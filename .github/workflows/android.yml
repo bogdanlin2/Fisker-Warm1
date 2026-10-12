@@ -1,34 +1,111 @@
-name: Build Fisker Warm APK
+name: Build Fisker Warm 0.3.3 APK
+
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - 'app/**'
-      - 'scripts/**'
-      - '.github/workflows/android.yml'
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Check out source files
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: yes | sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - name: Test core
-        run: python3 scripts/test_core.py
-      - name: Build signed APK
+
+      - name: Install official Android SDK 35 and Build Tools 35.0.0
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Confirm Android SDK packages
+        run: |
+          test -f "$ANDROID_SDK_ROOT/platforms/android-35/android.jar"
+          test -f "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/apksigner.jar"
+          test -x "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2"
+
+      - name: Run all 151 offline core checks
+        run: |
+          python3 scripts/test_core.py
+          python3 - <<'PY'
+          from pathlib import Path
+          results = Path('build/core-test-results.txt').read_text()
+          if 'TOTAL 151 checks passed' not in results:
+              raise SystemExit('Expected all 151 core checks to pass')
+          PY
+
+      - name: Restore the existing Lab03 signing key from GitHub Secrets
+        env:
+          FISKERWARM_KEYSTORE_B64: ${{ secrets.FISKERWARM_KEYSTORE_B64 }}
+          FISKERWARM_SIGNING_PASSWORD: ${{ secrets.FISKERWARM_SIGNING_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+          encoded = os.environ.get('FISKERWARM_KEYSTORE_B64', '')
+          password = os.environ.get('FISKERWARM_SIGNING_PASSWORD', '')
+          if not encoded or not password:
+              raise SystemExit('Missing repository Actions secrets: FISKERWARM_KEYSTORE_B64 and FISKERWARM_SIGNING_PASSWORD. Restore the existing Lab03 key; do not generate a new signing identity.')
+          key = base64.b64decode(encoded, validate=True)
+          build = Path('build')
+          build.mkdir(exist_ok=True)
+          build.chmod(0o700)
+          for name, value in [('local-lab-signing.p12', key), ('.local-signing-password', password.encode('utf-8'))]:
+              path = build / name
+              fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+              with os.fdopen(fd, 'wb') as out:
+                  out.write(value)
+              path.chmod(0o600)
+          PY
+
+      - name: Build signed APK with the established certificate
         run: python3 scripts/build_android.py
-      - name: Verify APK
-        run: python3 scripts/verify_apk.py --build-tools "$ANDROID_HOME/build-tools/35.0.0"
-      - name: Upload APK
+
+      - name: Verify package, version, permissions, manifest, and signature
+        run: python3 scripts/verify_apk.py --build-tools "$ANDROID_SDK_ROOT/build-tools/35.0.0"
+
+      - name: Upload verified installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: Fisker-Warm-Lab-APK
-          path: dist/*.apk
+          name: Fisker-Warm-Lab-0.3.3-APK
+          path: dist/Fisker-Warm-Lab-0.3.3.apk
           if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload build and verification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fisker-Warm-0.3.3-Verification
+          path: |
+            build/core-test-results.txt
+            build/build-result.json
+            build/apk-inspection.json
+            build/apk-signature.txt
+            build/apk-badging.txt
+            build/apk-manifest-tree.txt
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['local-lab-signing.p12', '.local-signing-password']:
+              (Path('build') / name).unlink(missing_ok=True)
+          PY

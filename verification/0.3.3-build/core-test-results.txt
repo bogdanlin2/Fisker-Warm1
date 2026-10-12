@@ -1,0 +1,152 @@
+PASS genuine PKC21.3 owner reply
+PASS genuine ECC24 owner reply
+PASS genuine ICC49 uses 7B9
+PASS spaced CAN frames
+PASS DLC is checked
+PASS bad DLC rejected
+PASS single frame
+PASS numbered ELM parser offline
+PASS live mode requires responder
+PASS echo stripped
+PASS wrong DID rejected
+PASS wrong responder rejected
+PASS missing consecutive frame rejected
+PASS truncated ISO-TP rejected
+PASS extra ISO-TP rejected
+PASS truncated formatted rejected
+PASS out-of-order formatted rejected
+PASS NRC31 is failure
+PASS NRC78 is pending, never success
+PASS adapter error NO DATA
+PASS adapter error BUFFER FULL
+PASS adapter error CAN ERROR
+PASS adapter error STOPPED
+PASS adapter error UNABLE TO CONNECT
+PASS adapter error ?
+PASS non-hex text rejected
+PASS mixed formats rejected
+PASS binary identity not invented ASCII
+PASS voltage normal
+PASS voltage echo
+PASS voltage garbage unknown
+PASS voltage nan unknown
+PASS voltage mixed unknown
+PASS voltage absurd unknown
+PASS low voltage blocks UDS policy
+PASS unknown voltage blocks
+PASS infinite voltage blocks
+PASS addressed identity read allowed
+PASS unaddressed identity blocked
+PASS mismatched RX blocked
+PASS route change invalidates RX
+PASS ATZ invalidates route
+PASS wire firewall blocks 1101
+PASS wire firewall blocks 14FFFFFF
+PASS wire firewall blocks 1003
+PASS wire firewall blocks 2701
+PASS wire firewall blocks 2EF19500
+PASS wire firewall blocks 31010000
+PASS wire firewall blocks 3E00
+PASS wire firewall blocks 3400
+PASS wire firewall blocks ATLP
+PASS wire firewall blocks ATSH7C2
+PASS wire firewall blocks ATSH7D0
+PASS wire firewall blocks ATSH7F4
+PASS wire firewall blocks ATSH781
+PASS wire firewall blocks 22EFF2
+PASS wire firewall blocks ATCRA
+PASS wire firewall blocks ATPP00OFF
+PASS wire firewall blocks ATSH7A2/1101
+PASS wire firewall blocks ATSH7A2/1101
+PASS wire firewall blocks atsh7a2
+PASS wire firewall blocks  ATZ
+PASS all genuine routes paired
+PASS production heat always blocked
+PASS synthetic future prerequisites only
+PASS missing telemetry blocks
+PASS drive gear blocks
+PASS unknown park blocks
+PASS moving blocks
+PASS unknown speed blocks
+PASS stale data blocks
+PASS future timestamp blocks
+PASS low HV blocks
+PASS unknown HV blocks
+PASS nan HV blocks
+PASS no authentication blocks
+PASS untrusted telemetry blocks
+PASS duration capped
+PASS independent vehicle timeout required
+PASS weekly Kyiv local clock
+PASS weekly DST changes UTC hour
+PASS DST missing time skipped
+PASS DST overlap not duplicated
+PASS empty weekdays invalid
+PASS past one shot cannot catch up
+PASS fragmented ELM response single flight
+PASS timeout closes channel and forbids retry
+PASS stop closes without any write
+PASS unsafe wire command causes zero writes
+PASS overflow makes channel terminal
+PASS multiple prompts rejected
+PASS new budget cannot exceed 60 sec
+PASS slow writer cannot bypass reply deadline
+PASS identity DID allowlist cannot be mutated
+PASS single BLE probe owner only
+PASS stale BLE callback cannot complete newer probe
+PASS invalid BLE ownership token cannot release session
+PASS known UART table cannot be mutated
+PASS published UART profiles match exact triples
+PASS wrong UUID in known UART service blocked
+PASS unknown UART and missing UUID blocked
+PASS passive adapter controls allowed
+PASS passive parse two CAN frames
+PASS passive ignores junk without fake frames
+PASS passive differences are candidate IDs
+PASS passive parser rejects malformed payload
+PASS passive monitor stops adapter with CR
+PASS streaming passive parses split BLE packets
+PASS stream overflow detected before finish
+PASS streaming detects adapter overflow
+PASS streaming limits lines without unbounded growth
+PASS streaming monitor stops without CAN transmission
+PASS PKC sample climate 15 minute fixture
+PASS PKC sample climate 120 minute fixture
+PASS PKC sample climate stop fixture
+PASS PKC climate 0 minutes denied
+PASS PKC climate 25 minutes denied
+PASS PKC climate 121 minutes denied
+PASS PKC 22C driver fixture
+PASS PKC 24C passenger fixture
+PASS PKC minimum temperature fixture
+PASS PKC maximum temperature fixture
+PASS PKC half-degree temperature fixture
+PASS PKC sub-half-degree temperature denied
+PASS PKC unsafe high temp denied
+PASS PKC NaN temperature denied
+PASS PKC null zone denied
+PASS PKC VA key hex format valid
+PASS PKC VA key invalid character denied
+PASS PKC VIN is not VA key
+PASS PKC HMAC RFC4231 first case
+PASS PKC HMAC differs on changed bytes
+PASS PKC HMAC missing key denied
+PASS PKC status setpoint decode
+PASS PKC status cabin temp decode
+PASS PKC status ambient temp decode
+PASS PKC status flags remain undecoded
+PASS PKC undocumented status ID denied
+PASS PKC out-of-range status byte denied
+PASS PKC cannot transmit to vehicle
+PASS valid signed offline envelope
+PASS replay blocked atomically
+PASS persistent ledger failure blocks
+PASS missing ledger blocks
+PASS body tampering blocked
+PASS stale envelope blocked
+PASS future envelope blocked
+PASS path tampering blocked
+PASS nonce injection blocked
+PASS short pairing key blocked
+PASS oversized body blocked
+TOTAL 151 checks passed; no vehicle connection or climate command.

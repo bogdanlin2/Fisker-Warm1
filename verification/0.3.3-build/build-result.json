@@ -1,0 +1,18 @@
+{
+  "file": "Fisker-Warm-Lab-0.3.3.apk",
+  "sha256": "fe24227926838e510eb3355228431deeafd78307bc5e0e1d2c7675aa066235ab",
+  "sizeBytes": 45449,
+  "compileSdk": 35,
+  "targetSdk": 35,
+  "minSdk": 26,
+  "applicationId": "com.fiskerwarm.lab03",
+  "versionCode": 7,
+  "versionName": "0.3.3-lab",
+  "signerCertificateSha256": "3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74",
+  "heatingAvailable": false,
+  "readOnlyCanCapture": true,
+  "climateProtocolVerified": false,
+  "built": true,
+  "installedOnSamsung": false,
+  "testedOnVehicle": false
+}

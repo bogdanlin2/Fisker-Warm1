@@ -1,0 +1,194 @@
+{
+  "researchDate": "2026-10-10",
+  "vehicle": "European Fisker Ocean Extreme 2023",
+  "status": "BLOCKED_UNVERIFIED_PROTOCOL",
+  "apk": {
+    "file": "Fisker-Warm-Lab-0.1.0.apk",
+    "sha256": "401e31ffe1eb4ea87724e0d434f908f3ee47e6b96209b6fcbcc4ab6359c380f0",
+    "sizeBytes": 37257,
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26,
+    "heatingAvailable": false,
+    "built": true,
+    "installedOnSamsung": false,
+    "testedOnVehicle": false
+  },
+  "sources": [
+    {
+      "repository": "https://github.com/Fiskeretta/fiskeretta-diagnostics",
+      "commit": "2254dbc4845346523da91c3a1a7b85018767de7b",
+      "commitTime": "2026-06-14T15:59:54-07:00",
+      "selectedFileDigests": [
+        {
+          "path": "README.md",
+          "sha256": "7b34d06fc7e076b47ec42aa08a592573ded12537da67a2676ac3a69cd49303e4",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/README.md"
+        },
+        {
+          "path": "fiskeretta/core.py",
+          "sha256": "9ddbf1d6a2dc37418427aa7a7b961390597fee07f22a99698f64fbd034d1d5df",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/core.py"
+        },
+        {
+          "path": "fiskeretta/connection.py",
+          "sha256": "2b9fd45f70a4a7ad5519d1fbba5ebfc7952a53832097829cc5b17e2650c1f6f3",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/connection.py"
+        },
+        {
+          "path": "fiskeretta/uds.py",
+          "sha256": "083b3e3540de7c05974f27edc02dcd9f1200610cde0622eafd1000ca93ea8183",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/uds.py"
+        },
+        {
+          "path": "fiskeretta/modules.py",
+          "sha256": "eaee6c8990bee887f2c4768cda3313d2f523c561361ee8df8339ef8f13febabd",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/modules.py"
+        },
+        {
+          "path": "fiskeretta/scan.py",
+          "sha256": "42271a19c87fc090e8005aba1587cfb1ce325c1bcc3aa55724f681cfdf303250",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/scan.py"
+        },
+        {
+          "path": "fiskeretta/registry.py",
+          "sha256": "d9a705339e19061898acae53fd7f79e770b32f36c7d76d2ebd43e50d4ab497e1",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/registry.py"
+        },
+        {
+          "path": "fiskeretta/knowns.py",
+          "sha256": "17c4b57dee66c749fc925c48e85ded274a84e75196dd2aed9b29e88576c6d5ec",
+          "url": "https://github.com/Fiskeretta/fiskeretta-diagnostics/blob/2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/knowns.py"
+        }
+      ],
+      "verifiedClimateDriverFound": false
+    },
+    {
+      "repository": "https://github.com/puddletools/CAN",
+      "commit": "4654bca7ecb6aa27db114ab40f63d7a1ad675660",
+      "commitTime": "2025-01-05T14:11:09-05:00",
+      "selectedFileDigests": [
+        {
+          "path": "README.md",
+          "sha256": "8923c849136af2cad92f36f46d443a7794533d5dea13aee0f435d755f0d9fb77",
+          "url": "https://github.com/puddletools/CAN/blob/4654bca7ecb6aa27db114ab40f63d7a1ad675660/README.md"
+        },
+        {
+          "path": "FiskerDBC.dbc",
+          "sha256": "cfd9cc84661d0b6ff4b42fd2388d5940981b364b1e74a896bbd12d818b30c3c2",
+          "url": "https://github.com/puddletools/CAN/blob/4654bca7ecb6aa27db114ab40f63d7a1ad675660/FiskerDBC.dbc"
+        }
+      ],
+      "verifiedClimateDriverFound": false
+    },
+    {
+      "repository": "https://github.com/puddletools/SaavyScripts",
+      "commit": "eaf134c680f30b04f12ffb99eacffe7531ec90d7",
+      "commitTime": "2025-01-03T19:38:12-05:00",
+      "selectedFileDigests": [
+        {
+          "path": "README.md",
+          "sha256": "ae75d7ec3dfc65fdf5cfae63b4970830ec95c3d9ac2213e454c12b8aa0152b7f",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/README.md"
+        },
+        {
+          "path": "getBootloader.js",
+          "sha256": "d07ca8d4e426aa54adae6c5aae2c89fcb9acaaef974b5cba1a4bfef2fbe81895",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getBootloader.js"
+        },
+        {
+          "path": "getFOB.js",
+          "sha256": "e6245718b958a018d322d12561f9976ba90b1b856668eaf19472ee311add795f",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getFOB.js"
+        },
+        {
+          "path": "getNFC.js",
+          "sha256": "27a33d375baffeedb334c465f6a92d968bd9fb02cc75fe4d319bab513d3cc15c",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getNFC.js"
+        },
+        {
+          "path": "getPKCHW.js",
+          "sha256": "04b688ee4bf0768d7b4eaab834e7712ef2c3301bde31cd8fb653791de856df0c",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getPKCHW.js"
+        },
+        {
+          "path": "getPKCPart.js",
+          "sha256": "824aa5f4c07a6d07bb9ed8bb450b3d5227d5497cbb020197609eb346d3067f83",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getPKCPart.js"
+        },
+        {
+          "path": "getPKCSW.js",
+          "sha256": "a292fd68f7cc654788eb6cb1d82dbd431337f13aa6a3334969aadad5c081eabc",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getPKCSW.js"
+        },
+        {
+          "path": "getPKCSWver.js",
+          "sha256": "891d149e77ae40a36b928a195ca4cf5cad0dad3b46f4277d6e62d99d80b43248",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getPKCSWver.js"
+        },
+        {
+          "path": "getVIN.js",
+          "sha256": "97d23349b12d62e4cabdc992353acec526f6bf597621c598104f7f7e6a2d5f77",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/getVIN.js"
+        },
+        {
+          "path": "resetDTC.js",
+          "sha256": "6104f2e22e4bf50a9857a7ba0ebcf2ec0d0ee673653ac63c3d5db5efb292b517",
+          "url": "https://github.com/puddletools/SaavyScripts/blob/eaf134c680f30b04f12ffb99eacffe7531ec90d7/resetDTC.js"
+        }
+      ],
+      "verifiedClimateDriverFound": false
+    }
+  ],
+  "ownerEvidence": {
+    "date": "2026-10-04",
+    "historicalOnly": true,
+    "pkcF195": "F160808130021.3",
+    "eccF195": "ECC395 24",
+    "bcmF195": "BCM395030",
+    "iccF195": "ICC390C49",
+    "liveBatterySocAvailable": false,
+    "liveParkSpeedAvailable": false,
+    "sleepMeasured": false,
+    "climateCommandAvailable": false
+  },
+  "upstreamRouteCorrections": {
+    "7C2/7CA": "VCU24 on this vehicle; excluded",
+    "781/789": "MRR on this vehicle; excluded",
+    "7B1/7B9": "ICC on this vehicle; permitted identity reads",
+    "7B6/7BE": "Gateway on this vehicle; excluded"
+  },
+  "blockingEvidence": {
+    "authorizedProtocol": false,
+    "start": false,
+    "stop": false,
+    "lockedSleepWake": false,
+    "vehicleSideTimeout": false,
+    "liveClimateFeedback": false,
+    "verifiedSafetyTelemetry": false
+  },
+  "testScope": {
+    "jvmChecksPassed": 111,
+    "apkInspectionPassed": true,
+    "phoneInstalled": false,
+    "vehicleTested": false
+  },
+  "primaryReferences": [
+    "https://www.oceanlinkpro.com/faq",
+    "https://www.oceanlinkpulse.com/",
+    "https://cdn.webshopapp.com/shops/318249/files/433179428/vgate-vlinker-fd-handleiding.pdf",
+    "https://developer.android.com/develop/connectivity/bluetooth/ble/background",
+    "https://developer.android.com/develop/background-work/services/alarms/schedule",
+    "https://github.com/cheeseprince/obd-gauge-cluster/blob/main/docs/ADAPTERS.md",
+    "https://www.defa.com/product/termini-ii-1400/"
+  ],
+  "toolchain": {
+    "jdk": "OpenJDK 17.0.20",
+    "platform": 35,
+    "buildTools": "35.0.0",
+    "platformPackageUrl": "https://dl.google.com/android/repository/platform-35_r02.zip",
+    "platformPackageSha1": "0bb560a90a7a2cbd0dd8348224d518b638fe7949",
+    "buildToolsPackageUrl": "https://dl.google.com/android/repository/build-tools_r35_linux.zip",
+    "buildToolsPackageSha1": "2cfaa0bbb2336e9ec18ed3ecea84fa2e2af607bc"
+  }
+}

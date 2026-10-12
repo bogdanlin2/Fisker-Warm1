@@ -1,0 +1,51 @@
+{
+  "apk": "Fisker-Warm-Lab-0.3.3.apk",
+  "sha256": "fe24227926838e510eb3355228431deeafd78307bc5e0e1d2c7675aa066235ab",
+  "applicationId": "com.fiskerwarm.lab03",
+  "signerCertificateSha256": "3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74",
+  "checks": {
+    "apkSignatureV2": true,
+    "apkSignatureV3": true,
+    "expectedSigningCertificate": true,
+    "onlyOneSigner": true,
+    "applicationId": true,
+    "versionCode": true,
+    "versionName": true,
+    "minSdk26": true,
+    "targetSdk35": true,
+    "applicationLabel": true,
+    "exactPermissionSet": true,
+    "noInternet": true,
+    "noServicesReceiversProviders": true,
+    "onlyOneActivity": true,
+    "notDebuggable": true,
+    "backupDisabled": true,
+    "cleartextDisabled": true,
+    "aligned": true
+  },
+  "installedOnPhone": false,
+  "vehicleTested": false,
+  "scope": "Artifact inspection only; does not validate BLE hardware or heating.",
+  "previousApkCompatibility": [
+    {
+      "apk": "Fisker-Warm-Lab-0.3.0.apk",
+      "applicationId": "com.fiskerwarm.lab03",
+      "versionName": "0.3.0-lab",
+      "signerCertificateSha256": "3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74",
+      "sameApplicationId": true,
+      "sameSigningCertificate": true,
+      "higherVersionCode": true,
+      "inPlaceUpdateCompatible": true
+    },
+    {
+      "apk": "Fisker-Warm-Lab-0.3.2.apk",
+      "applicationId": "com.fiskerwarm.lab032",
+      "versionName": "0.3.2-lab",
+      "signerCertificateSha256": "927c783a94c45e73f52688ac1e23cde60f7c5d33bb739342d5510da3b5725324",
+      "sameApplicationId": false,
+      "sameSigningCertificate": false,
+      "higherVersionCode": true,
+      "inPlaceUpdateCompatible": false
+    }
+  ]
+}

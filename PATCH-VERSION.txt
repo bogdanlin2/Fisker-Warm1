@@ -1,0 +1,1 @@
+0.3.3-source; requires Android SDK 35, Build Tools 35.0.0, and the existing Lab03 signing key

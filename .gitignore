@@ -1,0 +1,13 @@
+build/
+dist/
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+.env
+.env.*
+*.signing-password
+.local-signing-password
+local.properties
+__pycache__/
