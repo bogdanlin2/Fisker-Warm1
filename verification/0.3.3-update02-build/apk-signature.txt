@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Fisker Warm Independent Lab
+Signer #1 certificate SHA-256 digest: 848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e
+Signer #1 certificate SHA-1 digest: bf47cb739660b767ba70505d634467dd526a0610
+Signer #1 certificate MD5 digest: 9ad58fdbfde337e5d629d76422bfb0c2
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: e6b3dccfa91546f8f308a57f291abf44c00fbba001b11c09b8742e40d08f0295
+Signer #1 public key SHA-1 digest: bb117531260409c17883a3fde3b9451012f67669
+Signer #1 public key MD5 digest: a1e1256e83a9d3dd71c35b9777c4f156

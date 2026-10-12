@@ -8,9 +8,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import zipfile
+from release_profiles import DEFAULT_PROFILE, PROFILES, VERSION_CODE, VERSION_NAME
 
 ROOT = Path(__file__).resolve().parents[1]
-SIGNER_SHA256 = '3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74'
 
 def run(args, **kw):
     result = subprocess.run([str(a) for a in args], text=True, capture_output=True, **kw)
@@ -23,7 +23,9 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--sdk-root', default=os.environ.get('ANDROID_SDK_ROOT'))
     p.add_argument('--build-tools', help='Override directory containing aapt2, zipalign and lib/d8.jar')
+    p.add_argument('--profile', choices=sorted(PROFILES), default=DEFAULT_PROFILE)
     args = p.parse_args()
+    profile = PROFILES[args.profile]
     if not args.sdk_root: p.error('Set ANDROID_SDK_ROOT or --sdk-root')
     sdk = Path(args.sdk_root).resolve()
     candidates = [sdk / 'platforms/android-35/android.jar', sdk / 'android-35/android.jar']
@@ -36,13 +38,13 @@ def main():
     build=ROOT/'build'; build.mkdir(exist_ok=True)
     key=build/'local-lab-signing.p12'; password_file=build/'.local-signing-password'
     if not key.is_file() or not password_file.is_file():
-        p.error('Restore the existing Lab03 signing key and password into build/; new keys are never generated automatically')
+        p.error('Restore the existing signing key and password for the selected profile into build/; new keys are never generated automatically')
     env=os.environ.copy();env['FISKERWARM_SIGNING_PASSWORD']=password_file.read_text().strip()
     if not env['FISKERWARM_SIGNING_PASSWORD']: p.error('Signing password is empty')
     certificate=build/'signer-certificate.der'
     run([keytool,'-exportcert','-keystore',key,'-alias','lab','-storepass:env','FISKERWARM_SIGNING_PASSWORD','-file',certificate],env=env)
-    if hashlib.sha256(certificate.read_bytes()).hexdigest() != SIGNER_SHA256:
-        p.error('Signing certificate differs from the established com.fiskerwarm.lab03 certificate')
+    if hashlib.sha256(certificate.read_bytes()).hexdigest() != profile['certificateSha256']:
+        p.error('Signing certificate differs from the pinned certificate for ' + profile['applicationId'])
     classes=build/'classes'; dex=build/'dex'
     for d in [classes,dex]:
         if d.exists(): shutil.rmtree(d)
@@ -55,14 +57,21 @@ def main():
     run([java,'-cp',bt/'lib/d8.jar','com.android.tools.r8.D8','--min-api','26','--lib',platform,'--output',dex,jar])
     tool_ext='.exe' if os.name=='nt' else ''
     resource=build/'resources.apk'
-    run([bt/('aapt2'+tool_ext),'link','-I',platform,'--manifest',ROOT/'app/src/main/AndroidManifest.xml',
+    source_manifest=ROOT/'app/src/main/AndroidManifest.xml'
+    manifest_text=source_manifest.read_text(encoding='utf-8')
+    original_package='package="com.fiskerwarm.lab03"'
+    if manifest_text.count(original_package) != 1:
+        p.error('Source Manifest must keep the canonical com.fiskerwarm.lab03 package')
+    build_manifest=build/'AndroidManifest.xml'
+    build_manifest.write_text(manifest_text.replace(original_package,'package="'+profile['applicationId']+'"'),encoding='utf-8')
+    run([bt/('aapt2'+tool_ext),'link','-I',platform,'--manifest',build_manifest,
          '--min-sdk-version','26','--target-sdk-version','35','-o',resource])
     unsigned=build/'unsigned.apk'; aligned=build/'aligned.apk'
     shutil.copyfile(resource,unsigned)
     with zipfile.ZipFile(unsigned,'a',zipfile.ZIP_DEFLATED) as z:
         for f in sorted(dex.glob('*.dex')): z.write(f,f.name)
     run([bt/('zipalign'+tool_ext),'-f','4',unsigned,aligned])
-    out=ROOT/'dist';out.mkdir(exist_ok=True);apk=out/'Fisker-Warm-Lab-0.3.3.apk'
+    out=ROOT/'dist';out.mkdir(exist_ok=True);apk=out/profile['apkFilename']
     run([java,'-jar',bt/'lib/apksigner.jar','sign','--ks',key,'--ks-key-alias','lab',
          '--ks-pass','env:FISKERWARM_SIGNING_PASSWORD','--key-pass','env:FISKERWARM_SIGNING_PASSWORD','--out',apk,aligned],env=env)
     verification=run([java,'-jar',bt/'lib/apksigner.jar','verify','--verbose','--print-certs',apk])
@@ -71,8 +80,9 @@ def main():
     (build/'apk-badging.txt').write_text(manifest.stdout,encoding='utf-8')
     (build/'build-result.json').write_text(json.dumps({
         'file':apk.name,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'sizeBytes':apk.stat().st_size,
-        'compileSdk':35,'targetSdk':35,'minSdk':26,'applicationId':'com.fiskerwarm.lab03','versionCode':7,'versionName':'0.3.3-lab',
-        'signerCertificateSha256':SIGNER_SHA256,'heatingAvailable':False,'readOnlyCanCapture':True,'climateProtocolVerified':False,
+        'compileSdk':35,'targetSdk':35,'minSdk':26,'profile':args.profile,
+        'applicationId':profile['applicationId'],'versionCode':VERSION_CODE,'versionName':VERSION_NAME,
+        'signerCertificateSha256':profile['certificateSha256'],'heatingAvailable':False,'readOnlyCanCapture':True,'climateProtocolVerified':False,
         'built':True,'installedOnSamsung':False,'testedOnVehicle':False,
     },indent=2)+'\n')
     print('APK:',apk)

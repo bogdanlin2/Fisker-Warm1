@@ -1,6 +1,7 @@
 {
   "apk": "Fisker-Warm-Lab-0.3.3.apk",
-  "sha256": "fe24227926838e510eb3355228431deeafd78307bc5e0e1d2c7675aa066235ab",
+  "profile": "lab03",
+  "sha256": "3999ad8b8629eadd94cf37879e45a65833c58b53649ec3d1ab3680a4c139773e",
   "applicationId": "com.fiskerwarm.lab03",
   "signerCertificateSha256": "3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74",
   "checks": {
@@ -21,7 +22,8 @@
     "notDebuggable": true,
     "backupDisabled": true,
     "cleartextDisabled": true,
-    "aligned": true
+    "aligned": true,
+    "compatibleUpdate": true
   },
   "installedOnPhone": false,
   "vehicleTested": false,
@@ -36,16 +38,6 @@
       "sameSigningCertificate": true,
       "higherVersionCode": true,
       "inPlaceUpdateCompatible": true
-    },
-    {
-      "apk": "Fisker-Warm-Lab-0.3.2.apk",
-      "applicationId": "com.fiskerwarm.lab032",
-      "versionName": "0.3.2-lab",
-      "signerCertificateSha256": "927c783a94c45e73f52688ac1e23cde60f7c5d33bb739342d5510da3b5725324",
-      "sameApplicationId": false,
-      "sameSigningCertificate": false,
-      "higherVersionCode": true,
-      "inPlaceUpdateCompatible": false
     }
   ]
 }

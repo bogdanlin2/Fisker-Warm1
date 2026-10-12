@@ -1,10 +1,11 @@
 {
   "file": "Fisker-Warm-Lab-0.3.3.apk",
-  "sha256": "fe24227926838e510eb3355228431deeafd78307bc5e0e1d2c7675aa066235ab",
+  "sha256": "3999ad8b8629eadd94cf37879e45a65833c58b53649ec3d1ab3680a4c139773e",
   "sizeBytes": 45449,
   "compileSdk": 35,
   "targetSdk": 35,
   "minSdk": 26,
+  "profile": "lab03",
   "applicationId": "com.fiskerwarm.lab03",
   "versionCode": 7,
   "versionName": "0.3.3-lab",
