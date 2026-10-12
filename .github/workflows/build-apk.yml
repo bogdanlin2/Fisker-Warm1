@@ -20,10 +20,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
-      - name: Install Android SDK Platform 35 and Build Tools 35.0.0
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+      - name: Confirm Android SDK packages
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+          test -d "$ANDROID_SDK_ROOT/platforms/android-35"
+          test -x "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner"
       - name: Run offline safety tests
         run: python3 scripts/test_core.py
       - name: Build signed APK
