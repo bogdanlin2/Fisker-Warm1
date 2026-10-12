@@ -72,6 +72,26 @@ jobs:
               path.chmod(0o600)
           PY
 
+      - name: Diagnose signing certificate compatibility (fingerprint only)
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, subprocess
+          from pathlib import Path
+          key = Path('build/local-lab-signing.p12')
+          password = Path('build/.local-signing-password').read_text().strip()
+          env = os.environ.copy()
+          env['FISKERWARM_SIGNING_PASSWORD'] = password
+          cert = Path('build/signing-diagnostic.der')
+          subprocess.run(['keytool', '-exportcert', '-keystore', str(key), '-alias', 'lab', '-storepass:env', 'FISKERWARM_SIGNING_PASSWORD', '-file', str(cert)], env=env, check=True, capture_output=True)
+          actual = hashlib.sha256(cert.read_bytes()).hexdigest()
+          old = '848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e'
+          pinned = '3c1716e279eb2a9cfc8b1c90d54845a2cb74a92ecc1df3bf2dc0955a2b39be74'
+          print('GitHub Secret certificate SHA256:', actual)
+          print('Matches installed 0.2.0 APK:', actual == old)
+          print('Matches pinned 0.3.3 certificate:', actual == pinned)
+          cert.unlink(missing_ok=True)
+          PY
+
       - name: Build signed APK with the established certificate
         run: python3 scripts/build_android.py
 
