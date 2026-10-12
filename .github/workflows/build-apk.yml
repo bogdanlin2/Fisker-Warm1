@@ -8,9 +8,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Extract source package
+        run: |
+          test -f Fisker-Warm-0.3.2-GitHub-AutoBuild.zip
+          unzip -o Fisker-Warm-0.3.2-GitHub-AutoBuild.zip -d .
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
