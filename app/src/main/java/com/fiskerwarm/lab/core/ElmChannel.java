@@ -92,8 +92,8 @@ public final class ElmChannel {
                 if(closed || waiting || monitoring)throw new IllegalStateException("Channel busy/closed");
                 stream=new CanCapture.Stream();monitorTruncated=false;monitoring=true;
             }
+            long monitorStart=System.nanoTime();
             try {
-                long monitorStart=System.nanoTime();
                 writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
                 long until=monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis);
                 synchronized(receiveLock) {
