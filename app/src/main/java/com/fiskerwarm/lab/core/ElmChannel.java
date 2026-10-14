@@ -93,8 +93,9 @@ public final class ElmChannel {
                 stream=new CanCapture.Stream();monitorTruncated=false;monitoring=true;
             }
             try {
+                long monitorStart=System.nanoTime();
                 writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
-                long until=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(durationMillis);
+                long until=monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis);
                 synchronized(receiveLock) {
                     while(!closed && System.nanoTime()<until && !stream.hasAdapterOverflow() && !stream.isTruncated()) {
                         long nanos=until-System.nanoTime();
@@ -107,7 +108,9 @@ public final class ElmChannel {
             }
             synchronized(receiveLock) {
                 if(closed)throw new IllegalStateException(failure);
-                CanCapture.Snapshot result=stream.finish();stream=null;
+                CanCapture.Snapshot result=stream.finish();
+                result.captureElapsedMillis=TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-monitorStart);
+                stream=null;
                 monitorTruncated=result.truncated;
                 return result;
             }
