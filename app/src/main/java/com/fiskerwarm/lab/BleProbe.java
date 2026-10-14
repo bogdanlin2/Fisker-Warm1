@@ -213,6 +213,10 @@ public final class BleProbe {
                         .put("ignoredLines",snap.ignoredLines)
                         .put("truncated",snap.truncated || channel.monitorTruncated())
                         .put("adapterBufferFull",snap.adapterBufferFull)
+                        .put("receivedBytes",snap.receivedBytes)
+                        .put("bleNotificationCount",snap.notificationCount)
+                        .put("framesAtFirstOverflow",snap.framesAtFirstOverflow<0?JSONObject.NULL:snap.framesAtFirstOverflow)
+                        .put("captureElapsedMillis",snap.captureElapsedMillis)
                         .put("captureStrategy","short-500ms-stop-on-overflow")
                         .put("captureQuality",(snap.adapterBufferFull || snap.truncated || channel.monitorTruncated())?"INCOMPLETE":"UNVERIFIED")
                         .put("interpretation","Undecoded passive frames. Changed IDs are not confirmed HVAC signals.");
