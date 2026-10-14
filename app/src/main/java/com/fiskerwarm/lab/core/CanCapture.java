@@ -28,6 +28,8 @@ public final class CanCapture {
         public int ignoredLines;
         public boolean truncated;
         public boolean adapterBufferFull;
+        public int receivedBytes, notificationCount, framesAtFirstOverflow = -1;
+        public long captureElapsedMillis;
         public final Map<String,IdSummary> ids=new LinkedHashMap<>();
     }
     private CanCapture() { }
@@ -64,6 +66,8 @@ public final class CanCapture {
         private final StringBuilder line=new StringBuilder();
         private int lines;
         public void accept(byte[] bytes) {
+            snapshot.notificationCount++;
+            snapshot.receivedBytes+=bytes.length;
             for(byte b:bytes) {
                 int c=b&255;
                 if(c==13 || c==10) { flush(); continue; }
@@ -78,6 +82,7 @@ public final class CanCapture {
             if(lines++>=MAX_CAPTURE_LINES) {snapshot.truncated=true;return;}
             Snapshot one=parse(text);
             snapshot.ignoredLines+=one.ignoredLines;
+            if(one.adapterBufferFull && !snapshot.adapterBufferFull) snapshot.framesAtFirstOverflow=snapshot.frameCount;
             snapshot.adapterBufferFull|=one.adapterBufferFull;
             for(IdSummary item:one.ids.values()) {
                 IdSummary target=snapshot.ids.get(item.id);
