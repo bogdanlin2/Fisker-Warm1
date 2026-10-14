@@ -49,12 +49,18 @@ public final class BleProbe {
     private final JSONArray events=new JSONArray();
     private volatile BluetoothGatt gatt;
     private volatile ElmChannel channel;
-    private BluetoothGattCharacteristic writeChar;
-    private BluetoothGattCharacteristic notifyChar;
+    private volatile BluetoothGattCharacteristic writeChar;
+    private volatile BluetoothGattCharacteristic notifyChar;
+    private final AtomicBoolean mtuPending=new AtomicBoolean(false), subscriptionStarted=new AtomicBoolean(false);
+    private final JSONObject transport=new JSONObject();
+    private volatile int effectiveMtu=23;
     private volatile CountDownLatch writeLatch;
     private volatile int writeStatus;
     private final long startElapsed=SystemClock.elapsedRealtime();
     private final Runnable watchdog=()->finish("SESSION_LIMIT", "Hard session deadline reached");
+    private final Runnable mtuWatchdog=()->{
+        if(mtuPending.compareAndSet(true,false))finish("MTU_TIMEOUT","MTU operation did not complete; no overlapping GATT writes started");
+    };
 
     public BleProbe(Context context,Mode mode,Listener listener) {
         this.context=context.getApplicationContext(); this.mode=mode; this.listener=listener;
@@ -62,6 +68,7 @@ public final class BleProbe {
     public void start(BluetoothDevice device,String advertisedName) {
         try {
             report.put("format","fisker-warm-lab-1"); report.put("appVersion","0.3.3-lab");
+            report.put("diagnosticRevision","can-diagnostics-1").put("bleTransport",transport);
             report.put("mode",mode.toString()); report.put("startedAt",Instant.now().toString());
             report.put("heatCapability",HeatSafety.BUILD_STATUS); report.put("events",events);
             report.put("deviceName",advertisedName); report.put("deviceAddress",device.getAddress());
@@ -89,6 +96,8 @@ public final class BleProbe {
     private final BluetoothGattCallback callback=new BluetoothGattCallback() {
         @Override public void onConnectionStateChange(BluetoothGatt g,int status,int state) {
             if(terminal.get()) { g.close(); return; }
+            if(gatt==null)gatt=g;
+            if(g!=gatt)return;
             if(status!=BluetoothGatt.GATT_SUCCESS) { finish("BLE_ERROR","Connection status "+status); return; }
             if(state==BluetoothProfile.STATE_CONNECTED) {
                 log("BLE connected. This does not prove the vehicle is awake.");
@@ -128,52 +137,86 @@ public final class BleProbe {
                 if(pairs.size()!=1) { finish("UART_NOT_CONFIRMED","Missing or ambiguous known UART service; export a GATT map first"); return; }
                 writeChar=pairs.get(0)[0]; BluetoothGattCharacteristic notify=pairs.get(0)[1]; notifyChar=notify;
                 report.put("writeUuid",writeChar.getUuid().toString()).put("notifyUuid",notify.getUuid().toString());
-                channel=new ElmChannel(BleProbe.this::write,Math.max(1,ReadOnlyPolicy.MAX_SESSION_MILLIS-(SystemClock.elapsedRealtime()-startElapsed)));
-                if(!g.setCharacteristicNotification(notify,true)) { finish("NOTIFY_ERROR","Local subscription failed"); return; }
-                BluetoothGattDescriptor d=notify.getDescriptor(CCC);
-                if(d==null) { finish("NOTIFY_ERROR","No CCC descriptor"); return; }
-                byte[] value=(notify.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY)!=0?
-                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE:BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
-                if(Build.VERSION.SDK_INT>=33) {
-                    if(g.writeDescriptor(d,value)!=0) finish("NOTIFY_ERROR","Descriptor write did not start");
+                long remaining=ReadOnlyPolicy.MAX_SESSION_MILLIS-(SystemClock.elapsedRealtime()-startElapsed);
+                if(remaining<=0) {finish("SESSION_LIMIT","Session expired before UART setup");return;}
+                channel=new ElmChannel(BleProbe.this::write,remaining);
+                if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON) {
+                    transport.put("highPriorityRequestQueued",g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH));
+                    transport.put("highPriorityConfirmed",false).put("requestedMtu",247).put("negotiatedMtu",JSONObject.NULL);
+                    mtuPending.set(true);ui.postDelayed(mtuWatchdog,2500);
+                    if(!g.requestMtu(247) && mtuPending.compareAndSet(true,false)) {
+                        ui.removeCallbacks(mtuWatchdog);transport.put("mtuRequestQueued",false);
+                        subscribe(g);
+                    } else transport.put("mtuRequestQueued",true);
                 } else {
-                    d.setValue(value); if(!g.writeDescriptor(d)) finish("NOTIFY_ERROR","Descriptor write did not start");
+                    subscribe(g);
                 }
             } catch(Exception e) { finish("GATT_ERROR",e.toString()); }
         }
         @Override public void onDescriptorWrite(BluetoothGatt g,BluetoothGattDescriptor d,int status) {
-            if(terminal.get()) return;
+            if(terminal.get() || g!=gatt || !CCC.equals(d.getUuid()) || !sameCharacteristic(d.getCharacteristic(),notifyChar)) return;
             if(status!=BluetoothGatt.GATT_SUCCESS) { finish("NOTIFY_ERROR","Subscription status "+status); return; }
             if(started.compareAndSet(false,true)) worker.execute(BleProbe.this::read);
         }
         @Override public void onCharacteristicWrite(BluetoothGatt g,BluetoothGattCharacteristic c,int status) {
+            if(g!=gatt || !sameCharacteristic(c,writeChar) || terminal.get())return;
             CountDownLatch latch=writeLatch; writeStatus=status; if(latch!=null) latch.countDown();
+        }
+        @Override public void onMtuChanged(BluetoothGatt g,int mtu,int status) {
+            if(g!=gatt || terminal.get() || !mtuPending.compareAndSet(true,false))return;
+            ui.removeCallbacks(mtuWatchdog);
+            try {
+                transport.put("mtuGattStatus",status);
+                if(status==BluetoothGatt.GATT_SUCCESS && mtu>=23) {
+                    effectiveMtu=mtu;transport.put("negotiatedMtu",mtu);
+                }
+                // Failed negotiation keeps small commands within the default 20-byte payload.
+                subscribe(g);
+            } catch(Exception e) {finish("GATT_ERROR",e.toString());}
         }
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c,byte[] value) {
             ElmChannel ch=channel;
-            if(ch!=null && notifyChar!=null && notifyChar.getUuid().equals(c.getUuid()) && !terminal.get()) ch.receive(value.clone());
+            if(ch!=null && g==gatt && sameCharacteristic(c,notifyChar) && value!=null && !terminal.get()) ch.receive(value.clone());
         }
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c) {
             if(Build.VERSION.SDK_INT<33) { byte[] v=c.getValue(); if(v!=null) onCharacteristicChanged(g,c,v); }
         }
     };
 
+    private static boolean sameCharacteristic(BluetoothGattCharacteristic a,BluetoothGattCharacteristic b) {
+        return a!=null && b!=null && a.getUuid().equals(b.getUuid()) && a.getService()!=null && b.getService()!=null
+                && a.getService().getUuid().equals(b.getService().getUuid());
+    }
+    private void subscribe(BluetoothGatt g) throws Exception {
+        if(terminal.get() || g!=gatt || !subscriptionStarted.compareAndSet(false,true))return;
+        BluetoothGattCharacteristic notify=notifyChar;
+        if(!g.setCharacteristicNotification(notify,true)) {finish("NOTIFY_ERROR","Local subscription failed");return;}
+        BluetoothGattDescriptor d=notify.getDescriptor(CCC);
+        if(d==null) {finish("NOTIFY_ERROR","No CCC descriptor");return;}
+        boolean useNotifications=(notify.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY)!=0;
+        transport.put("receiveMode",useNotifications?"NOTIFICATION":"INDICATION");
+        byte[] value=useNotifications?BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE:BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
+        if(Build.VERSION.SDK_INT>=33) {
+            if(g.writeDescriptor(d,value)!=0)finish("NOTIFY_ERROR","Descriptor write did not start");
+        } else {d.setValue(value);if(!g.writeDescriptor(d))finish("NOTIFY_ERROR","Descriptor write did not start");}
+    }
+
     private void write(byte[] bytes) throws Exception {
         if(terminal.get() || gatt==null || writeChar==null) throw new IllegalStateException("No active UART");
+        if(bytes.length>effectiveMtu-3)throw new IllegalArgumentException("UART command exceeds negotiated ATT payload");
         int type=(writeChar.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE)!=0?
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT:BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
         CountDownLatch latch=new CountDownLatch(1); writeLatch=latch; writeStatus=-1;
-        boolean queued;
-        if(Build.VERSION.SDK_INT>=33) queued=gatt.writeCharacteristic(writeChar,bytes,type)==0;
-        else { writeChar.setWriteType(type); writeChar.setValue(bytes); queued=gatt.writeCharacteristic(writeChar); }
-        if(!queued) throw new IllegalStateException("BLE write did not start");
-        // A GATT response is required for confirmed writes. Write-without-response
-        // is confirmed only by the ELM prompt inside ElmChannel, not by an invented ACK.
-        if(type==BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) {
+        try {
+            boolean queued;
+            if(Build.VERSION.SDK_INT>=33) queued=gatt.writeCharacteristic(writeChar,bytes,type)==0;
+            else {writeChar.setWriteType(type);writeChar.setValue(bytes);queued=gatt.writeCharacteristic(writeChar);}
+            if(!queued)throw new IllegalStateException("BLE write did not start");
+            // Serialize host GATT completion for both write types. For NO_RESPONSE
+            // this callback is not a peripheral ACK; only the ELM prompt confirms it.
             if(!latch.await(3000,TimeUnit.MILLISECONDS) || writeStatus!=BluetoothGatt.GATT_SUCCESS)
                 throw new IllegalStateException("BLE write failed or timed out");
-        }
-        writeLatch=null;
+        } finally {writeLatch=null;}
     }
     private String command(String cmd,long timeout) throws Exception {
         if(terminal.get()) throw new IllegalStateException("Stopped");
@@ -207,6 +250,9 @@ public final class BleProbe {
                 report.put("observationPhase",stage);
                 report.put("phaseMeaning","User-reported HVAC state, not verified by car");
                 report.put("captureSeconds",0.5);
+                report.put("captureConfig",new JSONObject().put("protocolCommand","ATSP6").put("canIdBits",11).put("canBitrate",500000)
+                        .put("customFilterCommands",new JSONArray()).put("hardwareFiltersVerified",false)
+                        .put("meaning","Requested 11-bit/500kbps OBD monitor; not proof of HVAC bus visibility or adapter filter defaults"));
                 log("Listening to CAN for 0.5 seconds; no UDS requests or CAN frames transmitted.");
                 CanCapture.Snapshot snap=channel.listenCanSnapshot(500);
                 JSONObject can=new JSONObject().put("frameCount",snap.frameCount)
@@ -217,8 +263,27 @@ public final class BleProbe {
                         .put("bleNotificationCount",snap.notificationCount)
                         .put("framesAtFirstOverflow",snap.framesAtFirstOverflow<0?JSONObject.NULL:snap.framesAtFirstOverflow)
                         .put("captureElapsedMillis",snap.captureElapsedMillis)
-                        .put("captureStrategy","short-500ms-stop-on-overflow")
-                        .put("captureQuality",(snap.adapterBufferFull || snap.truncated || channel.monitorTruncated())?"INCOMPLETE":"UNVERIFIED")
+                        .put("startWriteMillis",snap.startWriteMillis).put("lateStartWrite",snap.lateStartWrite).put("windowElapsed",snap.windowElapsed)
+                        .put("firstOverflowMillis",snap.firstOverflowMillis<0?JSONObject.NULL:snap.firstOverflowMillis)
+                        .put("bytesAtFirstOverflow",snap.bytesAtFirstOverflow<0?JSONObject.NULL:snap.bytesAtFirstOverflow)
+                        .put("firstNotificationMillis",snap.firstNotificationMillis<0?JSONObject.NULL:snap.firstNotificationMillis)
+                        .put("lastNotificationMillis",snap.lastNotificationMillis<0?JSONObject.NULL:snap.lastNotificationMillis)
+                        .put("minNotificationBytes",snap.minNotificationBytes).put("maxNotificationBytes",snap.maxNotificationBytes)
+                        .put("maxNotificationGapMillis",snap.maxNotificationGapMillis)
+                        .put("partialLinesDiscarded",snap.partialLinesDiscarded).put("invalidFrameLines",snap.invalidFrameLines)
+                        .put("overlongLines",snap.overlongLines).put("nonAsciiBytes",snap.nonAsciiBytes)
+                        .put("ignoredNullBytes",snap.ignoredNullBytes)
+                        .put("stopDrainMillis",snap.stopDrainMillis).put("promptSeen",snap.promptSeen)
+                        .put("stopSent",snap.stopSent).put("stopWriteConfirmed",snap.stopWriteConfirmed).put("stopConfirmed",snap.stopConfirmed)
+                        .put("sessionBudgetExceeded",snap.sessionBudgetExceeded).put("endReason",snap.endReason)
+                        .put("adapterError",snap.adapterError==null?JSONObject.NULL:snap.adapterError)
+                        .put("stopError",snap.stopError==null?JSONObject.NULL:snap.stopError)
+                        .put("receivedByteRate",snap.lastNotificationMillis>snap.firstNotificationMillis?
+                                snap.receivedBytes*1000.0/(snap.lastNotificationMillis-snap.firstNotificationMillis):JSONObject.NULL)
+                        .put("throughputMeaning","Host ASCII bytes including status; packet timestamps. Not CAN bitrate, UART speed, or over-the-air BLE throughput")
+                        .put("overflowMeasurementResolution","Host BLE notification timestamp and cumulative whole-packet byte count; not internal adapter timing")
+                        .put("captureStrategy","500ms-acquisition-then-bounded-prompt-drain")
+                        .put("captureQuality",snap.incomplete()?"INCOMPLETE":"UNVERIFIED")
                         .put("interpretation","Undecoded passive frames. Changed IDs are not confirmed HVAC signals.");
                 JSONArray ids=new JSONArray();
                 for(CanCapture.IdSummary id:snap.ids.values()) {
@@ -227,7 +292,7 @@ public final class BleProbe {
                 }
                 can.put("ids",ids);report.put("passiveCan",can);
                 log("Passive frames: "+snap.frameCount+" · CAN IDs: "+snap.ids.size());
-                if(snap.adapterBufferFull || snap.truncated || channel.monitorTruncated())
+                if(snap.incomplete())
                     log("Incomplete capture; compare only as exploratory data.");
                 finish(snap.frameCount==0?"NO_PASSIVE_FRAMES":"PASSIVE_CAPTURED",
                         snap.frameCount==0?"OBD gateway may not forward broadcast CAN traffic":"Read-only passive snapshot; climate state is NOT decoded");return;
@@ -257,6 +322,7 @@ public final class BleProbe {
     private void finish(String result,String detail) {
         if(!terminal.compareAndSet(false,true)) return;
         ui.removeCallbacks(watchdog);
+        ui.removeCallbacks(mtuWatchdog);mtuPending.set(false);
         ElmChannel ch=channel; if(ch!=null) ch.close(detail);
         CountDownLatch latch=writeLatch; if(latch!=null) latch.countDown();
         BluetoothGatt g=gatt; gatt=null;

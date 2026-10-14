@@ -1,8 +1,8 @@
-name: Build Fisker Warm 0.3.3 APK
+name: Build and verify Fisker Warm APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, diagnostics/can-overflow-root-cause]
   workflow_dispatch:
 
 permissions:
@@ -37,15 +37,8 @@ jobs:
           test -f "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/apksigner.jar"
           test -x "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2"
 
-      - name: Run all 151 offline core checks
-        run: |
-          python3 scripts/test_core.py
-          python3 - <<'PY'
-          from pathlib import Path
-          results = Path('build/core-test-results.txt').read_text()
-          if 'TOTAL 151 checks passed' not in results:
-              raise SystemExit('Expected all 151 core checks to pass')
-          PY
+      - name: Compile and execute every core and CAN regression suite
+        run: python3 scripts/test_core.py
 
       - name: Restore the existing signing key from GitHub Secrets
         env:
@@ -80,7 +73,7 @@ jobs:
         run: python3 scripts/build_android.py --profile "${{ steps.signing.outputs.profile }}"
 
       - name: Verify package, version, permissions, manifest, and signature
-        run: python3 scripts/verify_apk.py --profile "${{ steps.signing.outputs.profile }}" --build-tools "$ANDROID_SDK_ROOT/build-tools/35.0.0"
+        run: python3 scripts/verify_apk.py --profile "${{ steps.signing.outputs.profile }}" --build-tools "$ANDROID_SDK_ROOT/build-tools/35.0.0" --previous-identity-json verification/installed-0.3.3-identity.json --require-compatible-update
 
       - name: Upload verified installable APK
         uses: actions/upload-artifact@v4
@@ -97,6 +90,7 @@ jobs:
           name: Fisker-Warm-0.3.3-Verification
           path: |
             build/core-test-results.txt
+            build/offline-test-summary.json
             build/build-result.json
             build/apk-inspection.json
             build/apk-signature.txt

@@ -84,6 +84,9 @@ def main():
         'applicationId':profile['applicationId'],'versionCode':VERSION_CODE,'versionName':VERSION_NAME,
         'signerCertificateSha256':profile['certificateSha256'],'heatingAvailable':False,'readOnlyCanCapture':True,'climateProtocolVerified':False,
         'built':True,'installedOnSamsung':False,'testedOnVehicle':False,
+        'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),
+        'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),
+        'diagnosticRevision':'can-diagnostics-1',
     },indent=2)+'\n')
     print('APK:',apk)
 

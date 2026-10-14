@@ -20,11 +20,12 @@ def main():
     parser.add_argument('--profile', choices=sorted(PROFILES), default=DEFAULT_PROFILE)
     parser.add_argument('--apk')
     parser.add_argument('--previous-apk', action='append', default=[], help='Inspect package/signature compatibility with a previous APK')
+    parser.add_argument('--previous-identity-json', help='Public identity extracted from the already verified installed APK; no private key')
     parser.add_argument('--require-compatible-update', action='store_true')
     args = parser.parse_args()
     profile = PROFILES[args.profile]
-    if args.require_compatible_update and not args.previous_apk:
-        parser.error('--require-compatible-update needs --previous-apk')
+    if args.require_compatible_update and not args.previous_apk and not args.previous_identity_json:
+        parser.error('--require-compatible-update needs --previous-apk or --previous-identity-json')
     bt = Path(args.build_tools).resolve()
     apk = Path(args.apk).resolve() if args.apk else ROOT/'dist'/profile['apkFilename']
     java = shutil.which('java')
@@ -65,6 +66,16 @@ def main():
               'checks':checks,'installedOnPhone':False,'vehicleTested':False,
               'scope':'Artifact inspection only; does not validate BLE hardware or heating.'}
     compatibility=[]
+    if args.previous_identity_json:
+        old=json.loads(Path(args.previous_identity_json).read_text(encoding='utf-8'))
+        if not re.fullmatch('[0-9a-f]{64}',old.get('signerCertificateSha256','')) or not isinstance(old.get('versionCode'),int):
+            raise SystemExit('Invalid previous APK identity')
+        same_package=bool(package and old['applicationId']==package.group(1))
+        same_signer=bool(signer and old['signerCertificateSha256']==signer.group(1))
+        higher_version=bool(package and int(package.group(2))>old['versionCode'])
+        compatibility.append({'apk':old['apk'],'evidence':'Pinned identity; local delivery also verifies previous APK bytes',
+                              'sameApplicationId':same_package,'sameSigningCertificate':same_signer,'higherVersionCode':higher_version,
+                              'inPlaceUpdateCompatible':same_package and same_signer and higher_version})
     for previous in args.previous_apk:
         old=Path(previous).resolve()
         old_signature=run([java,'-jar',bt/'lib/apksigner.jar','verify','--verbose','--print-certs',old])

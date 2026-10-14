@@ -1,0 +1,9 @@
+{
+  "apk": "Fisker-Warm-Lab-0.3.3-Update02.apk",
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionCode": 7,
+  "versionName": "0.3.3-lab",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "apkSha256": "1a824287185d896524e0b5aab3e3003b33c646ffc675ce380612b877052eb2f2",
+  "evidence": "apksigner verify and aapt2 badging on owner supplied 0.3.3 Update02 APK, 2026-10-14"
+}
