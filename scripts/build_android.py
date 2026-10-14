@@ -8,7 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import zipfile
-from release_profiles import DEFAULT_PROFILE, PROFILES, VERSION_CODE, VERSION_NAME
+from release_profiles import DEFAULT_PROFILE, PROFILES, VERSION_CODE, VERSION_NAME, DIAGNOSTIC_REVISION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -86,7 +86,7 @@ def main():
         'built':True,'installedOnSamsung':False,'testedOnVehicle':False,
         'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),
         'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),
-        'diagnosticRevision':'can-diagnostics-1',
+        'diagnosticRevision':DIAGNOSTIC_REVISION,
     },indent=2)+'\n')
     print('APK:',apk)
 

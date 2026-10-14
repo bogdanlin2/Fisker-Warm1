@@ -17,6 +17,14 @@ public final class CanCapture {
     private static final Pattern BYTE = Pattern.compile("[0-9A-F]{2}");
     public static final int MAX_CAPTURE_LINES = 1500;
     public static final int MAX_SAMPLES_PER_ID = 12;
+    public static final int MAX_RAW_TRACE_BYTES=2048, MAX_NOTIFICATION_TRACE=64, MAX_INVALID_LINE_SAMPLES=3;
+    public static final class NotificationTrace {
+        public final int bytes;
+        public final long arrivalMicros,processingMicros;
+        private NotificationTrace(int bytes,long arrivalMicros,long processingMicros) {
+            this.bytes=bytes;this.arrivalMicros=arrivalMicros;this.processingMicros=processingMicros;
+        }
+    }
 
     public static final class IdSummary {
         public final String id;
@@ -26,6 +34,7 @@ public final class CanCapture {
     }
     public static final class Snapshot {
         public int frameCount;
+        public int framesWithDlc, framesWithoutDlc;
         public int ignoredLines;
         public boolean truncated;
         public boolean adapterBufferFull;
@@ -36,6 +45,11 @@ public final class CanCapture {
         public long lastNotificationMillis = -1, firstOverflowMillis = -1, maxNotificationGapMillis;
         public boolean promptSeen, adapterStopped, stopSent, stopWriteConfirmed, stopConfirmed, sessionBudgetExceeded;
         public boolean windowElapsed, lateStartWrite;
+        public String rawAsciiPrefix;
+        public boolean rawTraceTruncated, notificationTraceTruncated;
+        public long maxProcessingMicros, maxReceiveLockWaitMicros;
+        public final List<NotificationTrace> notificationTrace=new ArrayList<>();
+        public final List<String> invalidLineSamples=new ArrayList<>();
         public String adapterError, endReason, stopError;
         public final Map<String,IdSummary> ids=new LinkedHashMap<>();
         public boolean incomplete() {
@@ -68,37 +82,44 @@ public final class CanCapture {
         }
         return false;
     }
-    private static void invalid(Snapshot s) {s.ignoredLines++;s.invalidFrameLines++;}
+    private static void invalid(Snapshot s,String line) {
+        s.ignoredLines++;s.invalidFrameLines++;
+        if(s.invalidLineSamples.size()<MAX_INVALID_LINE_SAMPLES)s.invalidLineSamples.add(line.substring(0,Math.min(160,line.length())));
+    }
     private static void parseFrame(String line,Snapshot s) {
         String[] p=line.split("\\s+");
-        if(p.length<2 || !HEADER.matcher(p[0]).matches()) {invalid(s);return;}
+        if(p.length<2 || !HEADER.matcher(p[0]).matches()) {invalid(s,line);return;}
         int start=1, dlc=-1;
         if(p[1].length()==1 && p[1].matches("[0-8]")) {dlc=p[1].charAt(0)-'0';start=2;}
         int length=p.length-start;
-        if(length>8 || (dlc<0 && length==0) || (dlc>=0 && dlc!=length)) {invalid(s);return;}
-        for(int j=start;j<p.length;j++) if(!BYTE.matcher(p[j]).matches()) {invalid(s);return;}
+        if(length>8 || (dlc<0 && length==0) || (dlc>=0 && dlc!=length)) {invalid(s,line);return;}
+        for(int j=start;j<p.length;j++) if(!BYTE.matcher(p[j]).matches()) {invalid(s,line);return;}
         StringBuilder bytes=new StringBuilder();
         for(int j=start;j<p.length;j++) {if(j>start)bytes.append(' ');bytes.append(p[j]);}
         IdSummary id=s.ids.get(p[0]);
         if(id==null) {id=new IdSummary(p[0]);s.ids.put(p[0],id);}
         id.count++;s.frameCount++;
+        if(dlc>=0)s.framesWithDlc++;else s.framesWithoutDlc++;
         if(id.samples.size()<MAX_SAMPLES_PER_ID)id.samples.add(bytes.toString());
     }
-    /** Incremental bounded monitor parser: never stores the full four-second stream. */
+    /** Incremental bounded monitor parser: never stores the full monitor stream. */
     public static final class Stream {
         private final Snapshot snapshot=new Snapshot();
         private final StringBuilder line=new StringBuilder();
         private final long startedNanos;
         private int lines;
         private boolean discardLine, finished;
+        private final StringBuilder rawTrace;
         public Stream() {this(System.nanoTime());}
-        public Stream(long startedNanos) {this.startedNanos=startedNanos;}
+        public Stream(long startedNanos) {this(startedNanos,false);}
+        public Stream(long startedNanos,boolean diagnosticTrace) {this.startedNanos=startedNanos;rawTrace=diagnosticTrace?new StringBuilder():null;}
         public void accept(byte[] bytes) {
             accept(bytes,System.nanoTime());
         }
         public void accept(byte[] bytes,long receivedNanos) {
             if(finished)throw new IllegalStateException("Capture already finished");
             if(bytes==null || bytes.length==0)return;
+            long processingStart=System.nanoTime();
             long elapsed=Math.max(0,TimeUnit.NANOSECONDS.toMillis(receivedNanos-startedNanos));
             snapshot.notificationCount++;
             snapshot.receivedBytes+=bytes.length;
@@ -109,6 +130,10 @@ public final class CanCapture {
             snapshot.lastNotificationMillis=elapsed;
             for(byte b:bytes) {
                 int c=b&255;
+                if(rawTrace!=null) {
+                    if(rawTrace.length()<MAX_RAW_TRACE_BYTES)rawTrace.append(c<128?(char)c:'?');
+                    else snapshot.rawTraceTruncated=true;
+                }
                 // ELM327 datasheet documents rare inserted NULLs; ignore only NULL.
                 if(c==0) {snapshot.ignoredNullBytes++;continue;}
                 if(snapshot.promptSeen) {
@@ -131,6 +156,16 @@ public final class CanCapture {
             }
             // Some adapters omit CR after BUFFER FULL; observe it before finish().
             noteOverflow(line.toString().toUpperCase(Locale.ROOT),elapsed);
+            long processingMicros=TimeUnit.NANOSECONDS.toMicros(System.nanoTime()-processingStart);
+            snapshot.maxProcessingMicros=Math.max(snapshot.maxProcessingMicros,processingMicros);
+            if(rawTrace!=null) {
+                if(snapshot.notificationTrace.size()<MAX_NOTIFICATION_TRACE)
+                    snapshot.notificationTrace.add(new NotificationTrace(bytes.length,Math.max(0,TimeUnit.NANOSECONDS.toMicros(receivedNanos-startedNanos)),processingMicros));
+                else snapshot.notificationTraceTruncated=true;
+            }
+        }
+        public void noteReceiveLockWait(long waitNanos) {
+            snapshot.maxReceiveLockWaitMicros=Math.max(snapshot.maxReceiveLockWaitMicros,Math.max(0,TimeUnit.NANOSECONDS.toMicros(waitNanos)));
         }
         private void noteOverflow(String text,long elapsed) {
             if(text.contains("BUFFER FULL") && !snapshot.adapterBufferFull) {
@@ -166,7 +201,7 @@ public final class CanCapture {
         public boolean hasStopped() {return snapshot.adapterStopped;}
         public boolean isTruncated() { return snapshot.truncated; }
         public Snapshot finish() {
-            if(!finished) {discardPartial(snapshot.lastNotificationMillis);finished=true;}
+            if(!finished) {discardPartial(snapshot.lastNotificationMillis);finished=true;if(rawTrace!=null)snapshot.rawAsciiPrefix=rawTrace.toString();}
             return snapshot;
         }
     }

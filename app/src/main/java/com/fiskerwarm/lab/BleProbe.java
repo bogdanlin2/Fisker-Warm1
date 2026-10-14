@@ -19,6 +19,7 @@ import com.fiskerwarm.lab.core.ElmParser;
 import com.fiskerwarm.lab.core.HeatSafety;
 import com.fiskerwarm.lab.core.ReadOnlyPolicy;
 import com.fiskerwarm.lab.core.UartProfiles;
+import com.fiskerwarm.lab.core.PassiveNetworkPlan;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Foreground, finite probes only. GATT-map mode never writes characteristics or descriptors. */
 @SuppressLint("MissingPermission")
 public final class BleProbe {
-    public enum Mode { VOLTAGE_ONLY, IDENTITIES, GATT_MAP, PASSIVE_CAN_OFF, PASSIVE_CAN_ON }
+    public enum Mode { VOLTAGE_ONLY, IDENTITIES, GATT_MAP, PASSIVE_CAN_OFF, PASSIVE_CAN_ON, CAN_NETWORK_AUDIT }
     public interface Listener { void log(String text); void done(JSONObject report); }
     private static final UUID CCC=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private final Context context;
@@ -68,7 +69,7 @@ public final class BleProbe {
     public void start(BluetoothDevice device,String advertisedName) {
         try {
             report.put("format","fisker-warm-lab-1"); report.put("appVersion","0.3.3-lab");
-            report.put("diagnosticRevision","can-diagnostics-1").put("bleTransport",transport);
+            report.put("diagnosticRevision","can-network-audit-1").put("bleTransport",transport);
             report.put("mode",mode.toString()); report.put("startedAt",Instant.now().toString());
             report.put("heatCapability",HeatSafety.BUILD_STATUS); report.put("events",events);
             report.put("deviceName",advertisedName); report.put("deviceAddress",device.getAddress());
@@ -140,7 +141,7 @@ public final class BleProbe {
                 long remaining=ReadOnlyPolicy.MAX_SESSION_MILLIS-(SystemClock.elapsedRealtime()-startElapsed);
                 if(remaining<=0) {finish("SESSION_LIMIT","Session expired before UART setup");return;}
                 channel=new ElmChannel(BleProbe.this::write,remaining);
-                if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON) {
+                if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON || mode==Mode.CAN_NETWORK_AUDIT) {
                     transport.put("highPriorityRequestQueued",g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH));
                     transport.put("highPriorityConfirmed",false).put("requestedMtu",247).put("negotiatedMtu",JSONObject.NULL);
                     mtuPending.set(true);ui.postDelayed(mtuWatchdog,2500);
@@ -244,6 +245,7 @@ public final class BleProbe {
             if(!ReadOnlyPolicy.diagnosticVoltageAcceptable(voltage)) {
                 finish("BLOCKED_VOLTAGE","No UDS: voltage unknown, below 12.2 V or outside expected range"); return;
             }
+            if(mode==Mode.CAN_NETWORK_AUDIT) {networkAudit();return;}
             if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON) {
                 for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF0","ATCFC0"}) expectOk(cmd);
                 String stage=mode==Mode.PASSIVE_CAN_OFF?"OFF":"ON";
@@ -255,7 +257,100 @@ public final class BleProbe {
                         .put("meaning","Requested 11-bit/500kbps OBD monitor; not proof of HVAC bus visibility or adapter filter defaults"));
                 log("Listening to CAN for 0.5 seconds; no UDS requests or CAN frames transmitted.");
                 CanCapture.Snapshot snap=channel.listenCanSnapshot(500);
-                JSONObject can=new JSONObject().put("frameCount",snap.frameCount)
+                JSONObject can=snapshotJson(snap);report.put("passiveCan",can);
+                log("Passive frames: "+snap.frameCount+" · CAN IDs: "+snap.ids.size());
+                if(snap.incomplete())
+                    log("Incomplete capture; compare only as exploratory data.");
+                finish(snap.frameCount==0?"NO_PASSIVE_FRAMES":"PASSIVE_CAPTURED",
+                        snap.frameCount==0?"OBD gateway may not forward broadcast CAN traffic":"Read-only passive snapshot; climate state is NOT decoded");return;
+            }
+            for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF1","ATAL","ATCFC1"}) expectOk(cmd);
+            JSONArray readings=new JSONArray(); report.put("identities",readings);
+            for(ReadOnlyPolicy.Route route:ReadOnlyPolicy.routes()) {
+                expectOk("ATSH"+route.tx); expectOk("ATCRA"+route.rx); expectOk("ATFCSH"+route.tx);
+                for(int did:ReadOnlyPolicy.identityDids()) {
+                    String raw=command(String.format(Locale.ROOT,"22%04X",did),4000);
+                    JSONObject row=new JSONObject().put("ecu",route.name).put("tx",route.tx).put("rx",route.rx)
+                            .put("did",String.format(Locale.ROOT,"%04X",did)).put("at",Instant.now().toString()).put("raw",raw);
+                    try {
+                        byte[] value=ElmParser.identityFramed(raw,route.rx,did);
+                        row.put("status","read").put("ascii",ElmParser.printable(value)).put("hex",ElmParser.hexText(value));
+                        readings.put(row);
+                    } catch(IllegalArgumentException invalid) {
+                        row.put("status","unverified").put("reason",invalid.getMessage()); readings.put(row);
+                        finish("STOPPED_UNVERIFIED_REPLY",invalid.getMessage()+"; no retry and no further ECU requests"); return;
+                    }
+                }
+            }
+            finish("IDENTITIES_CAPTURED","Completed a bounded read-only snapshot");
+        } catch(Exception e) { finish("PROBE_ERROR",e.toString()); }
+    }
+    private String diagnosticCommand(String command) throws Exception {
+        if(terminal.get())throw new IllegalStateException("Stopped");
+        log("Adapter RX/status "+command);
+        String reply=channel.sendAdapterDiagnostic(command,2500);
+        synchronized(report) {events.put(new JSONObject().put("at",Instant.now().toString()).put("command",command).put("reply",reply).put("scope","ADAPTER_RECEIVE_OR_STATUS_ONLY"));}
+        return reply;
+    }
+    private void diagnosticOk(String command) throws Exception {
+        String reply=diagnosticCommand(command);
+        if(!"OK".equals(reply.trim()))throw new IllegalStateException("Unsupported/unacknowledged adapter setting "+command+": "+reply);
+    }
+    private void networkAudit() throws Exception {
+        JSONObject audit=new JSONObject().put("observedFloodId","0E9").put("requestedIdBits",11)
+                .put("windowMillisPerGroup",PassiveNetworkPlan.WINDOW_MILLIS).put("groupCount",11)
+                .put("plannedIdsOtherThanFlood",2047).put("vehicleCommandsSent",0)
+                .put("climateStateVerified",false).put("decodedSignals",0).put("heatingAvailable",false);
+        JSONArray groups=new JSONArray();audit.put("groups",groups);report.put("networkAudit",audit);
+        for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF0","ATCFC0"})expectOk(cmd);
+        diagnosticOk("ATCSM1"); // Explicit silent monitoring. CSM0 is never permitted.
+        String protocol=diagnosticCommand("ATDPN");audit.put("protocolReply",protocol);
+        if(!"6".equals(protocol.trim()))throw new IllegalStateException("Network audit requires confirmed configured protocol 6");
+        boolean dlcAcknowledged="OK".equals(diagnosticCommand("ATD1").trim());
+        audit.put("dlcDisplayAcknowledged",dlcAcknowledged);
+        audit.put("canStatusBefore",diagnosticCommand("ATCS"));
+        diagnosticOk("ATCM000");diagnosticOk("ATCF000");
+        log("Short unfiltered reference, then all 2047 other 11-bit IDs; no ECU requests.");
+        CanCapture.Snapshot reference=channel.listenCanSnapshot(PassiveNetworkPlan.WINDOW_MILLIS,true);
+        audit.put("reference",snapshotJson(reference));
+        if(!reference.stopConfirmed || reference.truncated)throw new IllegalStateException("Reference monitor did not finish cleanly; no further operations");
+        audit.put("canStatusAfterReference",diagnosticCommand("ATCS"));
+        boolean otherIdSeen=false, complete=true;
+        for(PassiveNetworkPlan.Group group:PassiveNetworkPlan.groups()) {
+            diagnosticOk(group.maskCommand());diagnosticOk(group.filterCommand());
+            log(String.format(Locale.ROOT,"Receive range %03X–%03X",group.firstId,group.lastId));
+            CanCapture.Snapshot capture=channel.listenCanSnapshot(PassiveNetworkPlan.WINDOW_MILLIS,true);
+            JSONObject row=new JSONObject().put("mask",String.format(Locale.ROOT,"%03X",group.mask))
+                    .put("filter",String.format(Locale.ROOT,"%03X",group.filter)).put("capture",snapshotJson(capture));
+            boolean mismatch=false;
+            for(String id:capture.ids.keySet()) {
+                if(!group.accepts(Integer.parseInt(id,16)))mismatch=true;
+                else otherIdSeen=true;
+            }
+            row.put("unexpectedIdOutsideFilter",mismatch);groups.put(row);
+            if(mismatch) {
+                audit.put("verdict","FILTER_BEHAVIOR_MISMATCH");
+                if(capture.stopConfirmed && !capture.truncated) {
+                    if(dlcAcknowledged)diagnosticOk("ATD0");
+                    diagnosticOk("ATCRA");audit.put("defaultReceiveFilterRestored",true);
+                }
+                finish("NETWORK_AUDIT_STOPPED","Adapter returned an ID outside its acknowledged mask; filter behavior is unverified");return;
+            }
+            if(!capture.stopConfirmed || capture.truncated)throw new IllegalStateException("Filtered monitor did not finish cleanly; no further operations");
+            complete&=!capture.incomplete();
+        }
+        audit.put("canStatusAfterGroups",diagnosticCommand("ATCS"));
+        if(dlcAcknowledged)diagnosticOk("ATD0");
+        diagnosticOk("ATCRA");audit.put("defaultReceiveFilterRestored",true);
+        audit.put("otherIdsObserved",otherIdSeen).put("allGroupsComplete",complete)
+                .put("verdict",!complete?"FILTERED_CAPTURE_INCOMPLETE":otherIdSeen?"OTHER_11BIT_TRAFFIC_OBSERVED":"NO_OTHER_IDS_IN_SAMPLED_WINDOWS")
+                .put("scope","Sequential 500ms windows, not a simultaneous full-bus trace. Absent IDs may be dormant, slower, gated, on another bus or require a different format; HVAC remains unverified.")
+                .put("canStatusMeaning","Adapter error counters; unsupported ATCS is kept raw. Zero counters alone cannot rule out another transmitter missing ACK.");
+        finish("NETWORK_AUDIT_CAPTURED","Receive-only network census completed; not a climate signal or heating capability");
+    }
+    private JSONObject snapshotJson(CanCapture.Snapshot snap) throws Exception {
+        JSONObject can=new JSONObject().put("frameCount",snap.frameCount)
+                        .put("framesWithDlc",snap.framesWithDlc).put("framesWithoutDlc",snap.framesWithoutDlc)
                         .put("ignoredLines",snap.ignoredLines)
                         .put("truncated",snap.truncated || channel.monitorTruncated())
                         .put("adapterBufferFull",snap.adapterBufferFull)
@@ -290,34 +385,18 @@ public final class BleProbe {
                     JSONArray samples=new JSONArray();for(String sample:id.samples)samples.put(sample);
                     ids.put(new JSONObject().put("id",id.id).put("count",id.count).put("samples",samples));
                 }
-                can.put("ids",ids);report.put("passiveCan",can);
-                log("Passive frames: "+snap.frameCount+" · CAN IDs: "+snap.ids.size());
-                if(snap.incomplete())
-                    log("Incomplete capture; compare only as exploratory data.");
-                finish(snap.frameCount==0?"NO_PASSIVE_FRAMES":"PASSIVE_CAPTURED",
-                        snap.frameCount==0?"OBD gateway may not forward broadcast CAN traffic":"Read-only passive snapshot; climate state is NOT decoded");return;
-            }
-            for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF1","ATAL","ATCFC1"}) expectOk(cmd);
-            JSONArray readings=new JSONArray(); report.put("identities",readings);
-            for(ReadOnlyPolicy.Route route:ReadOnlyPolicy.routes()) {
-                expectOk("ATSH"+route.tx); expectOk("ATCRA"+route.rx); expectOk("ATFCSH"+route.tx);
-                for(int did:ReadOnlyPolicy.identityDids()) {
-                    String raw=command(String.format(Locale.ROOT,"22%04X",did),4000);
-                    JSONObject row=new JSONObject().put("ecu",route.name).put("tx",route.tx).put("rx",route.rx)
-                            .put("did",String.format(Locale.ROOT,"%04X",did)).put("at",Instant.now().toString()).put("raw",raw);
-                    try {
-                        byte[] value=ElmParser.identityFramed(raw,route.rx,did);
-                        row.put("status","read").put("ascii",ElmParser.printable(value)).put("hex",ElmParser.hexText(value));
-                        readings.put(row);
-                    } catch(IllegalArgumentException invalid) {
-                        row.put("status","unverified").put("reason",invalid.getMessage()); readings.put(row);
-                        finish("STOPPED_UNVERIFIED_REPLY",invalid.getMessage()+"; no retry and no further ECU requests"); return;
-                    }
-                }
-            }
-            finish("IDENTITIES_CAPTURED","Completed a bounded read-only snapshot");
-        } catch(Exception e) { finish("PROBE_ERROR",e.toString()); }
+                can.put("ids",ids);
+
+        JSONArray packets=new JSONArray();
+        for(CanCapture.NotificationTrace packet:snap.notificationTrace)packets.put(new JSONObject().put("bytes",packet.bytes).put("arrivalMicros",packet.arrivalMicros).put("processingMicros",packet.processingMicros));
+        JSONArray invalid=new JSONArray();for(String line:snap.invalidLineSamples)invalid.put(line);
+        can.put("notificationTrace",packets).put("notificationTraceTruncated",snap.notificationTraceTruncated)
+                .put("rawAsciiPrefix",snap.rawAsciiPrefix==null?JSONObject.NULL:snap.rawAsciiPrefix).put("rawTraceTruncated",snap.rawTraceTruncated)
+                .put("invalidLineSamples",invalid).put("maxProcessingMicros",snap.maxProcessingMicros).put("maxReceiveLockWaitMicros",snap.maxReceiveLockWaitMicros)
+                .put("processingMeaning","ELM receive callback entry, parser time and receiveLock wait; excludes Android stack queue time before callback");
+        return can;
     }
+
     private void log(String s) { ui.post(()->listener.log(s)); }
     private void finish(String result,String detail) {
         if(!terminal.compareAndSet(false,true)) return;

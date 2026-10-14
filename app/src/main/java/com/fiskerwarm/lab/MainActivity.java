@@ -123,6 +123,8 @@ public final class MainActivity extends Activity {
         captureStatus=text("Ще немає записів CAN.",13,Color.rgb(80,92,97),false);climate.addView(captureStatus);
         addProbeButton(climate,"1. Записати CAN · клімат ВИМКНЕНО",BleProbe.Mode.PASSIVE_CAN_OFF);
         addProbeButton(climate,"2. Записати CAN · клімат УВІМКНЕНО",BleProbe.Mode.PASSIVE_CAN_ON);
+        addProbeButton(climate,"3. Перевірити інші CAN ID без 0E9",BleProbe.Mode.CAN_NETWORK_AUDIT);
+        climate.addView(text("Крок 3 автоматично перевіряє інші ID приблизно за 10 секунд. Клімат залиш увімкненим штатно; нові ID самі по собі не підтверджують HVAC.",12,Color.rgb(93,104,108),false));
         climate.addView(text("Різниця CAN ID — лише кандидат на дослідження, а НЕ підтвердження роботи обігріву. Якщо шлюз не пропускає CAN-трафік, буде 0 кадрів. Під час запису телефон поруч з авто, екран відкритий.",12,Color.rgb(93,104,108),false));
 
         LinearLayout history=card();page.addView(history);
@@ -218,6 +220,10 @@ public final class MainActivity extends Activity {
                     }else captureStatus.setText("Другий запис є, але порівняння неможливе: перевір час, пристрій і результат.");
                 }
                 lastReport=report;probe=null;setBusy(false);
+                if("CAN_NETWORK_AUDIT".equals(report.optString("mode"))) {
+                    JSONObject audit=report.optJSONObject("networkAudit");
+                    captureStatus.setText("Діагностика мережі: "+(audit==null?report.optString("result"):audit.optString("verdict",report.optString("result")))+"\nЗбережи результат у JSON. Стан HVAC не декодовано.");
+                }
                 String voltage=report.isNull("voltageAtObd")?"не виміряно":report.optString("voltageAtObd")+" В";
                 status.setText("Перевірка завершена · BLE роз'єднано.\nНапруга на OBD: "+voltage+"\nSOC, P і стан опалення: невідомі.\nРезультат: "+report.optString("result"));
                 try{Files.write(cacheFile().toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));}catch(Exception e){appendLog("Не вдалося зберегти журнал: "+e.getMessage());}

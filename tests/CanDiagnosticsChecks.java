@@ -160,6 +160,97 @@ public final class CanDiagnosticsChecks {
         test("valid buffer-full-free data still does not prove heating",()->{
             CanCapture.Stream s=new CanCapture.Stream();s.accept(ascii("123 01\r>"));CanCapture.Snapshot n=s.finish();n.stopConfirmed=true;n.windowElapsed=true;yes(!n.incomplete());yes(!PkcOfflineCodec.canSendToVehicle());
         });
+        networkAuditChecks();
         System.out.println("TOTAL "+count+" CAN regression checks passed; emulated adapter only.");
+    }
+    private static void networkAuditChecks() throws Exception {
+        test("eleven receive groups cover every other 11-bit ID exactly once",()->{
+            eq(11,PassiveNetworkPlan.groups().length);
+            for(int id=0;id<=0x7FF;id++) {
+                int hits=0;for(PassiveNetworkPlan.Group group:PassiveNetworkPlan.groups())if(group.accepts(id))hits++;
+                eq(id==0x0E9?0:1,hits);
+            }
+        });
+        test("receive groups do not invent 29-bit coverage",()->{
+            for(PassiveNetworkPlan.Group group:PassiveNetworkPlan.groups()) {yes(!group.accepts(-1));yes(!group.accepts(0x800));yes(!group.accepts(0x18DAF110));}
+        });
+        test("diagnostic group table cannot be mutated by callers",()->{
+            PassiveNetworkPlan.Group[] copy=PassiveNetworkPlan.groups();copy[0]=null;yes(PassiveNetworkPlan.groups()[0]!=null);
+        });
+        test("all fixed receive masks are canonically encoded and allowed",()->{
+            for(PassiveNetworkPlan.Group group:PassiveNetworkPlan.groups()) {
+                yes(group.maskCommand().matches("ATCM[0-7][0-9A-F]{2}"));yes(group.filterCommand().matches("ATCF[0-7][0-9A-F]{2}"));
+                yes(PassiveNetworkPlan.diagnosticAdapterCommand(group.maskCommand()));yes(PassiveNetworkPlan.diagnosticAdapterCommand(group.filterCommand()));
+                eq(group.firstId,(group.firstId & group.mask));yes(group.accepts(group.firstId));yes(group.accepts(group.lastId));
+            }
+        });
+        test("new adapter path forbids ECU/control/wake/baud/ACK-on commands",()->{
+            int[] writes={0};ElmChannel ch=new ElmChannel(b->writes[0]++,3000);
+            for(String command:Arrays.asList("1101","2701","2EF19500","31010000","1003","3E00","ATCSM0","ATBRD23","ATSP7","STMA","STP31","ATFCSH7A2","ATCRA0E9","ATS0","ATCM123","ATCF123"))
+                blocked(()->ch.sendAdapterDiagnostic(command,100));
+            eq(0,writes[0]);
+        });
+        test("adapter diagnostics reject injected and lowercase commands",()->{
+            int[] writes={0};ElmChannel ch=new ElmChannel(b->writes[0]++,3000);
+            for(String command:Arrays.asList("atcs","ATCS\r1101","ATCM000\nATCSM0"," ATCS","ATCS ","AT CS"))blocked(()->ch.sendAdapterDiagnostic(command,100));eq(0,writes[0]);
+        });
+        test("local status inspection leaves original raw send firewall intact",()->{
+            int[] writes={0};ElmChannel ch=new ElmChannel(b->writes[0]++,3000);blocked(()->ch.send("ATCS",100));eq(0,writes[0]);
+        });
+        test("fixed adapter diagnostics use the same fragmented prompt channel",()->{
+            ElmChannel[] ch=new ElmChannel[1];ch[0]=new ElmChannel(b->{eq("ATCS\r",new String(b,StandardCharsets.US_ASCII));ch[0].receive(ascii("T:00 R:"));ch[0].receive(ascii("00\r>"));},3000);
+            eq("T:00 R:00",ch[0].sendAdapterDiagnostic("ATCS",100));
+        });
+        test("unsupported local query remains raw and does not invent support",()->{
+            ElmChannel[] ch=new ElmChannel[1];ch[0]=new ElmChannel(b->ch[0].receive(ascii("?\r>")),3000);eq("?",ch[0].sendAdapterDiagnostic("ATCS",100));
+        });
+        test("diagnostic timeout closes all paths without retries",()->{
+            int[] writes={0};ElmChannel ch=new ElmChannel(b->writes[0]++,3000);blocked(()->ch.sendAdapterDiagnostic("ATCS",5));blocked(()->ch.sendAdapterDiagnostic("ATDPN",100));eq(1,writes[0]);
+        });
+        test("a diagnostic channel cannot reuse a stale authorized ECU route",()->{
+            ElmChannel[] ch=new ElmChannel[1];List<String> writes=new ArrayList<>();ch[0]=new ElmChannel(b->{writes.add(new String(b,StandardCharsets.US_ASCII));ch[0].receive(ascii("OK\r>"));},3000);
+            for(String cmd:Arrays.asList("ATSH7A2","ATCRA7AA","ATFCSH7A2"))ch[0].send(cmd,100);
+            ch[0].sendAdapterDiagnostic("ATCSM1",100);int before=writes.size();
+            for(String cmd:Arrays.asList("22F195","ATSH7A2","ATCFC1","ATCAF1","ATAL"))blocked(()->ch[0].send(cmd,100));eq(before,writes.size());
+        });
+        test("ATZ cannot re-enable the ECU path of a diagnostic-only channel",()->{
+            ElmChannel[] ch=new ElmChannel[1];ch[0]=new ElmChannel(b->ch[0].receive(ascii("OK\r>")),3000);
+            ch[0].sendAdapterDiagnostic("ATCSM1",100);ch[0].send("ATZ",100);blocked(()->ch[0].send("ATSH7A2",100));
+        });
+        test("bounded raw trace preserves the malformed line and prompt",()->{
+            CanCapture.Stream s=new CanCapture.Stream(0,true);String raw="0E9 01 02\r0E9 8 01 02\rBUFFER FULL\r>";s.accept(ascii(raw),10_000_000);
+            CanCapture.Snapshot n=s.finish();eq(raw,n.rawAsciiPrefix);eq(1,n.invalidFrameLines);eq(Arrays.asList("0E9 8 01 02"),n.invalidLineSamples);eq(1,n.notificationTrace.size());
+        });
+        test("DLC presence is evidence, not inferred from an adapter OK",()->{
+            CanCapture.Stream s=new CanCapture.Stream();s.accept(ascii("123 2 01 02\r345 01 02\r456 8 01 02\r>"));CanCapture.Snapshot n=s.finish();
+            eq(2,n.frameCount);eq(1,n.framesWithDlc);eq(1,n.framesWithoutDlc);eq(1,n.invalidFrameLines);
+        });
+        test("raw trace cap never masks actual parsed CAN counts",()->{
+            CanCapture.Stream s=new CanCapture.Stream(0,true);for(int i=0;i<400;i++)s.accept(ascii("123 01\r"),i*1_000_000L);
+            CanCapture.Snapshot n=s.finish();eq(400,n.frameCount);yes(n.rawTraceTruncated);eq(CanCapture.MAX_RAW_TRACE_BYTES,n.rawAsciiPrefix.length());yes(!n.truncated);
+        });
+        test("notification trace is bounded independently of capture correctness",()->{
+            CanCapture.Stream s=new CanCapture.Stream(0,true);for(int i=0;i<70;i++)s.accept(ascii("123 01\r"),i*1_000_000L);
+            CanCapture.Snapshot n=s.finish();eq(70,n.notificationCount);eq(64,n.notificationTrace.size());yes(n.notificationTraceTruncated);yes(!n.truncated);
+        });
+        test("trace arrival timestamps refer to the notification entry",()->{
+            CanCapture.Stream s=new CanCapture.Stream(0,true);s.accept(ascii("123 01\r>"),8_000_000);s.noteReceiveLockWait(250_000);
+            CanCapture.Snapshot n=s.finish();eq(8000L,n.notificationTrace.get(0).arrivalMicros);eq(250L,n.maxReceiveLockWaitMicros);
+        });
+        test("normal capture avoids raw notification trace storage",()->{
+            CanCapture.Stream s=new CanCapture.Stream();s.accept(ascii("123 01\r>"));CanCapture.Snapshot n=s.finish();eq(null,n.rawAsciiPrefix);eq(0,n.notificationTrace.size());
+        });
+        test("invalid-line samples cannot grow unbounded",()->{
+            CanCapture.Stream s=new CanCapture.Stream();for(int i=0;i<20;i++)s.accept(ascii("not a frame\r"));CanCapture.Snapshot n=s.finish();eq(20,n.invalidFrameLines);eq(3,n.invalidLineSamples.size());
+        });
+        test("filtered passive capture uses only local AT configuration and one stop",()->{
+            ElmChannel[] ch=new ElmChannel[1];List<String> writes=new ArrayList<>();
+            ch[0]=new ElmChannel(b->{String cmd=new String(b,StandardCharsets.US_ASCII);writes.add(cmd);
+                ch[0].receive(ascii(cmd.equals("ATMA\r")?"400 01\r":cmd.equals("\r")?"STOPPED\r>":"OK\r>"));},3000);
+            ch[0].sendAdapterDiagnostic("ATCSM1",100);PassiveNetworkPlan.Group group=PassiveNetworkPlan.groups()[0];
+            ch[0].sendAdapterDiagnostic(group.maskCommand(),100);ch[0].sendAdapterDiagnostic(group.filterCommand(),100);
+            CanCapture.Snapshot n=ch[0].listenCanSnapshot(500,true);eq(1,n.frameCount);yes(n.stopConfirmed);yes(!n.incomplete());yes(group.accepts(Integer.parseInt(n.ids.keySet().iterator().next(),16)));
+            for(String cmd:writes)yes(cmd.equals("\r") || cmd.startsWith("AT"));
+        });
     }
 }
