@@ -1,0 +1,18 @@
+name: CAN diagnostics tests
+on:
+  push:
+    branches:
+      - diagnostics/can-overflow-root-cause
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: python3 scripts/test_core.py
