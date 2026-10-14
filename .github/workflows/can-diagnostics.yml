@@ -15,4 +15,5 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - run: python3 scripts/test_core.py
+      - name: Compile and execute offline Java core checks
+        run: python3 scripts/test_core.py
