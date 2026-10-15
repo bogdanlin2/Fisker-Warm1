@@ -1,0 +1,171 @@
+{
+  "schema": "fisker-warm-remote-climate-feasibility/v1",
+  "asOf": "2026-10-15",
+  "auditedCommit": "dfcad80437a8c1a29ecb6a5c4e774a0390a66973",
+  "acceptance": "Remote internet request; parked locked sleeping vehicle; native climate with last saved settings; trustworthy fresh physical operation feedback; no paid OceanLink Pro or new paid climate-service subscription.",
+  "verdict": "NO_PROVEN_END_TO_END_PATH_UNDER_CURRENT_CONSTRAINTS",
+  "preferredConditionalArchitecture": [
+    "owner phone",
+    "internet",
+    "owner-controlled reachable relay",
+    "vehicle-installed LTE/Wi-Fi gateway",
+    "owner-authorized PKC21.3 interface",
+    "native HVAC",
+    "fresh vehicle feedback"
+  ],
+  "criticalMissingLink": "Independent supported PKC21.3 provisioning and start/wake/status/timeout contract without paid intermediary",
+  "validated": {
+    "freeOemOwnerControlApi": false,
+    "ownerVehicleWanReachability": false,
+    "independentPkcProvisioning": false,
+    "independentClimateOn": false,
+    "lockedSleepWake": false,
+    "lastSavedSettings": false,
+    "freshPhysicalHvacFeedback": false,
+    "vehicleSideTimeout": false,
+    "gatewayDoesNotActAsProximityKey": false,
+    "installedGatewayPowerProfile": false,
+    "ownerRelayAvailable": false,
+    "endToEnd100km": false
+  },
+  "technicalEvidence": {
+    "retainedPkcSdkStartFound": true,
+    "sdkStartTransport": "Local BLE peripheral/GATT server, not ELM",
+    "priorEvidenceFileSha256": "787522f8d68a4cd3315512ecaa614715ccc5361b331dfb9092e8e8de791f2699",
+    "networkSecurityPrimitiveOnly": "SignedEnvelope: HMAC, +/-30 second timestamp window, external ReplayLedger callback; no deployed gateway",
+    "internetPermissionInWarm": false,
+    "bluetoothAdvertisePermissionInWarm": false
+  },
+  "powerModel": {
+    "measured": false,
+    "measurementPoint": "12 V input of complete installed gateway, not MCU only",
+    "formula": "Ah = mA * hours / 1000",
+    "rows": [
+      {
+        "inputAverageMilliamp": 10,
+        "ampHoursPerDay": 0.24,
+        "ampHoursPerWeek": 1.68
+      },
+      {
+        "inputAverageMilliamp": 50,
+        "ampHoursPerDay": 1.2,
+        "ampHoursPerWeek": 8.4
+      },
+      {
+        "inputAverageMilliamp": 100,
+        "ampHoursPerDay": 2.4,
+        "ampHoursPerWeek": 16.8
+      },
+      {
+        "inputAverageMilliamp": 250,
+        "ampHoursPerDay": 6.0,
+        "ampHoursPerWeek": 42.0
+      }
+    ]
+  },
+  "costModel": {
+    "currency": "UAH",
+    "checked": "2026-10-15",
+    "notACompleteInstalledSystemQuote": true,
+    "exampleDevBoard": {
+      "model": "Waveshare ESP32-S3-SIM7670G-4G",
+      "publishedPriceWithVat": 2767,
+      "pkcCompatibilityValidated": false,
+      "url": "https://arduino.ua/prod7182-plata-rozrobnika-esp32-s3-sim7670g-4g-lte-cat-1wifibluetooth-gnss"
+    },
+    "vodafoneExtraSim": {
+      "publishedMonthlyPrice": 50,
+      "requiresEligiblePaidPrimaryTariff": true,
+      "someTariffsNoExtraCharge": true,
+      "roaming": false,
+      "url": "https://www.vodafone.ua/services/internet/i2d"
+    },
+    "kyivstarDevices": {
+      "publishedDailyPrice": 2,
+      "dailyDataMB": 50,
+      "extraPricePerMB": 1,
+      "initialAccountTopupUAH": 50,
+      "topupNotDoubleCountedAsExtraAnnualFee": true,
+      "url": "https://kyivstar.ua/services/prepaid/simfordev"
+    },
+    "vodafoneIotBase": {
+      "publishedMonthlyPrice": 75,
+      "dataMB": 400,
+      "businessEligibilityRequired": true,
+      "url": "https://business.vodafone.ua/iot/iot-tariffs"
+    },
+    "partialFirstYearKyivstar": 3497,
+    "partialFirstYearVodafoneEligibleExtraSim": 3367,
+    "excluded": [
+      "SIM purchase",
+      "eligible primary tariff cost",
+      "automotive protected power",
+      "enclosure",
+      "installation",
+      "relay hosting and electricity",
+      "development",
+      "data overages"
+    ],
+    "oLoop": {
+      "annualUSD": 499,
+      "taxAdditional": true,
+      "legacyThirdPartyApiDisabledClaim": true,
+      "url": "https://ocean.ovloop.com/"
+    },
+    "pulseEuListings": {
+      "USD": [
+        399,
+        450
+      ],
+      "availability": "Sold out in inspected shop listings",
+      "independentNoSubscriptionClimateValidated": false,
+      "url": "https://shop.oceanlinkpulse.com/"
+    }
+  },
+  "trafficModel": {
+    "measured": false,
+    "directionBytesEach": 250,
+    "directions": 2,
+    "intervalSeconds": 60,
+    "days": 30,
+    "payloadBytesPerMonth": 21600000,
+    "excludes": [
+      "TCP/IP/TLS overhead",
+      "reconnects",
+      "telemetry",
+      "firmware updates"
+    ]
+  },
+  "publicRepositoryReview": {
+    "pulseHead": "ee9cac2496ac10085db99ae6214e9194c048c7f2",
+    "pulseUnchangedSinceStage4": true,
+    "pulseForkHead": "faa23418a9d506c437eef15374ed69f4b7cd0124",
+    "legacyMyFiskerForkHead": "383fcb18f7c654bb8d13820564c5b0bdaa4a759a",
+    "wicanFiskerProfile": "hooijschuur/fisker-ocean-wambs-wican-pro-profile-",
+    "wicanRepoEmpty": true,
+    "independentCompatiblePkcStartFoundInReviewedPublicRepos": false
+  },
+  "protectedFileSha256": {
+    "ReadOnlyPolicy.java": "888c20d810f5076b2f9435ad31e768d47edeb3176b81a4108e691032617d3935",
+    "HeatSafety.java": "83662b0bb388f9e4cc486978cfbd5d53fd0dbb73620cc183cb06b5178b35d1d1"
+  },
+  "offlineValidation": {
+    "calculationsChecked": true,
+    "result": "See local test summary and exact-commit CI; not a vehicle or WAN test",
+    "existingOfflineCheckCount": 249
+  },
+  "actions": {
+    "vehicleCommandsSent": 0,
+    "controlApiRequestsSent": 0,
+    "providerMessagesSent": 0,
+    "equipmentPurchased": false,
+    "newApkCreated": false,
+    "productionPolicyEnabled": false
+  },
+  "singleNextStep": {
+    "recipient": "Undercurrent Inc / PKC21 developer",
+    "publishedContact": "info@undercurrentauto.com",
+    "purpose": "Obtain supported independent PKC21.3 climate-only provisioning/start/wake/feedback/timeout contract with no paid intermediary; questions in report.",
+    "sent": false
+  }
+}
