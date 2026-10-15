@@ -49,7 +49,7 @@ def main():
   if 'BLUETOOTH_SCAN' in badging or 'ACCESS_FINE_LOCATION' in badging:p.error('Unnecessary sensitive permission')
   if role=='remote' and ('BLUETOOTH' in badging or 'FOREGROUND_SERVICE' in badging):p.error('Remote must not access vehicle/BLE or run a background service')
   for name,value in [('signature.txt',sig),('badging.txt',badging),('manifest.txt',manifest)]: (build/name).write_text(value)
-  entry={'file':apk.name,'applicationId':'com.fiskerwarm.'+role,'versionCode':1,'versionName':'0.6.0-test','sizeBytes':apk.stat().st_size,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'signerCertificateSha256':expected,'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),'minSdk':26,'targetSdk':35,'internetTestOnly':True,'vehicleCommandsImplemented':False,'installedOnPhysicalDevice':False,'screenOffOnPhysicalDeviceVerified':False}
+  entry={'file':apk.name,'applicationId':'com.fiskerwarm.'+role,'versionCode':2,'versionName':'0.6.1-test','sizeBytes':apk.stat().st_size,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'signerCertificateSha256':expected,'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),'minSdk':26,'targetSdk':35,'internetTestOnly':True,'vehicleCommandsImplemented':False,'installedOnPhysicalDevice':False,'screenOffOnPhysicalDeviceVerified':False}
   evidence.append(entry);print(apk.name+': signed and verified; '+entry['sha256'])
  (ROOT/'build/internet-apk-results.json').write_text(json.dumps(evidence,indent=2)+'\n')
 if __name__=='__main__':main()

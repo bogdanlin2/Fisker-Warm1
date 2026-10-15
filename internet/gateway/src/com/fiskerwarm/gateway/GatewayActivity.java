@@ -19,7 +19,7 @@ public final class GatewayActivity extends Activity {
   Ui.button(this,p,"Налаштування фонового живлення",v->{try{startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));}catch(Exception e){state.setText("Відкрийте налаштування батареї вручну.");}});
   ble=Ui.text(this,p,"BLE: ще не перевірено. Для інтернет-тесту Bluetooth не потрібний.");Ui.button(this,p,"Перевірити підтримку BLE без PKC",v->checkBle());
   Ui.button(this,p,"Видалити конфігурацію з телефону",v->{getSharedPreferences(GatewayService.PREF,0).edit().putBoolean("enabled",false).commit();stopService(new Intent(this,GatewayService.class));Vault.clear(this);state.setText("Конфігурацію видалено. Відкличте пару на сторінці налаштування для повного скасування доступу.");});
-  log=Ui.text(this,p,"");show();
+  log=Ui.text(this,p,"");log.setTextIsSelectable(true);show();
  }
  private void startGateway(){try{if(Vault.load(this,"gateway")==null){state.setText("Спочатку імпортуйте Gateway-файл.");return;}
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},51);return;}
@@ -33,7 +33,7 @@ public final class GatewayActivity extends Activity {
  private void show(){android.content.SharedPreferences p=getSharedPreferences(GatewayService.PREF,0);boolean enabled=p.getBoolean("enabled",false);state.setText("Шлюз: "+(enabled?"увімкнений":"зупинений")+"\nОстання подія: "+p.getString("state","ще немає")+" · "+p.getLong("stateAt",0));
   PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);Intent b=registerReceiver(null,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));String battery=b==null?"невідомо":b.getIntExtra(BatteryManager.EXTRA_LEVEL,-1)+"% · "+(b.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,0)/10.0)+" °C";
   health.setText("Батарея: "+battery+"\nОптимізація Android: "+(power.isIgnoringBatteryOptimizations(getPackageName())?"виняток надано":"може затримати інтернет у сні")+"\nПісля холодного перезапуску потрібне перше розблокування. Після примусової зупинки відкрийте застосунок.");
-  log.setText("Журнал без секретів\n"+p.getString("log",""));start.setEnabled(!enabled);
+  log.setText("Журнал без секретів\n"+p.getString("log","")+"\nЖивлення: plugged=0 — батарея, 1 — AC, 2 — USB, 4 — wireless\n"+p.getString("powerLog",""));start.setEnabled(!enabled);
  }
  private final Runnable tick=new Runnable(){public void run(){if(visible){show();ui.postDelayed(this,3000);}}};
  @Override public void onResume(){super.onResume();visible=true;ui.post(tick);}

@@ -10,6 +10,18 @@ import java.util.Random;
 public final class GatewayService extends Service {
  private volatile boolean running;private Thread worker;private PowerManager.WakeLock wake;
  static final String PREF="gateway",CHANNEL="gateway-online";private Journal journal;private volatile RelayClient activeClient;
+ private int lastPlug=-1,lastLevel=-1;private long lastPowerAt;
+ private final BroadcastReceiver batteryReceiver=new BroadcastReceiver(){@Override public void onReceive(Context c,Intent b){
+  int plug=b.getIntExtra(BatteryManager.EXTRA_PLUGGED,0),level=b.getIntExtra(BatteryManager.EXTRA_LEVEL,-1),scale=b.getIntExtra(BatteryManager.EXTRA_SCALE,100);
+  long at=now();
+  if(plug!=lastPlug||Math.abs(level-lastLevel)>=2||at-lastPowerAt>=600){
+   int temp=b.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,0);
+   String line=at+" POWER plugged="+plug+" level="+level+"/"+scale+" tempDeciC="+temp+"\n";
+   android.content.SharedPreferences p=getSharedPreferences(PREF,0);String log=p.getString("powerLog","");
+   if(log.length()>14000)log=log.substring(log.indexOf('\n',log.length()-12000)+1);
+   p.edit().putString("powerLog",log+line).apply();lastPlug=plug;lastLevel=level;lastPowerAt=at;
+  }
+ }};
  public static void start(Context c){Intent i=new Intent(c,GatewayService.class);if(Build.VERSION.SDK_INT>=26)c.startForegroundService(i);else c.startService(i);}
  @Override public void onCreate(){super.onCreate();
   NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);n.createNotificationChannel(new NotificationChannel(CHANNEL,"Інтернет-шлюз · тільки тест",NotificationManager.IMPORTANCE_LOW));
@@ -17,6 +29,7 @@ public final class GatewayService extends Service {
   if(Build.VERSION.SDK_INT>=34)startForeground(6,note,ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);else startForeground(6,note);
   PowerManager p=(PowerManager)getSystemService(POWER_SERVICE);wake=p.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"FiskerWarm:Gateway");wake.setReferenceCounted(false);
   journal=new Journal(this);
+  registerReceiver(batteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
  }
  private Notification notification(String message){Intent i=new Intent(this,GatewayActivity.class);PendingIntent pi=PendingIntent.getActivity(this,0,i,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
   return new Notification.Builder(this,CHANNEL).setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("Fisker Warm Gateway · ТЕСТ").setContentText(message).setContentIntent(pi).setOngoing(true).build();}
@@ -70,6 +83,6 @@ public final class GatewayService extends Service {
   }catch(Exception e){state("CONFIG_OR_STORAGE_ERROR",null);getSharedPreferences(PREF,0).edit().putBoolean("enabled",false).commit();}
   finally{if(wake!=null&&wake.isHeld())wake.release();running=false;stopSelf();}
  }
- @Override public void onDestroy(){running=false;if(activeClient!=null)activeClient.cancel();if(worker!=null)worker.interrupt();if(wake!=null&&wake.isHeld())wake.release();super.onDestroy();}
+ @Override public void onDestroy(){running=false;if(activeClient!=null)activeClient.cancel();if(worker!=null)worker.interrupt();if(wake!=null&&wake.isHeld())wake.release();unregisterReceiver(batteryReceiver);super.onDestroy();}
  @Override public IBinder onBind(Intent i){return null;}
 }
