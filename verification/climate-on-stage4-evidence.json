@@ -1,0 +1,185 @@
+{
+  "schema": "fisker-warm-climate-on-evidence/v1",
+  "asOf": "2026-10-15",
+  "auditedWarmCommit": "f8d4b52a1023fbded39c3b1e67f2259a39e3e9b4",
+  "vehicle": {
+    "reported": "Fisker Ocean 2023 EU / Ocean OS 2.1 / PKC 21.3",
+    "historicalIdentityReplies": {
+      "PKC": "F160808130021.3",
+      "ECC": "ECC395 24",
+      "ICC": "ICC390C49"
+    },
+    "newVehicleQueriesDuringStage4": 0
+  },
+  "decision": {
+    "state": "BLOCKED_PENDING_OWNER_VEHICLE_AND_AUTHORIZED_INTEGRATION_EVIDENCE",
+    "preferredResearchPath": "OWNER_AUTHORIZED_DIRECT_PKC_BLE",
+    "vgateRole": "READ_ONLY_DIAGNOSTICS",
+    "newVehicleHardwareRecommended": false,
+    "newApkJustified": false
+  },
+  "claims": {
+    "retainedStaticStartImplementationFound": true,
+    "documentedOemObdClimateOnFound": false,
+    "lastSavedSettingsDocumented": false,
+    "lastSavedSettingsVehicleValidated": false,
+    "exactPkc21_3ClimateCompatibilityValidated": false,
+    "independentOwnerProvisioningConfirmed": false,
+    "supportedThirdPartyWarmInterfaceConfirmed": false,
+    "freshClimateFeedbackValidated": false,
+    "vehicleSideTimeoutValidated": false,
+    "lockedSleepWakeValidated": false,
+    "internetRemoteWithExistingHardwareValidated": false,
+    "vehicleCommandsSent": 0
+  },
+  "retainedStaticAnalysis": {
+    "sourceDate": "2026-10-12",
+    "files": [
+      {
+        "name": "OceanLink-Pro-1.2.6-Report-UA.pdf",
+        "sha256": "abc9a55790a1cc051723891565535792dc26bf150c7bf475d90d5e69cd63f56f"
+      },
+      {
+        "name": "OceanLink-Pro-1.2.6-Analysis-UA.zip",
+        "sha256": "235738b8e328078090ba2f863e1dd2138fbbf6178c7bcd771a5286242fc45c40"
+      }
+    ],
+    "provenance": {
+      "fetched_at_date": "2026-10-12",
+      "source_page": "https://apkpure.net/oceanlink-pro/com.undercurrent.oceanlinkpro/download/1.2.6",
+      "delivery_url_observed": "https://d.apkpure.net/b/XAPK/com.undercurrent.oceanlinkpro?versionCode=130001125",
+      "download_method": "Cloud Browser, page link Download XAPK (92.9 MB)",
+      "original_file": "OceanLink-Pro-1.2.6.xapk",
+      "original_bytes": 97422784,
+      "sha256": "b695a7d1db40164253b35c8cb0c8d53fc7a56703b74bca025fa6a36b419c28fa",
+      "mirror_certificate_sha1_observed": "e5498fc5e7b3820ed3c55047eff6a42d3de3ebc7",
+      "abi": "armeabi-v7a",
+      "installed_on_s24_ultra": false,
+      "not_repacked": true,
+      "not_resigned": true,
+      "official_reference_cert_pinned": false,
+      "runtime_app_executed": false,
+      "vehicle_tested": false
+    },
+    "baseApkSha256": "ae66488792217baffde9b8a5c2657d64f3935aaf58e185734e9dcccf83167af5",
+    "signerSha256": "d30d8d16c8beee90d1ca0495e438c3544105c5e18c7d44130873543be67c4163",
+    "package": "com.undercurrent.oceanlinkpro",
+    "version": "1.2.6",
+    "versionCode": 130001125,
+    "sdkVersion": "3.6.2.3.0",
+    "selectedMethodRecords": 21,
+    "methodIndexSha256": "e80280dde13f3a87a43562660300d8ecbe903c818a04df8e3b63fc165a74c445",
+    "protocolIndexSha256": "1e49d8baa878190fb56465e7487811bafc25ab926146574373bf3e960f2c9e77",
+    "startMethod": {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "remoteVehicleClimateOn_SendCMD",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 3439,
+      "end_line": 3908,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "4d128c03b1053966cd6757cd056d4a09fb77896ffbe57426569b62ef806c4361"
+    },
+    "wrapperMethod": {
+      "class": "com.example.oceanlink_scusdk_android.OceanlinkScusdkAndroidPlugin$onMethodCall$2",
+      "method": "invokeSuspend",
+      "start_line": 142,
+      "end_line": 337,
+      "method_sha256": "c48b3f00b3d1c7c28ea8d7f3573250bee2ff44d9da54a3ade6399848f74e032b"
+    },
+    "channel": "Phone GATT server, PKC as central; not ELM raw UDS",
+    "startArgumentsInPriorReport": {
+      "turnOnDefault": true,
+      "durationMinutesDefault": 15
+    },
+    "authenticationDiscrepancy": "Retained SDK uses a VA/BLE credential; public PKC21 FAQ says no BLE key required. Exact owner-supported PKC21.3 provisioning remains unresolved.",
+    "limits": [
+      "Original DEX/smali not present in retained archive; method hashes not recomputed.",
+      "Full Flutter UI call graph not reconstructed; absence of temperature argument is not saved-settings proof.",
+      "SDK callback success is not vehicle execution; cache read time is not source freshness.",
+      "No raw payload is added by this stage and no ELM/UDS equivalence is inferred."
+    ]
+  },
+  "publicCode": {
+    "pulse": {
+      "repository": "MichaelOE/homeassistant-ocean_pulse",
+      "commit": "ee9cac2496ac10085db99ae6214e9194c048c7f2",
+      "sourceHashes": {
+        "pulse-readme.md": "a706c9e717616506c0430c0a1607613acd4cb805070dae42ae72b2d88c5248b9",
+        "pulse-api.py": "1602dac52f5b8218810e6852ebb0dfb1deb98ee0a49e3972a706677aac1ad679",
+        "pulse-buttons.py": "3a02e3a566b60b65995a49a59d78c38d28d0672a50a13a7b53f8346eedfa8ede",
+        "pulse-button-transport.py": "e0687eccde50ffdb9dd233485dbe3d908b6d0211a48da50f7994f6aa9374fa2c"
+      },
+      "sourcePaths": {
+        "pulse-readme.md": "README.md",
+        "pulse-api.py": "custom_components/ocean_pulse/api.py",
+        "pulse-buttons.py": "custom_components/ocean_pulse/entities_button.py",
+        "pulse-button-transport.py": "custom_components/ocean_pulse/button.py"
+      },
+      "commandSymbol": "PKC_CLIMATE_ON",
+      "commandData": {
+        "durationMinutes": 15
+      },
+      "implementedServerOrVehicleExecutionVerified": false,
+      "readmeAlphaWarning": true,
+      "status401ReturnsHardcodedFixture": true,
+      "apiCallsPerformed": 0
+    },
+    "fiskeretta": {
+      "repository": "Fiskeretta/fiskeretta-diagnostics",
+      "commit": "2254dbc4845346523da91c3a1a7b85018767de7b",
+      "unchangedSinceStage3": true,
+      "verifiedClimateOnFoundInReviewedCode": false
+    },
+    "obdb": {
+      "repository": "OBDb/Fisker-Ocean",
+      "commit": "b1e121d4d36a526624c348d642ad5c1bbaff648c",
+      "path": "signalsets/v3/default.json",
+      "sha256": "238a166bd90e6a2fea544e105fd6037e17b6e0b692d44f70ff8ce8c221907515",
+      "commands": []
+    },
+    "adasDbc": {
+      "repository": "jos-technion/opendbc-sunnypilot",
+      "commit": "f78f117d4d519fd599d999ff62facbc8c0346045",
+      "path": "opendbc/dbc/fisker_ocean_adas.dbc",
+      "sha256": "c162502cf25cda3e7c3a153208bc5b271e93bad2052df9e5cade15b0156726b5",
+      "cabinClimateStartDescriptionFound": false,
+      "scope": "ADAS, not complete vehicle network"
+    }
+  },
+  "providerClaimsChecked": [
+    {
+      "url": "https://play.google.com/store/apps/details?id=com.undercurrent.oceanlinkpro&hl=en",
+      "claim": "PKC 21 cabin pre-conditioning",
+      "level": "DEVELOPER_FEATURE_CLAIM"
+    },
+    {
+      "url": "https://oceanlinkpro.com/faq",
+      "claim": "PKC21 is custom Chevalier/FOA firmware; preconditioning; credential model needs exact-version clarification",
+      "level": "DEVELOPER_FEATURE_CLAIM_WITH_MIXED_VERSION_TEXT"
+    },
+    {
+      "url": "https://ocean.ovloop.com/",
+      "claim": "O Loop advertises cabin preconditioning; legacy third-party APIs disabled; only official app supported",
+      "level": "CURRENT_PROVIDER_POLICY_CLAIM"
+    }
+  ],
+  "offlineVerification": {
+    "retainedIndexBindingsChecked": true,
+    "methodHashesRecomputedFromOriginalDex": false,
+    "pulseAstInspectedWithoutImport": true,
+    "sourceHashesMatched": true,
+    "existingOfflineChecksPassed": {
+      "core": 152,
+      "can": 58,
+      "independentJava": 23,
+      "python": 16,
+      "total": 249
+    },
+    "protectedFileSha256": {
+      "ReadOnlyPolicy.java": "888c20d810f5076b2f9435ad31e768d47edeb3176b81a4108e691032617d3935",
+      "HeatSafety.java": "83662b0bb388f9e4cc486978cfbd5d53fd0dbb73620cc183cb06b5178b35d1d1"
+    },
+    "productionEvidenceEnabled": false
+  },
+  "bestNextValidation": "One provider-supported, owner-authorized PKC21.3 start-only acceptance session: two saved configurations A/B, locked sleep wake, genuine fresh HVAC feedback, stop and vehicle-side timeout, plus a supported third-party integration contract."
+}
