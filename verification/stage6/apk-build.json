@@ -1,0 +1,36 @@
+[
+  {
+    "file": "Fisker-Warm-Remote.apk",
+    "applicationId": "com.fiskerwarm.remote",
+    "versionCode": 2,
+    "versionName": "0.6.1-test",
+    "sizeBytes": 24969,
+    "sha256": "8460f17dc1ffae5b250a17c2f75c554df84e664780c830b1cdd912999957d5d6",
+    "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+    "sourceCommit": "d5b6bd2180edefe9353d56d6c811b5e1996f048f",
+    "sourceTreeDirty": false,
+    "minSdk": 26,
+    "targetSdk": 35,
+    "internetTestOnly": true,
+    "vehicleCommandsImplemented": false,
+    "installedOnPhysicalDevice": false,
+    "screenOffOnPhysicalDeviceVerified": false
+  },
+  {
+    "file": "Fisker-Warm-Gateway.apk",
+    "applicationId": "com.fiskerwarm.gateway",
+    "versionCode": 2,
+    "versionName": "0.6.1-test",
+    "sizeBytes": 29065,
+    "sha256": "bd6be9365e37463dbe5c3eef6fb6667eb4a08ebe170003d6541ae0242ed132ef",
+    "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+    "sourceCommit": "d5b6bd2180edefe9353d56d6c811b5e1996f048f",
+    "sourceTreeDirty": false,
+    "minSdk": 26,
+    "targetSdk": 35,
+    "internetTestOnly": true,
+    "vehicleCommandsImplemented": false,
+    "installedOnPhysicalDevice": false,
+    "screenOffOnPhysicalDeviceVerified": false
+  }
+]
