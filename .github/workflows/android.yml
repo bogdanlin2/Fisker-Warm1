@@ -3,6 +3,14 @@ name: Build and verify Fisker Warm APK
 on:
   push:
     branches: [main, diagnostics/can-overflow-root-cause]
+    # Offline audits and reports run CAN CI without manufacturing a new APK.
+    # Workflow-only changes can still be validated with workflow_dispatch.
+    paths:
+      - 'app/**'
+      - 'scripts/build_android.py'
+      - 'scripts/verify_apk.py'
+      - 'scripts/release_profiles.py'
+      - 'scripts/select_signing_profile.py'
   workflow_dispatch:
 
 permissions:

@@ -20,6 +20,8 @@ jobs:
           java-version: '17'
       - name: Compile and execute all offline Java suites
         run: python3 scripts/test_core.py
+      - name: Independently audit the redacted measured CAN network export
+        run: python3 scripts/audit_can_network.py verification/can-stage3-fixture.json --output build/can-network-audit.json
       - name: Retain actual offline test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -28,4 +30,5 @@ jobs:
           path: |
             build/core-test-results.txt
             build/offline-test-summary.json
+            build/can-network-audit.json
           if-no-files-found: error

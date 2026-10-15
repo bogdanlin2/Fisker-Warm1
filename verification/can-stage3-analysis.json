@@ -1,0 +1,140 @@
+{
+  "coveredIds": 2047,
+  "missingIds": [
+    "0E9"
+  ],
+  "maxMultiplicity": 1,
+  "groups": [
+    {
+      "mask": "400",
+      "filter": "400",
+      "firstId": "400",
+      "lastId": "7FF",
+      "idCount": 1024,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 30,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "600",
+      "filter": "200",
+      "firstId": "200",
+      "lastId": "3FF",
+      "idCount": 512,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 29,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "700",
+      "filter": "100",
+      "firstId": "100",
+      "lastId": "1FF",
+      "idCount": 256,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 30,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "780",
+      "filter": "000",
+      "firstId": "000",
+      "lastId": "07F",
+      "idCount": 128,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 28,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7C0",
+      "filter": "080",
+      "firstId": "080",
+      "lastId": "0BF",
+      "idCount": 64,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 30,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7E0",
+      "filter": "0C0",
+      "firstId": "0C0",
+      "lastId": "0DF",
+      "idCount": 32,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 30,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7F0",
+      "filter": "0F0",
+      "firstId": "0F0",
+      "lastId": "0FF",
+      "idCount": 16,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 29,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7F8",
+      "filter": "0E0",
+      "firstId": "0E0",
+      "lastId": "0E7",
+      "idCount": 8,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 28,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7FC",
+      "filter": "0EC",
+      "firstId": "0EC",
+      "lastId": "0EF",
+      "idCount": 4,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 29,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7FE",
+      "filter": "0EA",
+      "firstId": "0EA",
+      "lastId": "0EB",
+      "idCount": 2,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 28,
+      "endReason": "WINDOW_ELAPSED"
+    },
+    {
+      "mask": "7FF",
+      "filter": "0E8",
+      "firstId": "0E8",
+      "lastId": "0E8",
+      "idCount": 1,
+      "frameCount": 0,
+      "captureElapsedMillis": 500,
+      "startWriteMillis": 28,
+      "endReason": "WINDOW_ELAPSED"
+    }
+  ],
+  "filterCommandSequenceMatches": true,
+  "resetOnlyAtEnd": true,
+  "protocolChangesDuringGroups": false,
+  "positiveFilteredTrafficObserved": false,
+  "hardwareInclusionVerified": false,
+  "hardwareInclusionMeaning": "Offline math and host replay cannot verify real adapter acceptance",
+  "sampleCoverageIsSimultaneous": false,
+  "passive29BitExecuted": false,
+  "hvacSignalsConfirmed": 0,
+  "inputSha256": "116dd5da095ca6e3e95e034c1af507bbfa1f991100e632019b8e45a34302ef99"
+}
