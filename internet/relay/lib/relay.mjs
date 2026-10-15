@@ -19,10 +19,9 @@ export async function handle(request,env,options={}) {
   if(path==="/api/setup"){
    const site=new URL(env.FW_ORIGIN||request.url).origin;
    const user=request.headers.get("oai-authenticated-user-id");
-   const service=env.FW_PROVISION_KEY && equal(request.headers.get("x-fw-provision")||"",env.FW_PROVISION_KEY);
-   // Browser provisioning requires the platform's owner-private boundary AND same origin. A temporary admin key is used only by deployment self-tests.
-   if(!service && (!user || request.headers.get("origin")!==site))return fail("OWNER_REQUIRED",403);
-   const owner=service?"service-self-test":user;
+   // Provisioning is browser-owner-only. No service/admin-key bypass exists, even if a stale runtime secret remains.
+   if(!user || request.headers.get("origin")!==site)return fail("OWNER_REQUIRED",403);
+   const owner=user;
    if(body.action==="list"){
     const rows=await db.prepare("SELECT id,created,revoked,last_seen FROM pairs WHERE owner=? ORDER BY created DESC LIMIT 100").bind(owner).all();
     return reply({pairs:rows.results});

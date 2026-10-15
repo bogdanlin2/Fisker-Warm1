@@ -8,7 +8,7 @@ if sys.stdin.isatty():
  import termios
  attr=termios.tcgetattr(sys.stdin);attr[3]&=~termios.ECHO;termios.tcsetattr(sys.stdin,termios.TCSANOW,attr)
 print('Ready for private relay test configuration on stdin (hidden).',flush=True)
-args=json.loads(sys.stdin.readline());origin=args['origin'];site=args['siteToken'];admin=args['provisionKey'];checks=[]
+args=json.loads(sys.stdin.readline());origin=args['origin'];site=args['siteToken'];admin=args.get('provisionKey','removed-service-provisioning');checks=[]
 class NoRedirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,*a,**k):return None
 opener=urllib.request.build_opener(NoRedirect,urllib.request.HTTPSHandler(context=ssl.create_default_context()))
@@ -42,17 +42,23 @@ def receipt(c,x,stage):
 
 def signed_receipt(c,x,r):return r['commandMac']==x['mac'] and r['vehicle']=='NOT_IMPLEMENTED' and hmac.compare_digest(r['mac'],mac(c,'\n'.join(map(str,['FW6','RECEIPT',c['pair'],x['id'],x['mac'],r['at'],r['stage'],r['vehicle']]))))
 if args.get('verifyClosed'):
- code,_=call('/api/setup',{'action':'create'},extra={'x-fw-provision':admin})
+ code,probe=call('/api/setup',{'action':'create'},extra={'x-fw-provision':admin})
+ print('Closure probe HTTP:',code,'error:',probe.get('error','none'),flush=True)
+ if code==200 and 'remote' in probe:call('/api/setup',{'action':'revoke','pair':probe['remote']['pair']},extra={'x-fw-provision':admin})
  check('temporary provisioning key disabled after final deployment',code==403)
  out=Path('build/provisioning-closed.json');out.parent.mkdir(exist_ok=True)
  out.write_text(json.dumps({'temporaryAdminDisabled':True,'httpStatus':code,'vehicleCommandsSent':0},indent=2)+'\n')
  sys.exit(0)
-start=time.time();pair=None
+start=time.time();pair=None;ownerProvisioned=False
 try:
  check('Sites boundary rejects an unauthenticated internet caller',call('/api/relay',{'action':'status'},platform=False)[0] in (301,302,303,307,308,401,403))
  check('service token alone cannot provision owner credentials',call('/api/setup',{'action':'create'})[0]==403)
  check('forged browser identity cannot provision through service access',call('/api/setup',{'action':'create'},extra={'oai-authenticated-user-id':'forged-owner','Origin':origin})[0]==403)
- code,pair=call('/api/setup',{'action':'create'},extra={'x-fw-provision':admin});check('private temporary provisioning',code==200)
+
+ if args.get('remote') and args.get('gateway'):
+  pair={'remote':args['remote'],'gateway':args['gateway']};ownerProvisioned=True;check('owner-provisioned dedicated test pair loaded',pair['remote']['pair']==pair['gateway']['pair'])
+ else:
+  raise SystemExit('Production provisioning is owner-browser-only. Supply a dedicated Remote and Gateway configuration on hidden stdin, or verifyClosed=true.')
  remote=pair['remote'];gateway=pair['gateway'];x=cmd(remote)
  check('offline gateway rejects new work',submit(remote,x)[0]==409)
  check('outbound gateway HTTPS connection',poll(gateway)[0]==200)
@@ -78,9 +84,8 @@ try:
  check('offline commands remain rejected',submit(remote,cmd(remote))[0]==409)
  check('reconnection never delivers expired work',poll(gateway)[1]['commands']==[])
  check('old request replay cannot become new work',submit(remote,stale)[1].get('duplicate') is True)
- check('owner revocation accepted',call('/api/setup',{'action':'revoke','pair':remote['pair']},extra={'x-fw-provision':admin})[0]==200)
- check('revoked Remote rejected',status(remote)[0]==401);check('revoked Gateway rejected',poll(gateway)[0]==401)
- result={'origin':origin,'testedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'checksPassed':len(checks),'checks':checks,'longPollDeliverySeconds':latency,'elapsedSeconds':round(time.time()-start,1),'physicalAndroidDevices':False,'screenOffVerified':False,'vehicleCommandsSent':0,'climateStarted':False,'temporaryPairRevoked':True}
+ check('service access cannot revoke owner pair',call('/api/setup',{'action':'revoke','pair':remote['pair']},extra={'x-fw-provision':admin})[0]==403)
+ result={'origin':origin,'testedAt':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'checksPassed':len(checks),'checks':checks,'longPollDeliverySeconds':latency,'elapsedSeconds':round(time.time()-start,1),'physicalAndroidDevices':False,'screenOffVerified':False,'vehicleCommandsSent':0,'climateStarted':False,'dedicatedOwnerPairMustBeRevokedInBrowser':True}
  out=Path('build/deployed-relay-test.json');out.parent.mkdir(exist_ok=True);out.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
 finally:
- if pair:call('/api/setup',{'action':'revoke','pair':pair['remote']['pair']},extra={'x-fw-provision':admin})
+ if pair and not ownerProvisioned:call('/api/setup',{'action':'revoke','pair':pair['remote']['pair']},extra={'x-fw-provision':admin})

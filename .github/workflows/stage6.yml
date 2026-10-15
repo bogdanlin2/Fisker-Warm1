@@ -2,7 +2,7 @@ name: Stage 6 internet gateway test APKs
 on:
   push:
     branches: [stage6/internet-gateway-test]
-    paths: ['internet/**', 'scripts/test_internet.py', 'scripts/build_internet_apks.py', '.github/workflows/stage6.yml']
+    paths: ['internet/common/**', 'internet/android/**', 'internet/remote/**', 'internet/gateway/**', 'scripts/test_internet.py', 'scripts/build_internet_apks.py']
   workflow_dispatch:
 permissions:
   contents: read

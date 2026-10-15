@@ -11,7 +11,7 @@ const t=1700000000;
 function adapter(db){return {prepare(sql){let args=[];return {bind(...x){args=x;return this;},async first(){return db.prepare(sql).get(...args)||null;},async all(){return {results:db.prepare(sql).all(...args)};},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:r.changes}};}};}};}
 function setup(){const dir=mkdtempSync(join(tmpdir(),'fw6-'));const file=join(dir,'relay.db');let db=new DatabaseSync(file);const sql=readFileSync(new URL('../drizzle/0000_nebulous_mastermind.sql',import.meta.url),'utf8');db.exec(sql);const env={DB:adapter(db),FW_ORIGIN:'https://relay.example',FW_SITE_SERVICE_TOKEN:'fixture-platform-token-not-valid-in-production',FW_PROVISION_KEY:'fixture-only-admin'};return {env,db,file,dir,close(){db.close();rmSync(dir,{recursive:true,force:true});}};}
 async function call(env,body,token=null,options={now:t,noWait:true},path='/api/relay',extra={}){const headers={'content-type':'application/json',...extra};if(token)headers.authorization=`Bearer ${token}`;const r=await handle(new Request('https://relay.example'+path,{method:'POST',headers,body:JSON.stringify(body)}),env,options);return {status:r.status,body:await r.json(),headers:r.headers};}
-async function pair(f){return (await call(f.env,{action:'create'},null,undefined,'/api/setup',{'x-fw-provision':'fixture-only-admin'})).body;}
+async function pair(f){return (await call(f.env,{action:'create'},null,undefined,'/api/setup',{'oai-authenticated-user-id':'owner','origin':'https://relay.example'})).body;}
 function sign(key,text){return createHmac('sha256',Buffer.from(key,'hex')).update(text).digest('hex');}
 function command(c,id='11'.repeat(16),issued=t){const x={v:1,pair:c.pair,id,issued,expires:issued+60,type:'CLIMATE_ON_TEST',mode:'TEST_ONLY'};x.mac=sign(c.macKey,commandText(x));return x;}
 function heartbeat(c,at=t){const h={v:1,pair:c.pair,at,nonce:'22'.repeat(16)};h.mac=sign(c.macKey,heartbeatText(h));return h;}
@@ -70,7 +70,7 @@ test('database reopen preserves commands, receipts and idempotency',async()=>{le
  const s=await call(f.env,{action:'status',pair:c.pair,id:cmd.id},c.token);assert.equal(s.body.command.receipt.stage,'TEST_ACCEPTED');reopened.close();
 }finally{f.close();}});
 test('owner revocation disables both role tokens',async()=>{let f=setup();try{const p=await pair(f),c=p.remote;await poll(f,p.gateway);
- assert.equal((await call(f.env,{action:'revoke',pair:c.pair},null,undefined,'/api/setup',{'x-fw-provision':'fixture-only-admin'})).status,200);
+ assert.equal((await call(f.env,{action:'revoke',pair:c.pair},null,undefined,'/api/setup',{'oai-authenticated-user-id':'owner','origin':'https://relay.example'})).status,200);
  assert.equal((await poll(f,p.gateway)).status,401);assert.equal((await call(f.env,{action:'status',pair:c.pair},c.token)).status,401);
 }finally{f.close();}});
 test('concurrent pending inserts cannot create two new commands',async()=>{let f=setup();try{const p=await pair(f),c=p.remote;await poll(f,p.gateway);
@@ -80,3 +80,5 @@ test('invalid JSON and oversized chunked body are bounded',async()=>{const f=set
  const r=await handle(new Request('https://relay.example/api/relay',{method:'POST',headers:{'content-type':'application/json'},body:'{'}),f.env);assert.equal(r.status,400);
  const big=await handle(new Request('https://relay.example/api/relay',{method:'POST',headers:{'content-type':'application/json'},body:'x'.repeat(20000)}),f.env);assert.equal(big.status,413);
 }finally{f.close();}});
+
+test('obsolete service provisioning secret never authorizes an owner operation',async()=>{const f=setup();try{const r=await call(f.env,{action:'create'},null,undefined,'/api/setup',{'x-fw-provision':'fixture-only-admin'});assert.equal(r.status,403);}finally{f.close();}});

@@ -1,0 +1,10 @@
+{
+  "initialDeployedSource": "89afcffe13674a7ed981acdc8dd7addfa8d5b19c",
+  "finalDeployedSource": "a8d8e00a75eadad9d3b4bfb814761df0a421f369",
+  "commandRoutesUnchangedAfterInternetTest": true,
+  "temporaryServiceProvisioningRemovedFromProductionCode": true,
+  "obsoleteAdminProbeHttpStatus": 403,
+  "testPairsRevoked": 3,
+  "physicalAndroidTestPerformed": false,
+  "vehicleCommandsSent": 0
+}
