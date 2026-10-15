@@ -14,6 +14,9 @@ public final class ElmChannel {
     private final long sessionDeadline;
     private boolean waiting, ready, closed, monitoring;
     private boolean monitorTruncated;
+    private boolean retainMonitorRaw;
+    private boolean diagnosticOnly;
+    private static final long STOP_DRAIN_MILLIS=1000;
     private CanCapture.Stream stream;
     private String failure;
 
@@ -24,102 +27,146 @@ public final class ElmChannel {
     }
     public String send(String cmd, long timeoutMillis) throws Exception {
         synchronized(sendLock) {
+            if(diagnosticOnly && !PassiveNetworkPlan.safeStartupCommand(cmd))
+                throw new SecurityException("Network audit channel cannot send ECU requests or enable flow control");
             policy.checkAndRecord(cmd);
-            long remaining=TimeUnit.NANOSECONDS.toMillis(sessionDeadline-System.nanoTime());
-            if(remaining<=0) { close("Session budget exceeded"); throw new IllegalStateException("Session expired"); }
-            if(timeoutMillis<=0 || timeoutMillis>10_000) throw new IllegalArgumentException("Invalid command timeout");
-            long until=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(Math.min(timeoutMillis,remaining));
+            return exchange(cmd,timeoutMillis);
+        }
+    }
+    /** Separate fixed adapter receive/status operations; protected vehicle policy stays unchanged. */
+    public String sendAdapterDiagnostic(String cmd,long timeoutMillis) throws Exception {
+        synchronized(sendLock) {
+            if(!PassiveNetworkPlan.diagnosticAdapterCommand(cmd))throw new SecurityException("Not a fixed receive-only adapter diagnostic");
+            diagnosticOnly=true; // No vehicle/UDS path can reuse this channel afterwards.
+            return exchange(cmd,timeoutMillis);
+        }
+    }
+    private String exchange(String cmd,long timeoutMillis) throws Exception {
+        long remaining=TimeUnit.NANOSECONDS.toMillis(sessionDeadline-System.nanoTime());
+        if(remaining<=0) { close("Session budget exceeded"); throw new IllegalStateException("Session expired"); }
+        if(timeoutMillis<=0 || timeoutMillis>10_000) throw new IllegalArgumentException("Invalid command timeout");
+        long until=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(Math.min(timeoutMillis,remaining));
+        synchronized(receiveLock) {
+            if(closed) throw new IllegalStateException(failure);
+            buffer.reset(); ready=false; waiting=true;
+        }
+        try {
+            writer.write((cmd+"\r").getBytes(StandardCharsets.US_ASCII));
             synchronized(receiveLock) {
+                if(System.nanoTime()>=until) { closed=true; failure="Reply/write deadline exceeded; channel closed"; }
+                while(!ready && !closed) {
+                    long nanos=until-System.nanoTime();
+                    if(nanos<=0) { closed=true; failure="Reply timeout; channel closed"; break; }
+                    TimeUnit.NANOSECONDS.timedWait(receiveLock,nanos);
+                }
+                waiting=false;
                 if(closed) throw new IllegalStateException(failure);
-                buffer.reset(); ready=false; waiting=true;
+                String reply=new String(buffer.toByteArray(),StandardCharsets.US_ASCII);
+                int prompt=reply.indexOf('>');
+                if(prompt<0) throw new IllegalStateException("No ELM prompt");
+                String body=reply.substring(0,prompt).trim();
+                if(body.startsWith(cmd)) body=body.substring(cmd.length()).trim();
+                return body;
             }
-            try {
-                writer.write((cmd+"\r").getBytes(StandardCharsets.US_ASCII));
-                synchronized(receiveLock) {
-                    if(System.nanoTime()>=until) { closed=true; failure="Reply/write deadline exceeded; channel closed"; }
-                    while(!ready && !closed) {
-                        long nanos=until-System.nanoTime();
-                        if(nanos<=0) { closed=true; failure="Reply timeout; channel closed"; break; }
-                        TimeUnit.NANOSECONDS.timedWait(receiveLock,nanos);
-                    }
-                    waiting=false;
-                    if(closed) throw new IllegalStateException(failure);
-                    String reply=new String(buffer.toByteArray(),StandardCharsets.US_ASCII);
-                    int prompt=reply.indexOf('>');
-                    if(prompt<0) throw new IllegalStateException("No ELM prompt");
-                    String body=reply.substring(0,prompt).trim();
-                    if(body.startsWith(cmd)) body=body.substring(cmd.length()).trim();
-                    return body;
-                }
-            } catch(Exception e) { close(e.getMessage()); throw e; }
-        }
+        } catch(Exception e) { close(e.getMessage()); throw e; }
     }
-    /** Passive monitor. Only ATMA is permitted; terminal CR stops adapter monitoring. */
+    /** Legacy raw view uses the same prompt/stop state machine as streaming capture. */
     public String listenCan(long durationMillis) throws Exception {
-        if(durationMillis<500 || durationMillis>5000) throw new IllegalArgumentException("Invalid monitor duration");
         synchronized(sendLock) {
-            policy.checkAndRecord("ATMA");
-            synchronized(receiveLock) {
-                if(closed || waiting || monitoring)throw new IllegalStateException("Channel busy/closed");
-                buffer.reset();monitorTruncated=false;monitoring=true;
-            }
-            try {
-                writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
-                long until=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(durationMillis);
-                synchronized(receiveLock){
-                    while(!closed && System.nanoTime()<until && !monitorTruncated) {
-                        long nanos=until-System.nanoTime();
-                        if(nanos>0)TimeUnit.NANOSECONDS.timedWait(receiveLock,nanos);
-                    }
-                }
-            } finally {
-                // Stopping the adapter monitor does not transmit a diagnostic CAN frame.
-                try { writer.write("\r".getBytes(StandardCharsets.US_ASCII)); } catch(Exception ignored) { }
-                synchronized(receiveLock){monitoring=false;receiveLock.notifyAll();}
-            }
-            synchronized(receiveLock){
-                if(closed)throw new IllegalStateException(failure);
-                return new String(buffer.toByteArray(),StandardCharsets.US_ASCII);
-            }
+            monitor(durationMillis,true,false);
+            synchronized(receiveLock) {return new String(buffer.toByteArray(),StandardCharsets.US_ASCII);}
         }
     }
-    /** Read-only bounded streaming monitor. No raw 48 KB buffer accumulation. */
+    /** Finite acquisition followed by bounded prompt drain; no increase to the CAN window. */
     public CanCapture.Snapshot listenCanSnapshot(long durationMillis) throws Exception {
+        return listenCanSnapshot(durationMillis,false);
+    }
+    public CanCapture.Snapshot listenCanSnapshot(long durationMillis,boolean diagnosticTrace) throws Exception {
+        synchronized(sendLock) {return monitor(durationMillis,false,diagnosticTrace);}
+    }
+    private CanCapture.Snapshot monitor(long durationMillis,boolean retainRaw,boolean diagnosticTrace) throws Exception {
         if(durationMillis<500 || durationMillis>5000)throw new IllegalArgumentException("Invalid monitor duration");
-        synchronized(sendLock) {
-            policy.checkAndRecord("ATMA");
+        policy.checkAndRecord("ATMA");
+        long monitorStart=System.nanoTime();
+        long until=Math.min(sessionDeadline,monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis));
+        synchronized(receiveLock) {
+            if(closed || waiting || monitoring)throw new IllegalStateException("Channel busy/closed");
+            if(monitorStart>=sessionDeadline) {closed=true;failure="Session budget exceeded";throw new IllegalStateException(failure);}
+            stream=new CanCapture.Stream(monitorStart,diagnosticTrace);buffer.reset();retainMonitorRaw=retainRaw;
+            monitorTruncated=false;monitoring=true;
+        }
+        String reason, stopError=null;
+        boolean stopSent=false, stopWritten=false;
+        long acquisitionEnd;
+        try {
+            writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
+            long startWriteDone=System.nanoTime();
             synchronized(receiveLock) {
-                if(closed || waiting || monitoring)throw new IllegalStateException("Channel busy/closed");
-                stream=new CanCapture.Stream();monitorTruncated=false;monitoring=true;
-            }
-            try {
-                writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
-                long until=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(durationMillis);
-                synchronized(receiveLock) {
-                    while(!closed && System.nanoTime()<until && !stream.hasAdapterOverflow() && !stream.isTruncated()) {
-                        long nanos=until-System.nanoTime();
-                        if(nanos>0)TimeUnit.NANOSECONDS.timedWait(receiveLock,nanos);
-                    }
+                while(!closed && !stream.hasPrompt() && !stream.hasAdapterOverflow() && !stream.hasAdapterError()
+                        && !stream.hasStopped() && !stream.isTruncated() && !monitorTruncated && System.nanoTime()<until) {
+                    TimeUnit.NANOSECONDS.timedWait(receiveLock,until-System.nanoTime());
                 }
-            } finally {
-                try {writer.write("\r".getBytes(StandardCharsets.US_ASCII));}catch(Exception ignored){}
-                synchronized(receiveLock){monitoring=false;receiveLock.notifyAll();}
-            }
-            synchronized(receiveLock) {
                 if(closed)throw new IllegalStateException(failure);
-                CanCapture.Snapshot result=stream.finish();stream=null;
+                acquisitionEnd=System.nanoTime();
+                reason=stream.hasAdapterOverflow()?"BUFFER_FULL":stream.hasAdapterError()?"ADAPTER_ERROR":
+                        stream.hasPrompt()?"ADAPTER_PROMPT":stream.hasStopped()?"ADAPTER_STOPPED":
+                        (stream.isTruncated() || monitorTruncated)?"APP_TRUNCATED":
+                        acquisitionEnd>=sessionDeadline?"SESSION_LIMIT":"WINDOW_ELAPSED";
+                // An empty CR at an idle prompt REPEATS ATMA. Do not restart a
+                // monitor that has already ended, including BUFFER FULL/error.
+                stopSent=!stream.hasPrompt() && !stream.hasAdapterOverflow() && !stream.hasAdapterError()
+                        && !stream.hasStopped() && acquisitionEnd<sessionDeadline;
+            }
+            if(stopSent) {
+                try {writer.write("\r".getBytes(StandardCharsets.US_ASCII));stopWritten=true;}
+                catch(Exception e) {stopError=e.toString();}
+            }
+            long drainUntil=Math.min(sessionDeadline,acquisitionEnd+TimeUnit.MILLISECONDS.toNanos(STOP_DRAIN_MILLIS));
+            synchronized(receiveLock) {
+                while(!closed && stopError==null && !stream.hasPrompt() && System.nanoTime()<drainUntil) {
+                    TimeUnit.NANOSECONDS.timedWait(receiveLock,drainUntil-System.nanoTime());
+                }
+                if(closed)throw new IllegalStateException(failure);
+                CanCapture.Snapshot result=stream.finish();
+                result.captureElapsedMillis=TimeUnit.NANOSECONDS.toMillis(acquisitionEnd-monitorStart);
+                result.startWriteMillis=TimeUnit.NANOSECONDS.toMillis(startWriteDone-monitorStart);
+                result.lateStartWrite=startWriteDone>=monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis);
+                result.windowElapsed=acquisitionEnd>=monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis);
+                result.stopDrainMillis=TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-acquisitionEnd);
+                result.endReason=reason;result.stopSent=stopSent;result.stopWriteConfirmed=stopWritten;
+                result.stopError=stopError;result.stopConfirmed=result.promptSeen && stopError==null;
+                result.sessionBudgetExceeded=System.nanoTime()>=sessionDeadline;
+                result.truncated|=monitorTruncated;
                 monitorTruncated=result.truncated;
+                if(!result.stopConfirmed || result.truncated) {
+                    closed=true;failure=stopError==null?"Unconfirmed or malformed monitor completion; channel closed":stopError;
+                }
                 return result;
             }
+        } catch(Exception e) {
+            close(e.getMessage());throw e;
+        } finally {
+            synchronized(receiveLock) {monitoring=false;stream=null;retainMonitorRaw=false;receiveLock.notifyAll();}
         }
     }
     public boolean monitorTruncated() { synchronized(receiveLock){return monitorTruncated;} }
 
     public void receive(byte[] bytes) {
+        long callbackEntry=System.nanoTime();
         synchronized(receiveLock) {
             if((!waiting && !monitoring) || closed) return;
-            if(monitoring && stream!=null) {stream.accept(bytes);receiveLock.notifyAll();return;}
+            if(monitoring && stream!=null) {
+                long lockWait=System.nanoTime()-callbackEntry;
+                stream.accept(bytes,callbackEntry);
+                stream.noteReceiveLockWait(lockWait);
+                if(retainMonitorRaw)for(byte b:bytes) {
+                    if(buffer.size()>=48_000) {monitorTruncated=true;break;}
+                    buffer.write(b);
+                }
+                receiveLock.notifyAll();return;
+            }
             for(byte b:bytes) {
+                if(b==0)continue; // documented ELM serial NULL insertion, not a frame byte
                 if((b & 255)>127) { closed=true; failure="Non-ASCII adapter output"; break; }
                 if(monitoring) {
                     if(buffer.size()>=48_000) { monitorTruncated=true;break; }

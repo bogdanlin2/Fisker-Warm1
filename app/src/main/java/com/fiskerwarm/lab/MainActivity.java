@@ -119,17 +119,19 @@ public final class MainActivity extends Activity {
 
         LinearLayout climate=card();page.addView(climate);
         climate.addView(text("CLIMATE MONITOR · ПАСИВНИЙ CAN",12,Color.rgb(93,104,108),true));
-        climate.addView(text("Два короткі записи по 4 секунди: спочатку клімат ВИМКНЕНО, потім увімкни його ШТАТНО з екрана авто та повтори. Програма не вмикає опалення і не надсилає діагностичних запитів у цьому режимі.",14,Color.rgb(24,39,53),false));
+        climate.addView(text("Два короткі записи по 0,5 секунди: спочатку клімат ВИМКНЕНО, потім увімкни його ШТАТНО з екрана авто та повтори. Завершення запису може зайняти трохи довше. Програма не вмикає опалення і не надсилає діагностичних запитів у цьому режимі.",14,Color.rgb(24,39,53),false));
         captureStatus=text("Ще немає записів CAN.",13,Color.rgb(80,92,97),false);climate.addView(captureStatus);
         addProbeButton(climate,"1. Записати CAN · клімат ВИМКНЕНО",BleProbe.Mode.PASSIVE_CAN_OFF);
         addProbeButton(climate,"2. Записати CAN · клімат УВІМКНЕНО",BleProbe.Mode.PASSIVE_CAN_ON);
+        addProbeButton(climate,"3. Перевірити інші CAN ID без 0E9",BleProbe.Mode.CAN_NETWORK_AUDIT);
+        climate.addView(text("Крок 3 автоматично перевіряє інші ID приблизно за 10 секунд. Клімат залиш увімкненим штатно; нові ID самі по собі не підтверджують HVAC.",12,Color.rgb(93,104,108),false));
         climate.addView(text("Різниця CAN ID — лише кандидат на дослідження, а НЕ підтвердження роботи обігріву. Якщо шлюз не пропускає CAN-трафік, буде 0 кадрів. Під час запису телефон поруч з авто, екран відкритий.",12,Color.rgb(93,104,108),false));
 
         LinearLayout history=card();page.addView(history);
         history.addView(text("ЖУРНАЛ ПЕРЕВІРКИ",12,Color.rgb(93,104,108),true));
         logView=text("Нової перевірки ще немає.",12,Color.rgb(52,65,76),false);logView.setTypeface(Typeface.MONOSPACE);logView.setTextIsSelectable(true);history.addView(logView);
         Button export=button("Зберегти результат у JSON");history.addView(export);export.setOnClickListener(v->export());
-        page.addView(text("Без інтернет-доступу, фонових опитувань і підписок.\nCAN Monitor 0.2 все ще потребує фізичного тестування на Ocean; читання ECU і GATT перевірено власником у версії 0.1.0.",12,Color.rgb(93,104,108),false));
+        page.addView(text("Без інтернет-доступу, фонових опитувань і підписок.\nДіагностична збірка CAN 0.3.3 потребує контрольного тесту на Ocean. Прогрів заблокований до підтвердження протоколу.",12,Color.rgb(93,104,108),false));
         setContentView(scroll);loadLast();loadBaseline();
     }
     private void addProbeButton(LinearLayout parent,String title,BleProbe.Mode mode) {
@@ -218,6 +220,10 @@ public final class MainActivity extends Activity {
                     }else captureStatus.setText("Другий запис є, але порівняння неможливе: перевір час, пристрій і результат.");
                 }
                 lastReport=report;probe=null;setBusy(false);
+                if("CAN_NETWORK_AUDIT".equals(report.optString("mode"))) {
+                    JSONObject audit=report.optJSONObject("networkAudit");
+                    captureStatus.setText("Діагностика мережі: "+(audit==null?report.optString("result"):audit.optString("verdict",report.optString("result")))+"\nЗбережи результат у JSON. Стан HVAC не декодовано.");
+                }
                 String voltage=report.isNull("voltageAtObd")?"не виміряно":report.optString("voltageAtObd")+" В";
                 status.setText("Перевірка завершена · BLE роз'єднано.\nНапруга на OBD: "+voltage+"\nSOC, P і стан опалення: невідомі.\nРезультат: "+report.optString("result"));
                 try{Files.write(cacheFile().toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));}catch(Exception e){appendLog("Не вдалося зберегти журнал: "+e.getMessage());}
@@ -287,8 +293,14 @@ public final class MainActivity extends Activity {
         for(String id:keys)if(!before.containsKey(id) || !after.containsKey(id) || !before.get(id).equals(after.get(id)))changed.put(id);
         output.put("changedCandidateIds",changed).put("beforeUniqueIds",before.size()).put("afterUniqueIds",after.size());
         boolean incomplete=first.optJSONObject("passiveCan").optBoolean("adapterBufferFull") || second.optJSONObject("passiveCan").optBoolean("adapterBufferFull")
-                || first.optJSONObject("passiveCan").optBoolean("truncated") || second.optJSONObject("passiveCan").optBoolean("truncated");
-        boolean usable=a>0 && b>0 && !incomplete;
+                || first.optJSONObject("passiveCan").optBoolean("truncated") || second.optJSONObject("passiveCan").optBoolean("truncated")
+                || !first.optJSONObject("passiveCan").optBoolean("stopConfirmed") || !second.optJSONObject("passiveCan").optBoolean("stopConfirmed")
+                || "INCOMPLETE".equals(first.optJSONObject("passiveCan").optString("captureQuality"))
+                || "INCOMPLETE".equals(second.optJSONObject("passiveCan").optString("captureQuality"));
+        boolean sameAdapter=first.optString("deviceAddress").equals(second.optString("deviceAddress"));
+        boolean phasesMatch="OFF".equals(first.optString("observationPhase")) && "ON".equals(second.optString("observationPhase"));
+        boolean usable=a>0 && b>0 && !incomplete && sameAdapter && phasesMatch;
+        output.put("sameAdapter",sameAdapter).put("phasesMatch",phasesMatch);
         output.put("captureIncomplete",incomplete);
         output.put("usable",usable).put("climateStateVerified",false).put("decodedSignals",0);
         output.put("summary",usable?("CAN IDs зі змінними даними: "+changed.length()+" · "+a+" → "+b+" кадрів"):

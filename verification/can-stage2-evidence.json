@@ -1,0 +1,59 @@
+{
+  "sourceSha256": "c5403a992d8429c9771da8697eaf0e92188e0c36a91ec6f2474a6a6d9d5656c4",
+  "sourceFile": "fisker-warm-lab-2026-10-14T15-00-22.226020Z.json",
+  "phases": [
+    {
+      "phase": "OFF",
+      "frames": 44,
+      "ids": [
+        "0E9"
+      ],
+      "bytes": 1311,
+      "notifications": 7,
+      "firstOverflowMillis": 156,
+      "captureElapsedMillis": 158,
+      "negotiatedMtu": 247,
+      "maxNotificationBytes": 200,
+      "stopConfirmed": true,
+      "stopSent": false,
+      "invalidFrameLines": 1,
+      "windowElapsed": false,
+      "adapterBufferFull": true,
+      "hostWindowBytesPerSecond": 8403.8
+    },
+    {
+      "phase": "ON",
+      "frames": 45,
+      "ids": [
+        "0E9"
+      ],
+      "bytes": 1313,
+      "notifications": 7,
+      "firstOverflowMillis": 165,
+      "captureElapsedMillis": 167,
+      "negotiatedMtu": 247,
+      "maxNotificationBytes": 200,
+      "stopConfirmed": true,
+      "stopSent": false,
+      "invalidFrameLines": 0,
+      "windowElapsed": false,
+      "adapterBufferFull": true,
+      "hostWindowBytesPerSecond": 7957.6
+    }
+  ],
+  "runtimeAndroidProcessingMeasured": false,
+  "reportedOverflowLocation": "Adapter status, upstream of app CAN storage limits",
+  "exactInternalQueueOrCauseProven": false,
+  "peerObservedFloodSource": "Fiskeretta/fiskeretta-diagnostics@2254dbc4845346523da91c3a1a7b85018767de7b/fiskeretta/uds.py no_filter_sweep",
+  "offlineReplayBenchmark": {
+    "fixture": "SYNTHETIC_NOT_RAW_OWNER_TRACE",
+    "bytes": 1313,
+    "notifications": 7,
+    "frames": 45,
+    "runs": 2000,
+    "medianMicros": 114,
+    "p95Micros": 366,
+    "maxMicros": 8323,
+    "measuredOnAndroid": false
+  }
+}

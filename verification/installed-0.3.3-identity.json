@@ -1,0 +1,9 @@
+{
+  "apk": "Fisker-Warm-Lab-0.3.3-CAN-Diagnostics-Update02.apk",
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionCode": 8,
+  "versionName": "0.3.3-lab",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "apkSha256": "48a0775b73ea86e347ccb49945ea99946231de65520a08c9387e8b163ec8a7ed",
+  "evidence": "Verified artifact from Actions 38537218678 / source commit 0d2996014433326e27bc20ef93b0ddbc6af8f0f4"
+}

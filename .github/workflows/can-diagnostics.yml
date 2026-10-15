@@ -1,0 +1,34 @@
+name: CAN diagnostics tests
+on:
+  push:
+    branches:
+      - diagnostics/can-overflow-root-cause
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Compile and execute all offline Java suites
+        run: python3 scripts/test_core.py
+      - name: Independently audit the redacted measured CAN network export
+        run: python3 scripts/audit_can_network.py verification/can-stage3-fixture.json --output build/can-network-audit.json
+      - name: Retain actual offline test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAN-Offline-Tests-${{ github.run_id }}
+          path: |
+            build/core-test-results.txt
+            build/offline-test-summary.json
+            build/can-network-audit.json
+          if-no-files-found: error
