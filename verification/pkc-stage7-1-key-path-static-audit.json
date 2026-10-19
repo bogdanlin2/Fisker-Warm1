@@ -1,0 +1,154 @@
+{
+  "schema": "fisker-warm-pkc-key-path-static-audit/v1",
+  "asOfUTC": "2026-10-19",
+  "result": "PASS_STATIC_BINDINGS_ONLY",
+  "libappSha256": "752f12b12ee9c6bcfd45f846c004b9979962194b6c6fbfb3ba1f600f7e022883",
+  "freshJadartVerification": {
+    "PASS": 10,
+    "FAIL": 0,
+    "SKIP": 5
+  },
+  "jadartCommit": "9ccfecb2fac0937c5ba483da013dea6c71306064",
+  "capstoneVersion": "5.0.9",
+  "verificationSha256": "65314207898ab5ed9ccecaef1286ff5dcf4182074bb2710e4953eeacb373f13b",
+  "newFunctionsReconstructed": [
+    {
+      "address": "0xa861f0",
+      "armInstructionsBound": 58,
+      "analysisSha256": "663cfd2ae7607ba213ffb9e076a7451acfbf4c14ba1976416af26f35c2459231"
+    },
+    {
+      "address": "0xa86f50",
+      "armInstructionsBound": 263,
+      "analysisSha256": "8f35abeb4541d74634fcc85acd3684d1c55e0a6041308709a6d2d81025056a3c"
+    },
+    {
+      "address": "0xa87670",
+      "armInstructionsBound": 274,
+      "analysisSha256": "357d4e56dcb237fc510230691582ad9567e3206df9fd31bbe4e2ad7d434b4251"
+    },
+    {
+      "address": "0xa862d8",
+      "armInstructionsBound": 39,
+      "analysisSha256": "3c704f017397316aec35dcc5dbac2c945363967aa378642fbe39bf455a48e355"
+    },
+    {
+      "address": "0xa8736c",
+      "armInstructionsBound": 154,
+      "analysisSha256": "23176c2b0d0dae0ccbed2aabee1a2398c40c3f48169d24c6fe5fa53627619930"
+    },
+    {
+      "address": "0xa87ab8",
+      "armInstructionsBound": 154,
+      "analysisSha256": "1cb9b9438620f94b3688f9898d5afa9f07a35025277e65c63ec5f95947e96876"
+    }
+  ],
+  "armDirectCallsBound": [
+    {
+      "site": "0xa85934",
+      "word": "0xeb000585",
+      "target": "0xa86f50",
+      "roleFromStaticAnalysis": "seed request -> OBD request wrapper"
+    },
+    {
+      "site": "0xa85dc0",
+      "word": "0xeb00010a",
+      "target": "0xa861f0",
+      "roleFromStaticAnalysis": "adapter literal -> CR-terminated transport helper"
+    },
+    {
+      "site": "0xa85e34",
+      "word": "0xeb00060d",
+      "target": "0xa87670",
+      "roleFromStaticAnalysis": "sendKey -> common OBD wrapper"
+    },
+    {
+      "site": "0xa85ec8",
+      "word": "0xeb0005e8",
+      "target": "0xa87670",
+      "roleFromStaticAnalysis": "extended session -> common OBD wrapper"
+    },
+    {
+      "site": "0xa88d24",
+      "word": "0xebfffa51",
+      "target": "0xa87670",
+      "roleFromStaticAnalysis": "key routine -> common OBD wrapper"
+    },
+    {
+      "site": "0xa862c0",
+      "word": "0xeb000004",
+      "target": "0xa862d8",
+      "roleFromStaticAnalysis": "CR-terminated helper -> async delegate"
+    },
+    {
+      "site": "0xa87118",
+      "word": "0xeb000093",
+      "target": "0xa8736c",
+      "roleFromStaticAnalysis": "seed OBD wrapper -> async delegate"
+    },
+    {
+      "site": "0xa87864",
+      "word": "0xeb000093",
+      "target": "0xa87ab8",
+      "roleFromStaticAnalysis": "common OBD wrapper -> async delegate"
+    }
+  ],
+  "instructionMarkers": [
+    {
+      "site": "0xa85660",
+      "word": "0xe2919008",
+      "interpretation": "response address is base ECU address + 8"
+    },
+    {
+      "site": "0xa85c5c",
+      "word": "0xe3a0c002",
+      "interpretation": "security_level stored as tagged Smi 2 = integer 1"
+    },
+    {
+      "site": "0xa85e5c",
+      "word": "0xe1510002",
+      "interpretation": "compare sendKey result status"
+    },
+    {
+      "site": "0xa85e60",
+      "word": "0x1a0000bc",
+      "interpretation": "non-OK sendKey status exits this client path"
+    },
+    {
+      "site": "0xa88ce0",
+      "word": "0xe30037aa",
+      "interpretation": "reader sets expected response address to 0x7AA"
+    },
+    {
+      "site": "0xa88d6c",
+      "word": "0xe3a02004",
+      "interpretation": "reader slices response data starting at index 4"
+    }
+  ],
+  "nativeApi": {
+    "abstractMethodCount": 57,
+    "namedEnrollmentExportMethodsFound": [],
+    "connectionMethodSha256": "42652111147da3157a15eeae55f475e8c2c2b4ae5f8136cd535bbae7db4e597a",
+    "notificationMethodSha256": "716c18f44b13f4e1eb96909f51b8d89df3e00f031115603618133f7ca02e0bb1",
+    "scope": "Reviewed public ScuSdk interface in retained 1.2.6 only; not proof that all PKC provisioning mechanisms are absent."
+  },
+  "protectedSourceSha256": {
+    "ReadOnlyPolicy.java": "888c20d810f5076b2f9435ad31e768d47edeb3176b81a4108e691032617d3935",
+    "HeatSafety.java": "83662b0bb388f9e4cc486978cfbd5d53fd0dbb73620cc183cb06b5178b35d1d1"
+  },
+  "decision": {
+    "serverSignatureRequiredByObservedClientPath": true,
+    "serverSignatureUniversallyRequiredByPkcFirmware": "UNTESTED",
+    "routine0110Option10SideEffectsVerified": false,
+    "independentOwnerProvisioningConfirmed": false,
+    "ownerCredentialAcquired": false,
+    "newApkBuilt": false,
+    "vehicleCommandsSent": 0,
+    "realClimateImplemented": false
+  },
+  "limits": [
+    "Static analysis of a retained mirror sample, not PKC firmware.",
+    "The fresh parser run retains five skipped checks.",
+    "Matching instructions do not establish vehicle-side routine permissions, key lifetime, last-settings behavior, HVAC actuation, or timeout."
+  ]
+}

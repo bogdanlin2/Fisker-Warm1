@@ -1,0 +1,144 @@
+{
+  "ok": true,
+  "epoch": "objectheader-3.13-local",
+  "target": "arm/uncompressed-pointers",
+  "gates": [
+    {
+      "gate": "G3 class-cid prefix",
+      "tier": "A",
+      "status": "SKIP",
+      "passed": false,
+      "checks": 0,
+      "detail": "",
+      "skipped": "no CLASS cluster with a predefined list"
+    },
+    {
+      "gate": "G4 string alloc/fill lengths",
+      "tier": "A",
+      "status": "SKIP",
+      "passed": false,
+      "checks": 0,
+      "detail": "",
+      "skipped": "no String cluster read by the fill pass"
+    },
+    {
+      "gate": "G4b rodata string objects",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 35307,
+      "detail": "35307 objects, offsets monotonic and tagged as strings",
+      "skipped": ""
+    },
+    {
+      "gate": "G5 ref ids in range",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 28944,
+      "detail": "0 <= ref <= 134767",
+      "skipped": ""
+    },
+    {
+      "gate": "G6 instance size vs class",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 978,
+      "detail": "978 INSTANCE clusters matched to their Class",
+      "skipped": ""
+    },
+    {
+      "gate": "G7 code_index vs instr slot",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 1210,
+      "detail": "16% of functions have both halves",
+      "skipped": ""
+    },
+    {
+      "gate": "G8 instr_table_len vs rodata",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 1,
+      "detail": "header 6742 == 34301 - 27559 = 6742",
+      "skipped": ""
+    },
+    {
+      "gate": "G10 canonical-set shape",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 6,
+      "detail": "6 canonical sets",
+      "skipped": ""
+    },
+    {
+      "gate": "G11 dispatch anchor + exact end",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 83782,
+      "detail": "table at 0x18cab4, 83782 entries, ends exactly at 0x19d476",
+      "skipped": ""
+    },
+    {
+      "gate": "G12 field offset vs instance size",
+      "tier": "A",
+      "status": "PASS",
+      "passed": true,
+      "checks": 799,
+      "detail": "799 instance fields inside their class",
+      "skipped": ""
+    },
+    {
+      "gate": "G14 getter code vs field offset",
+      "tier": "A",
+      "status": "SKIP",
+      "passed": true,
+      "checks": 0,
+      "detail": "0 implicit getters load the offset their Field records",
+      "skipped": "no implicit getter has code"
+    },
+    {
+      "gate": "G15 unboxed bitmap vs load width",
+      "tier": "A",
+      "status": "SKIP",
+      "passed": true,
+      "checks": 0,
+      "detail": "0 getters load the width the bitmap implies",
+      "skipped": "no getter on a compressed target to read a width from"
+    },
+    {
+      "gate": "G13 base objects vs vm snapshot",
+      "tier": "B",
+      "status": "SKIP",
+      "passed": false,
+      "checks": 0,
+      "detail": "",
+      "skipped": "no vm snapshot in this container"
+    },
+    {
+      "gate": "G2 cluster tags decode",
+      "tier": "B",
+      "status": "PASS",
+      "passed": true,
+      "checks": 1031,
+      "detail": "1031 clusters, all cids non-negative",
+      "skipped": ""
+    },
+    {
+      "gate": "G9 instr table monotonic",
+      "tier": "B",
+      "status": "PASS",
+      "passed": true,
+      "checks": 34301,
+      "detail": "strictly increasing, last pc inside the image",
+      "skipped": ""
+    }
+  ],
+  "passed": 10,
+  "failed": []
+}
