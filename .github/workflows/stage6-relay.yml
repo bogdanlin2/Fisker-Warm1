@@ -19,3 +19,5 @@ jobs:
         with:
           node-version: '24'
       - run: python3 scripts/test_internet.py
+      - name: Pairing page request and timeout regressions
+        run: node --test internet/relay/tests/setup-client.test.mjs
