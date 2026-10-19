@@ -1,0 +1,282 @@
+{
+  "schema": "fisker-warm-pkc-stage7-static-audit/v1",
+  "asOfLocalDate": "2026-10-20",
+  "timezone": "Europe/Kyiv",
+  "result": "PASS_STATIC_BINDINGS_ONLY",
+  "sourceSha256": {
+    "xapk": "b695a7d1db40164253b35c8cb0c8d53fc7a56703b74bca025fa6a36b419c28fa",
+    "base": "ae66488792217baffde9b8a5c2657d64f3935aaf58e185734e9dcccf83167af5",
+    "libapp": "752f12b12ee9c6bcfd45f846c004b9979962194b6c6fbfb3ba1f600f7e022883",
+    "native_archive": "235738b8e328078090ba2f863e1dd2138fbbf6178c7bcd771a5286242fc45c40",
+    "key_archive": "400c0907cc8545b7e2e33a66e4edd171e96ff4a244c8a0ab00bec1b9f94b3ef6"
+  },
+  "nativeMethodsRebound": [
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "encodeTemperatureToHex",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 656,
+      "end_line": 733,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "8c77272bf928bd96d0b94ff78704b1406df676565b52499eaa3f1c1aeced520c"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "remoteVehicleClimateOnScenario",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 3075,
+      "end_line": 3437,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "a2c816bc8fa34ad652c459f9894600e5381d1e6f861a54a558292a03af323308"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "remoteVehicleClimateOn_SendCMD",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 3439,
+      "end_line": 3908,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "4d128c03b1053966cd6757cd056d4a09fb77896ffbe57426569b62ef806c4361"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "remoteVehicleClimateOn_SendTime",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 3910,
+      "end_line": 4006,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "7c3f34ae1c81e01d070da98c743809e70324222233710d423a436c6a798018c7"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "runTheConnection",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 4008,
+      "end_line": 4506,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "8e58b52a634ef71ed0ddccae085dc025f755daad6741f8d5154490897b243153"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "setDriverSetPointTemp",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 4739,
+      "end_line": 4860,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "f5370c297ab9900b567f0efabdeaa9d67ff30e26aca6e3b13abe957434e2b50b"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "setDriverSetPointTemp",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 4862,
+      "end_line": 4959,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "fe08f2407a30e457a85bb7c5bb7d815a327bea9337b674e927a2527f196efc98"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "setPassengerSetPointTemp",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 5193,
+      "end_line": 5314,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "ab4d25216ad3112d6835d32e2f11222b7a5d53d3aa5dc3c73ae1bde139f3c136"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.ScuSdkImpl",
+      "method": "setPassengerSetPointTemp",
+      "smali_file": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "start_line": 5316,
+      "end_line": 5413,
+      "file_sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "method_sha256": "8a3adb7786b1e4e1d7ab85fb4d91a0fc3ef1a5354e1054fbe33b2cd3619cdd28"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.BleGattSendDataHandler",
+      "method": "notify-hr4KVGQ",
+      "smali_file": "com/chevalier/scusdk/sdk/util/BleGattSendDataHandler.smali",
+      "start_line": 1108,
+      "end_line": 1742,
+      "file_sha256": "0175bc04e3fd539cb4017ce663eb44a36ae9b934c60eb0f768af2e786102b926",
+      "method_sha256": "f8bbd50a74a492891ab37cb776514fb12e8e8e51c3d509f7ae3ce0b53d3b39d2"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.BleGattSendDataHandler",
+      "method": "sendCommand-VU-fvBY",
+      "smali_file": "com/chevalier/scusdk/sdk/util/BleGattSendDataHandler.smali",
+      "start_line": 1744,
+      "end_line": 2486,
+      "file_sha256": "0175bc04e3fd539cb4017ce663eb44a36ae9b934c60eb0f768af2e786102b926",
+      "method_sha256": "e6b106a59de4f95e779181c404575bd51ef709386ec95f1ec1fd121430db1acb"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.BleGattSendDataHandler",
+      "method": "sendDataToPKC-Zo7BePA",
+      "smali_file": "com/chevalier/scusdk/sdk/util/BleGattSendDataHandler.smali",
+      "start_line": 2488,
+      "end_line": 3113,
+      "file_sha256": "0175bc04e3fd539cb4017ce663eb44a36ae9b934c60eb0f768af2e786102b926",
+      "method_sha256": "ac60630b4c454d884321e69072c6d93039675e567d2db3e43d963507eede23ff"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.ByteArray_ExtKt",
+      "method": "hmacSha256-uo5YlkA",
+      "smali_file": "com/chevalier/scusdk/sdk/util/ByteArray_ExtKt.smali",
+      "start_line": 36,
+      "end_line": 265,
+      "file_sha256": "dedef90a4f09cb6e6a64d5f5764d0cdbcb4401f8d1ac487028ba80c8afed02d7",
+      "method_sha256": "35ede740e8d1023d0f63dba528b0ebb9fddc5971cc5f9706c8abc3df09f32e5b"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.UUIDs$Service",
+      "method": "<clinit>",
+      "smali_file": "com/chevalier/scusdk/sdk/util/UUIDs$Service.smali",
+      "start_line": 61,
+      "end_line": 79,
+      "file_sha256": "61e7383a06149687d97741d386d75c03fd3271331a331df1706ea962eaf3b322",
+      "method_sha256": "c4dbb1bdc5f2e7dcebacfc78dc493e1456dd75f97d1e7fb8a9f5629df7056f68"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.UUIDs$Characteristic",
+      "method": "<clinit>",
+      "smali_file": "com/chevalier/scusdk/sdk/util/UUIDs$Characteristic.smali",
+      "start_line": 61,
+      "end_line": 93,
+      "file_sha256": "3389b48df1fb402f5283c546f2a21d33f3e301aa6038cf9b17904740847714e5",
+      "method_sha256": "d8a2a1a8cb738b0f9b49b2bd609e78a328d7790eac7d7c28b55fa8e9093a680f"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.BleGattReceiveDataHandler",
+      "method": "handleSingleStatusCommand-EK-6454",
+      "smali_file": "com/chevalier/scusdk/sdk/util/BleGattReceiveDataHandler.smali",
+      "start_line": 1870,
+      "end_line": 3235,
+      "file_sha256": "6638059683a3663ecc3fc6b1f1a5cbf544c577326248a84cb0604b7575b67e5d",
+      "method_sha256": "04c0c74b5dcf3adc9a83df5306bd27e501515d3058a0a10e48ac318560116e27"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.BleGattReceiveDataHandler",
+      "method": "handledReceivedDate-GBYM_sE",
+      "smali_file": "com/chevalier/scusdk/sdk/util/BleGattReceiveDataHandler.smali",
+      "start_line": 4116,
+      "end_line": 4685,
+      "file_sha256": "6638059683a3663ecc3fc6b1f1a5cbf544c577326248a84cb0604b7575b67e5d",
+      "method_sha256": "81f677d303ae0cdfe45d449db2002838d3696b35a543ec69653c1f4c9f29c161"
+    },
+    {
+      "class": "com.chevalier.scusdk.sdk.util.ble_server.BleGattServer",
+      "method": "startPrimaryService",
+      "smali_file": "com/chevalier/scusdk/sdk/util/ble_server/BleGattServer.smali",
+      "start_line": 2613,
+      "end_line": 3120,
+      "file_sha256": "93c8235b8fb1136ae3eee11e1359d18293c4892b0f336ab6eaf92e404c043405",
+      "method_sha256": "c535f62361acf72cf2610733e8262ef7050af068242a538a266307ad6f1c5da6"
+    },
+    {
+      "class": "com.example.oceanlink_scusdk_android.OceanlinkScusdkAndroidPlugin",
+      "method": "onMethodCall",
+      "smali_file": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin.smali",
+      "start_line": 1348,
+      "end_line": 3766,
+      "file_sha256": "d23f9251ebf7dd25c045efc25087cfd2199a15602bfa1b1a185e8d76bd5c06c1",
+      "method_sha256": "f5ec8cf5527185c0d2b263e5c8949c1d7e5eff00f89bdd81a5ae775f78151ced"
+    },
+    {
+      "class": "com.example.oceanlink_scusdk_android.OceanlinkScusdkAndroidPlugin$onMethodCall$2",
+      "method": "invokeSuspend",
+      "smali_file": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin$onMethodCall$2.smali",
+      "start_line": 142,
+      "end_line": 337,
+      "file_sha256": "2f0a58c64df4531bf45e0cecc4ab9b89c3e2572c728a612e820cbc36fe105ed7",
+      "method_sha256": "c48b3f00b3d1c7c28ea8d7f3573250bee2ff44d9da54a3ade6399848f74e032b"
+    },
+    {
+      "class": "com.example.oceanlink_scusdk_android.OceanlinkScusdkAndroidPlugin$getClimateState$1",
+      "method": "invokeSuspend",
+      "smali_file": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin$getClimateState$1.smali",
+      "start_line": 120,
+      "end_line": 545,
+      "file_sha256": "f7ae619bf37f4bcaf90336470e1eb25d29cf42d55da75c65bbfd71ffd270d62a",
+      "method_sha256": "79bf9c9f64feb8506920d330d622f8ab22eae6bdf2be1f48ec821ece1a014c5b"
+    }
+  ],
+  "retainedKeyArchiveMembersVerified": 39,
+  "armDirectCallsRebound": [
+    {
+      "address": "0xa87fbc",
+      "instruction": "0xeb0002f5",
+      "target": "0xa88b98",
+      "roleFromRetainedAnalysis": "UI callback -> key reader"
+    },
+    {
+      "address": "0xa88bec",
+      "instruction": "0xeb0000b2",
+      "target": "0xa88ebc",
+      "roleFromRetainedAnalysis": "key reader -> protected-access wrapper"
+    },
+    {
+      "address": "0xa88ef8",
+      "instruction": "0xebfff17b",
+      "target": "0xa854ec",
+      "roleFromRetainedAnalysis": "wrapper -> generic protected diagnostic session"
+    },
+    {
+      "address": "0xa85cd4",
+      "instruction": "0xebffcfd4",
+      "target": "0xa79c2c",
+      "roleFromRetainedAnalysis": "protected session -> authenticated HTTP helper"
+    },
+    {
+      "address": "0xa79d84",
+      "instruction": "0xeb00037d",
+      "target": "0xa7ab80",
+      "roleFromRetainedAnalysis": "HTTP helper -> account authorization headers"
+    },
+    {
+      "address": "0xa88098",
+      "instruction": "0xeb00005e",
+      "target": "0xa88218",
+      "roleFromRetainedAnalysis": "successful read callback -> server record update"
+    }
+  ],
+  "feedbackFinding": {
+    "receiverPath": "com/chevalier/scusdk/sdk/util/BleGattReceiveDataHandler.smali",
+    "receiverSha256": "6638059683a3663ecc3fc6b1f1a5cbf544c577326248a84cb0604b7575b67e5d",
+    "enumMapSha256": "b67295512602f9ece6b1b04adf57aebe45e59acb8531d083998c3d4a358db261",
+    "getterPath": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin$getClimateState$1.smali",
+    "climateStateDerivedFromFanSpeed": true,
+    "getterTimestampIsLocalCacheReadTime": true,
+    "independentHvacActuationProof": false
+  },
+  "protectedSourceSha256": {
+    "ReadOnlyPolicy.java": "888c20d810f5076b2f9435ad31e768d47edeb3176b81a4108e691032617d3935",
+    "HeatSafety.java": "83662b0bb388f9e4cc486978cfbd5d53fd0dbb73620cc183cb06b5178b35d1d1"
+  },
+  "limits": [
+    "Retained AOT interpretation is rebound by original ELF branch instructions; the patched full Dart snapshot parser was not rerun.",
+    "No ECU firmware, owner VA-key, live BLE, or vehicle measurements.",
+    "APK signature provenance remains the retained mirror sample, not a new official reference."
+  ],
+  "decision": {
+    "realClimateImplemented": false,
+    "vehicleCommandsSent": 0,
+    "independentOwnerCredentialAcquired": false,
+    "independentOwnerProvisioningConfirmed": false,
+    "pkc21_3VehicleStartVerified": false,
+    "lastSettingsVerified": false,
+    "vehicleTimeoutVerified": false,
+    "activeVehicleTestReady": false,
+    "newApkJustified": false
+  },
+  "publicCodeDelta": {
+    "repository": "MichaelOE/homeassistant-ocean_pulse",
+    "previousCommit": "ee9cac2496ac10085db99ae6214e9194c048c7f2",
+    "currentCommit": "842a98ce0af959bec2a42796e59db563de8696d5",
+    "apiSha256": "7ae9260243ad05e82f347e4f5503a682025fcbaf4a2cb1402a073c1c35e2c3c6",
+    "buttonsSha256": "9231308f2e264b3303b414566dd8bb522fab67f45368659c3be55013b3cbd0ac",
+    "oldHardcoded401StatusRemoved": true,
+    "independentLocalPkcImplementationFound": false,
+    "controlApiCallsPerformed": 0
+  }
+}
