@@ -1,0 +1,34 @@
+{
+  "suites": [
+    {
+      "suite": "CoreChecks",
+      "checksPassed": 152,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanDiagnosticsChecks",
+      "checksPassed": 58,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditChecks",
+      "checksPassed": 23,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditLogChecks",
+      "checksPassed": 16,
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "allPassed": true,
+  "vehicleConnected": false,
+  "auditedCoreSourceCommit": "9a3a529ab69488f2be46245259d0371f8b262c97",
+  "coreSameInStage6Commit": "3956228f06926df85d59cc6ee4227c2ec3832cb8",
+  "totalPassed": 249,
+  "scope": "OFFLINE_REGRESSION_ONLY_NOT_VEHICLE_VALIDATION"
+}
