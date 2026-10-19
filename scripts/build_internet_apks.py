@@ -4,6 +4,8 @@ import argparse,hashlib,json,os,shutil,subprocess,zipfile
 from pathlib import Path
 from release_profiles import PROFILES
 ROOT=Path(__file__).resolve().parents[1]
+VERSION_CODE=3
+VERSION_NAME='0.6.2-test'
 def run(args,**kw):
  r=subprocess.run([str(x) for x in args],capture_output=True,text=True,**kw)
  if r.returncode:
@@ -45,11 +47,12 @@ def main():
   if expected not in sig.lower():p.error('Signed APK certificate mismatch')
   badging=run([bt/'aapt2','dump','badging',apk]).stdout;manifest=run([bt/'aapt2','dump','xmltree',apk,'--file','AndroidManifest.xml']).stdout
   if "package: name='com.fiskerwarm."+role+"'" not in badging or "targetSdkVersion:'35'" not in badging:p.error('APK identity mismatch')
+  if f"versionCode='{VERSION_CODE}'" not in badging or f"versionName='{VERSION_NAME}'" not in badging:p.error('APK version mismatch')
   if 'android.permission.INTERNET' not in badging:p.error('Missing internet permission')
   if 'BLUETOOTH_SCAN' in badging or 'ACCESS_FINE_LOCATION' in badging:p.error('Unnecessary sensitive permission')
   if role=='remote' and ('BLUETOOTH' in badging or 'FOREGROUND_SERVICE' in badging):p.error('Remote must not access vehicle/BLE or run a background service')
   for name,value in [('signature.txt',sig),('badging.txt',badging),('manifest.txt',manifest)]: (build/name).write_text(value)
-  entry={'file':apk.name,'applicationId':'com.fiskerwarm.'+role,'versionCode':2,'versionName':'0.6.1-test','sizeBytes':apk.stat().st_size,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'signerCertificateSha256':expected,'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),'minSdk':26,'targetSdk':35,'internetTestOnly':True,'vehicleCommandsImplemented':False,'installedOnPhysicalDevice':False,'screenOffOnPhysicalDeviceVerified':False}
+  entry={'file':apk.name,'applicationId':'com.fiskerwarm.'+role,'versionCode':VERSION_CODE,'versionName':VERSION_NAME,'sizeBytes':apk.stat().st_size,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'signerCertificateSha256':expected,'sourceCommit':run(['git','rev-parse','HEAD'],cwd=ROOT).stdout.strip(),'sourceTreeDirty':bool(run(['git','status','--porcelain'],cwd=ROOT).stdout.strip()),'minSdk':26,'targetSdk':35,'internetTestOnly':True,'vehicleCommandsImplemented':False,'installedOnPhysicalDevice':False,'screenOffOnPhysicalDeviceVerified':False}
   evidence.append(entry);print(apk.name+': signed and verified; '+entry['sha256'])
  (ROOT/'build/internet-apk-results.json').write_text(json.dumps(evidence,indent=2)+'\n')
 if __name__=='__main__':main()

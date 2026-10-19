@@ -16,10 +16,21 @@ public final class Ui {
   TextView mode=text(a,p,"ЕТАП 6 · ТЕСТОВИЙ РЕЖИМ");mode.setTextColor(Color.rgb(255,193,90));return p;
  }
  public static TextView text(Activity a,LinearLayout p,String t){TextView v=new TextView(a);v.setText(t);v.setTextSize(17);v.setTextColor(Color.rgb(219,232,240));v.setPadding(0,12,0,12);p.addView(v);return v;}
- public static Button button(Activity a,LinearLayout p,String t,View.OnClickListener f){Button b=new Button(a);b.setText(t);b.setAllCaps(false);p.addView(b,new LinearLayout.LayoutParams(-1,-2));b.setOnClickListener(f);return b;}
- public static void pick(Activity a){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);a.startActivityForResult(i,PICK);}
+ public static Button button(Activity a,LinearLayout p,String t,View.OnClickListener f){
+  Button b=new Button(a);b.setText(t);b.setAllCaps(false);
+  int[][] states=new int[][]{new int[]{-android.R.attr.state_enabled},new int[]{}};
+  b.setBackgroundTintList(new android.content.res.ColorStateList(states,new int[]{Color.rgb(48,65,77),Color.rgb(139,211,255)}));
+  b.setTextColor(new android.content.res.ColorStateList(states,new int[]{Color.rgb(166,183,195),Color.rgb(8,40,60)}));
+  p.addView(b,new LinearLayout.LayoutParams(-1,-2));b.setOnClickListener(f);return b;
+ }
+ public static void pick(Activity a){
+  // Samsung/providers can label downloaded JSON as text/plain or octet-stream.
+  // Accept a selected document here; Config still validates its full contents and role.
+  Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
+  a.startActivityForResult(i,PICK);
+ }
  public static String imported(Activity a,Intent data)throws Exception{
   if(data==null||data.getData()==null)throw new Exception("NO_DOCUMENT");
-  try(InputStream i=a.getContentResolver().openInputStream(data.getData())){if(i==null)throw new Exception("NO_DOCUMENT");ByteArrayOutputStream b=new ByteArrayOutputStream();byte[] buf=new byte[2048];int n;while((n=i.read(buf))!=-1){if(b.size()+n>20000)throw new Exception("CONFIG_LIMIT");b.write(buf,0,n);}return b.toString("UTF-8");}
+  try(InputStream i=a.getContentResolver().openInputStream(data.getData())){return PrivateConfigFile.read(i);}
  }
 }

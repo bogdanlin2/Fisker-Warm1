@@ -7,6 +7,7 @@ public final class InternetChecks {
  static final byte[] KEY=Wire.decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
  static void ok(boolean b,String m){count++;if(!b)throw new AssertionError(m);}
  static void blocked(Runnable f,String m){try{f.run();throw new AssertionError(m);}catch(SecurityException|IllegalStateException expected){count++;}}
+ static void unreadable(InputStream input,String m)throws Exception{try{PrivateConfigFile.read(input);throw new AssertionError(m);}catch(IOException expected){count++;}}
  // Independent disk-backed Journal implementation tests the state machine through process recreation.
  static final class DiskJournal implements GatewayEngine.Journal {
   final Path path;final Map<String,Wire.Command> commands=new HashMap<>();final Map<String,Wire.Receipt> receipts=new HashMap<>();
@@ -20,6 +21,23 @@ public final class InternetChecks {
  public static void main(String[] args)throws Exception{
   if(args.length>0&&args[0].equals("vector")){Wire.Command c=new Wire.Command(PAIR,"11111111111111111111111111111111",1700000000L,1700000060L,Wire.TYPE,Wire.MODE,"");System.out.println(Wire.hmac(KEY,c.text()));return;}
   long t=1700000000L;Wire.Command c=Wire.command(PAIR,KEY,t);
+  String json="{\"v\":1,\"role\":\"remote\"}";
+  ok(PrivateConfigFile.read(new ByteArrayInputStream(json.getBytes("UTF-8"))).equals(json),"downloaded JSON decoded without relying on MIME");
+  ok(PrivateConfigFile.read(new ByteArrayInputStream(("\ufeff"+json).getBytes("UTF-8"))).equals(json),"UTF-8 BOM does not break import");
+  ok(PrivateConfigFile.read(new ByteArrayInputStream(new byte[PrivateConfigFile.LIMIT])).length()==PrivateConfigFile.LIMIT,"file size boundary accepted");
+  unreadable(new ByteArrayInputStream(new byte[PrivateConfigFile.LIMIT+1]),"oversized file rejected");
+  unreadable(null,"missing file rejected");
+  unreadable(new InputStream(){public int read()throws IOException{throw new IOException("provider unavailable");}},"provider read failure is not a format error");
+  ok(RemoteControls.gate(false,false,false,false,null,true,t)==RemoteControls.Gate.NEED_CONFIG,"first install requires an imported config");
+  ok(RemoteControls.gate(false,true,false,false,null,true,t)==RemoteControls.Gate.IMPORTING,"import progress explains disabled send");
+  ok(RemoteControls.gate(true,false,false,false,null,true,t)==RemoteControls.Gate.READY,"saved config is ready independently of status polling");
+  ok(RemoteControls.gate(true,false,true,false,null,true,t)==RemoteControls.Gate.CONFIRMING,"PIN prompt blocks a second authorization");
+  ok(RemoteControls.gate(true,false,false,true,c,false,t)==RemoteControls.Gate.SUBMITTING,"in-flight submission blocks another ID");
+  ok(RemoteControls.gate(true,false,false,false,c,false,t+59)==RemoteControls.Gate.WAITING,"unconfirmed fresh command retains its ID");
+  ok(RemoteControls.canRetry(RemoteControls.Gate.WAITING)&&!RemoteControls.canRetry(RemoteControls.Gate.SUBMITTING),"only a pending ID may be retried, never two submissions at once");
+  ok(RemoteControls.gate(true,false,false,false,c,false,t+60)==RemoteControls.Gate.READY,"TTL expiry releases the send button even without a server response");
+  ok(RemoteControls.gate(true,false,false,false,c,true,t+1)==RemoteControls.Gate.READY,"terminal receipt permits a new user-requested test");
+  ok(RemoteControls.gate(false,false,false,false,c,true,t+1)==RemoteControls.Gate.NEED_CONFIG,"clearing a config never leaves send enabled");
   ok(c.authentic(PAIR,KEY),"signed command");ok(c.fresh(t+59),"TTL inclusive start");ok(!c.fresh(t+60),"expired boundary");ok(!c.fresh(t-11),"future clock skew");
   ok(!c.authentic("22222222222222222222222222222222",KEY),"pair isolation");byte[] bad=KEY.clone();bad[0]++;ok(!c.authentic(PAIR,bad),"wrong owner key");
   Wire.Command altered=new Wire.Command(PAIR,c.id,t,t+60,"CLIMATE_ON",Wire.MODE,c.mac);ok(!altered.authentic(PAIR,KEY),"real vehicle verb denied");
