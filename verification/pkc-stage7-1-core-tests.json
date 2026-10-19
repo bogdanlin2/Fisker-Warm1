@@ -1,0 +1,30 @@
+{
+  "suites": [
+    {
+      "suite": "CoreChecks",
+      "checksPassed": 152,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanDiagnosticsChecks",
+      "checksPassed": 58,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditChecks",
+      "checksPassed": 23,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditLogChecks",
+      "checksPassed": 16,
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "allPassed": true,
+  "vehicleConnected": false
+}
