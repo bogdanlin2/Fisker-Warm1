@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+  --page-bg: #eef3f8;
+  --surface: #ffffff;
+  --text: #142c3e;
+  --muted: #455d70;
+  --line: #ccd9e4;
+  --primary: #075a9c;
+  --primary-text: #ffffff;
+  --secondary: #e8f2fb;
+  --secondary-text: #104d7d;
+  --badge-bg: #fff0d5;
+  --badge-text: #7c4500;
+  --error-bg: #fff0ef;
+  --error-text: #96271d;
+  --focus: #dc6e00;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0b1521;
+    --surface: #142434;
+    --text: #edf5ff;
+    --muted: #bbcee0;
+    --line: #405970;
+    --primary: #8bd3ff;
+    --primary-text: #08283c;
+    --secondary: #203f59;
+    --secondary-text: #e7f4ff;
+    --badge-bg: #3e2b10;
+    --badge-text: #ffdaa0;
+    --error-bg: #432321;
+    --error-text: #ffd2cd;
+    --focus: #ffc26c;
+  }
+}
+* { box-sizing: border-box; }
+html { min-width: 280px; background: var(--page-bg); }
+body { margin: 0; background: var(--page-bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.6; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: default; opacity: .62; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+a { color: var(--secondary-text); text-decoration: underline; text-underline-offset: 3px; }
+.setup-page { width: min(100%, 720px); margin: 0 auto; padding: 28px 18px 40px; color: var(--text); }
+.setup-header { margin: 0 4px 24px; }
+.test-badge { display: inline-block; padding: 5px 10px; border-radius: 6px; background: var(--badge-bg); color: var(--badge-text); font-size: 12px; font-weight: 750; letter-spacing: .055em; }
+h1 { margin: 12px 0 6px; font-size: clamp(32px, 8vw, 42px); line-height: 1.2; font-weight: 750; letter-spacing: -.035em; }
+h2 { margin: 0 0 14px; font-size: 22px; line-height: 1.35; font-weight: 700; }
+h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
+p { margin: 0 0 12px; }
+.intro { color: var(--muted); font-size: 17px; }
+.setup-card { margin-bottom: 18px; padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.setup-steps { list-style: decimal; padding-left: 24px; margin: 0 0 22px; }
+.setup-steps li { margin-bottom: 10px; padding-left: 3px; }
+.button { display: block; width: 100%; min-height: 54px; padding: 13px 16px; border: 1px solid transparent; border-radius: 10px; font-weight: 700; font-size: 16px; line-height: 1.4; text-align: center; }
+.primary { background: var(--primary); color: var(--primary-text); }
+.secondary { background: var(--secondary); color: var(--secondary-text); border-color: var(--line); }
+.button + .button { margin-top: 12px; }
+.status-message { margin: 14px 0 0; font-size: 15px; }
+.error-message { margin-top: 16px; padding: 14px; background: var(--error-bg); color: var(--error-text); border: 1px solid currentColor; border-radius: 10px; }
+.error-message a { color: inherit; font-weight: 700; }
+.error-message p { margin-bottom: 8px; }
+.download-panel { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.download-panel .muted { margin-top: 16px; }
+.muted { color: var(--muted); font-size: 14px; }
+.section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.section-title h2 { margin-bottom: 0; }
+.refresh-button, .revoke-button { min-height: 44px; padding: 8px 12px; background: var(--secondary); color: var(--secondary-text); border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-weight: 650; }
+.device-list { padding: 0; margin: 0; list-style: none; }
+.device-list li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+.device-list .muted { margin: 2px 0 0; }
+.page-note { padding: 2px 4px; color: var(--muted); font-size: 14px; }
+@media (max-width: 360px) { .setup-page { padding: 20px 12px 32px; } .setup-card { padding: 18px 16px; } .section-title { flex-wrap: wrap; } }

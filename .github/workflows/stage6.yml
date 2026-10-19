@@ -1,0 +1,89 @@
+name: Stage 6 internet gateway test APKs
+on:
+  push:
+    branches: [stage6/internet-gateway-test]
+    paths: ['internet/common/**', 'internet/android/**', 'internet/remote/**', 'internet/gateway/**', 'scripts/test_internet.py', 'scripts/build_internet_apks.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: stage6-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Original safety and CAN regression suites
+        run: python3 scripts/test_core.py
+      - name: Internet security, durable state, replay and protocol tests
+        run: python3 scripts/test_internet.py
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+      - name: Restore the existing signing key from GitHub Secrets
+        env:
+          FISKERWARM_KEYSTORE_B64: ${{ secrets.FISKERWARM_KEYSTORE_B64 }}
+          FISKERWARM_SIGNING_PASSWORD: ${{ secrets.FISKERWARM_SIGNING_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+          encoded = os.environ.get('FISKERWARM_KEYSTORE_B64', '')
+          password = os.environ.get('FISKERWARM_SIGNING_PASSWORD', '')
+          if not encoded or not password:
+              raise SystemExit('Missing repository Actions secrets: FISKERWARM_KEYSTORE_B64 and FISKERWARM_SIGNING_PASSWORD. Restore the existing owner key; do not generate a new signing identity.')
+          key = base64.b64decode(encoded, validate=True)
+          build = Path('build')
+          build.mkdir(exist_ok=True)
+          build.chmod(0o700)
+          for name, value in [('local-lab-signing.p12', key), ('.local-signing-password', password.encode('utf-8'))]:
+              path = build / name
+              fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+              with os.fdopen(fd, 'wb') as out:
+                  out.write(value)
+              path.chmod(0o600)
+          PY
+
+      - name: Pin the existing owner certificate
+        id: signing
+        run: python3 scripts/select_signing_profile.py
+      - name: Build and inspect both signed standalone APKs
+        run: python3 scripts/build_internet_apks.py --profile "${{ steps.signing.outputs.profile }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fisker-Warm-Stage6-Remote-Gateway
+          path: |
+            dist/Fisker-Warm-Remote.apk
+            dist/Fisker-Warm-Gateway.apk
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Fisker-Warm-Stage6-Verification
+          path: |
+            build/internet-apk-results.json
+            build/internet-remote/*txt
+            build/internet-gateway/*txt
+            build/internet-tests/summary.json
+            build/offline-test-summary.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['local-lab-signing.p12', '.local-signing-password']:
+              (Path('build') / name).unlink(missing_ok=True)
+          PY
