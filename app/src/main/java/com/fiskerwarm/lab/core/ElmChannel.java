@@ -171,6 +171,11 @@ public final class ElmChannel {
                 }
                 if(closed)throw new IllegalStateException(failure);
                 acquisitionEnd=System.nanoTime();
+                CanCapture.Snapshot boundary=stream.current();
+                boundary.acquisitionEndedNanos=acquisitionEnd;
+                boundary.frameCountAtAcquisitionEnd=boundary.frameCount;
+                boundary.notificationCountAtAcquisitionEnd=boundary.notificationCount;
+                boundary.bytesAtAcquisitionEnd=boundary.receivedBytes;
                 reason=stream.hasAdapterOverflow()?"BUFFER_FULL":stream.hasAdapterError()?"ADAPTER_ERROR":
                         stream.hasUnexpectedId()?"FILTER_MISMATCH":stopRequested?"USER_STOP":
                         stream.hasPrompt()?"ADAPTER_PROMPT":stream.hasStopped()?"ADAPTER_STOPPED":
@@ -195,6 +200,8 @@ public final class ElmChannel {
                 }
                 if(closed)throw new IllegalStateException(failure);
                 CanCapture.Snapshot result=stream.finish();
+                result.recordingEndedNanos=System.nanoTime();
+                result.captureTotalMillis=TimeUnit.NANOSECONDS.toMillis(result.recordingEndedNanos-monitorStart);
                 result.plannedFrameLimit=frameLimit;
                 result.frameLimitReached=frameLimit>0 && result.frameCount>=frameLimit && "CONTROL_FRAME_LIMIT".equals(reason);
                 result.startWriteConfirmed=true;
@@ -291,7 +298,11 @@ public final class ElmChannel {
         synchronized(receiveLock) {
             if(!closed && stream!=null) {
                 lastSnapshot=stream.finish();lastSnapshot.endReason="CHANNEL_ABORT";
-                if(hvacOnly)lastSnapshot.captureElapsedMillis=TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-lastSnapshot.startedNanos);
+                if(hvacOnly) {
+                    lastSnapshot.recordingEndedNanos=System.nanoTime();
+                    lastSnapshot.captureTotalMillis=TimeUnit.NANOSECONDS.toMillis(lastSnapshot.recordingEndedNanos-lastSnapshot.startedNanos);
+                    if(lastSnapshot.acquisitionEndedNanos<0)lastSnapshot.captureElapsedMillis=lastSnapshot.captureTotalMillis;
+                }
             }
             closed=true;waiting=false;failure=reason==null?"Closed":reason;receiveLock.notifyAll();
         }

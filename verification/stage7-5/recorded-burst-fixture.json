@@ -1,0 +1,192 @@
+{
+  "format": "fisker-warm-recorded-burst-fixture-1",
+  "dataOrigin": "OWNER_RECORDED_BYTES_FOR_SYNTHETIC_REPLAY",
+  "sourceFile": "Fisker-Warm-HVAC-2026-10-20T07-32-39.426209Z.json",
+  "sourceSha256": "e64d837495bd40e2d34828544a98ac7b75b5fd7d2fe35df78ccdc549a78a266c",
+  "captureStartNanos": 71409250773330,
+  "runStartedAt": "2026-10-20T07:32:26.398847Z",
+  "replayIsNewPhysicalCanRx": false,
+  "monitorEvents": [
+    {
+      "kind": "TX_REQUEST",
+      "receivedNanos": 71409251963799,
+      "txId": 17,
+      "hex": "41544D410D",
+      "status": -1,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "TX_QUEUE_RESULT",
+      "receivedNanos": 71409253964059,
+      "txId": 17,
+      "hex": "41544D410D",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "TX_CALLBACK",
+      "receivedNanos": 71409277644632,
+      "txId": 17,
+      "hex": "41544D410D",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "TX_COMPLETE",
+      "receivedNanos": 71409278004371,
+      "txId": 17,
+      "hex": "41544D410D",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409298581246,
+      "txId": 0,
+      "hex": "3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "TX_REQUEST",
+      "receivedNanos": 71409304651351,
+      "txId": 18,
+      "hex": "20",
+      "status": -1,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "TX_QUEUE_RESULT",
+      "receivedNanos": 71409307541559,
+      "txId": 18,
+      "hex": "20",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409316394736,
+      "txId": 0,
+      "hex": "204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D30453920382032442046302046462046462039452035372046462046",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409338084476,
+      "txId": 0,
+      "hex": "46200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409353022653,
+      "txId": 0,
+      "hex": "204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D30453920382032442046302046462046462039452035372046",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "TX_CALLBACK",
+      "receivedNanos": 71409355575882,
+      "txId": 18,
+      "hex": "20",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "TX_COMPLETE",
+      "receivedNanos": 71409355679007,
+      "txId": 18,
+      "hex": "20",
+      "status": 0,
+      "endpoint": "2AF1",
+      "route": "WRITE_CALLBACK_IS_NOT_CAN_RX"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409369989788,
+      "txId": 0,
+      "hex": "46204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409385783642,
+      "txId": 0,
+      "hex": "204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D304539203820324420463020202020394520204646204646200D304539203820324420463020464620464620394520353720464620",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    },
+    {
+      "kind": "RX_NOTIFICATION",
+      "receivedNanos": 71409400388434,
+      "txId": 0,
+      "hex": "4646200D3045392038203244204630204646204646203945203537204646204646200D3045392038203244204630204646204646203945203537204646204646200D304539203820324420463020464620460D4255464645522046554C4C0D53544F505045440D0D3E",
+      "status": -1,
+      "endpoint": "000018f0-0000-1000-8000-00805f9b34fb#9/00002af0-0000-1000-8000-00805f9b34fb#11",
+      "route": "ELM_CHANNEL"
+    }
+  ],
+  "androidCaptureScalars": {
+    "frameCount": 40,
+    "retainedFrames": 40,
+    "expectedId": "0E9",
+    "rxTimeMeaning": "Host BLE callback completing a CR-terminated frame; not a CAN-bus hardware timestamp",
+    "startedEpochMillis": 1792481548637,
+    "startedNanos": 71409250773330,
+    "receivedBytes": 1305,
+    "notificationCount": 7,
+    "maxNotificationGapMillis": 22,
+    "notificationLossIndependentlyDetectable": false,
+    "physicalAdapterSilentModeVerified": false,
+    "completenessScope": "HOST_PARSER_ONLY; complete-frame losses before BLE callback are not observable",
+    "containsSyntheticInput": false,
+    "captureElapsedMillis": 53,
+    "windowElapsed": false,
+    "startWriteMillis": 27,
+    "startWriteConfirmed": true,
+    "startWriteEvidence": "Host GATT completion only; not proof of ELM interpretation or CAN RX",
+    "plannedFrameLimit": 3,
+    "frameLimitReached": true,
+    "inProgress": false,
+    "incomplete": true,
+    "endReason": "CONTROL_FRAME_LIMIT",
+    "adapterError": null,
+    "stopError": null,
+    "adapterBufferFull": true,
+    "stopSent": true,
+    "stopWriteConfirmed": true,
+    "stopConfirmed": true,
+    "promptSeen": true,
+    "truncated": false,
+    "invalidFrameLines": 2,
+    "partialLinesDiscarded": 0,
+    "nonAsciiBytes": 0,
+    "ignoredNullBytes": 0,
+    "overlongLines": 0,
+    "unexpectedIdOutsideFilter": false,
+    "droppedFrames": 0,
+    "droppedPackets": 0,
+    "sessionBudgetExceeded": false,
+    "lateStartWrite": false,
+    "stopDrainMillis": 98
+  },
+  "expectedValidFrames": 40,
+  "expectedMalformedLines": 2
+}

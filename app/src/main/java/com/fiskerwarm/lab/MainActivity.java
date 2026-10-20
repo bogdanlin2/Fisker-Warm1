@@ -70,21 +70,21 @@ public final class MainActivity extends Activity {
         adapter=manager==null?null:manager.getAdapter();
         ScrollView scroll=new ScrollView(this);page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(24,20,24,32);page.setBackgroundColor(Color.rgb(12,25,38));scroll.addView(page);
-        label("Fisker Warm · CAN RX",26);label("0.3.5 · ЕТАП 7.4 · ПАСИВНИЙ КОНТРОЛЬ",15);
+        label("Fisker Warm · CAN RX",26);label("0.3.6 · ЕТАП 7.5 · ПАСИВНИЙ КОНТРОЛЬ",15);
         label("Автомобільні команди заблоковано. Застосунок сам не вмикає клімат.",16);
         parked=new CheckBox(this);parked.setText("Авто у P, стоянкове гальмо, я біля авто зі штатним ключем");
         parked.setTextColor(Color.WHITE);parked.setTextSize(18);parked.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         parked.setButtonTintList(ColorStateList.valueOf(Color.rgb(135,206,250)));
         parked.setBackgroundColor(Color.rgb(31,57,78));parked.setPadding(16,20,16,20);page.addView(parked);
         state=label("BLE: не підключено\nАдаптер: не перевірено\nФільтр: не встановлено",16);
-        rx=label("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —",17);
+        rx=label("Кадри всього (із drain): 0\nОстанній CAN RX на телефоні: —",17);
         decoded=label("Дані з автомобіля ще не отримані.",15);
         LinearLayout connectionRow=row();connect=button(connectionRow,"Підключити Vgate");connect.setOnClickListener(v->scan());
         stop=button(connectionRow,"Зупинити");stop.setOnClickListener(v->stopCurrent());
         control=button(row(),"Контроль CAN RX · 0E9 → 373 → 0E9");control.setOnClickListener(v->confirmControl());
         LinearLayout testsRow=row();testA=button(testsRow,"Тест 0x534\nКлімат On/Off");testA.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_534));
         testB=button(testsRow,"Тест 0x373\nСтатус клімату");testB.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_373));
-        instructions=label("Для етапу 7.4 оберіть «Контроль CAN RX». Авто має бути пробуджене. Перемикати клімат під час контролю не потрібно; старі 30-секундні тести повторювати не потрібно.",15);
+        instructions=label("Для етапу 7.5 оберіть «Контроль CAN RX». Авто має бути пробуджене. Перемикати клімат під час контролю не потрібно; старі 30-секундні тести повторювати не потрібно.",15);
         LinearLayout hmiRow=row();mark(hmiRow,"Позначити: ON","HMI_ON");mark(hmiRow,"Позначити: OFF","HMI_OFF");
         LinearLayout physicalRow=row();mark(physicalRow,"Є потік повітря","AIRFLOW_PRESENT");mark(physicalRow,"Є тепле повітря","WARM_AIR_PRESENT");
         LinearLayout exportRow=row();export=button(exportRow,"Експортувати журнал");export.setOnClickListener(v->export());
@@ -130,7 +130,7 @@ public final class MainActivity extends Activity {
     private void confirmControl() {
         if(!readyToStart() || selected==null || !preflightReady)return;
         new AlertDialog.Builder(this).setTitle("Один пасивний контроль CAN RX")
-                .setMessage("Авто пробуджене, у P, ви поруч зі штатним ключем. Без оновлення ПЗ чи попереджень живлення.\n\n0E9: до 1 с або 3 кадрів → 373: 3 с → 0E9: до 1 с або 3 кадрів. Один BLE-сеанс. Якщо фільтр дає нуль, перевіряється альтернативний точний CRA для того самого ID; за появи RX повторно перевіряється CM/CF. До 12 с моніторингу загалом.\n\nШирокого моніторингу немає. Кліматом не керуємо, перемикати його не потрібно. «Зупинити» завершує моніторинг через SPACE. За помилки живлення чи стану авто від'єднайте Vgate.")
+                .setMessage("Авто пробуджене, у P, ви поруч зі штатним ключем. Без оновлення ПЗ чи попереджень живлення.\n\nПасивний контроль 0E9 → 373 → 0E9. Перемикати клімат не потрібно. Старі 30-секундні тести не повторюйте.\n\nПоріг 3 кадрів лише ініціює SPACE; він не обмежує фізичні кадри. Якщо 0E9 дасть BUFFER FULL, його потік залишиться позначеним НЕПОВНИМ. До 373 перейдемо лише після prompt, ATZ та повторної перевірки всіх пасивних налаштувань.\n\n«Зупинити» припиняє тест. За непідтвердженого prompt/reset чи попередження авто від'єднайте Vgate. Команд ECU немає.")
                 .setPositiveButton("Почати пасивний контроль",(d,w)->start(BleProbe.Mode.CAN_RX_CONTROL))
                 .setNegativeButton("Скасувати",null).show();
     }
@@ -176,7 +176,7 @@ public final class MainActivity extends Activity {
     private void start(BleProbe.Mode mode) {
         if(!readyToStart() || selected==null)return;
         long token=++generation;busy=true;stopping=false;lastCheckpoint=0;runIndex=runs.length();runs.put(new JSONObject());
-        rx.setText("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —");decoded.setText("Новий запис: кадрів ще немає.");
+        rx.setText("Кадри всього (із drain): 0\nОстанній CAN RX на телефоні: —");decoded.setText("Новий запис: кадрів ще немає.");
         filter=mode==BleProbe.Mode.HVAC_534?"0x534":mode==BleProbe.Mode.HVAC_373?"0x373":mode==BleProbe.Mode.CAN_RX_CONTROL?"контроль 0E9 / 373":"не встановлено (перевірка адаптера)";
         probe=new BleProbe(this,mode,new BleProbe.Listener(){
             @Override public void log(String text) {append(text);}
@@ -192,7 +192,7 @@ public final class MainActivity extends Activity {
                 if(capture!=null) {
                     int count=capture.optInt("frameCount");JSONArray frames=capture.optJSONArray("frames");String last="—";
                     if(frames!=null && frames.length()>0)last=formatTime(frames.optJSONObject(frames.length()-1).optLong("utcEpochMillis"));
-                    rx.setText("Прийняті кадри: "+count+"\nОстанній CAN RX на телефоні: "+last);
+                    rx.setText("Кадри всього (із drain): "+count+"\nОстанній CAN RX на телефоні: "+last);
                 }
                 boolean reset=report.optBoolean("adapterResetConfirmed");
                 state.setText("BLE: від'єднано\nАдаптер: "+(reset?"скидання підтверджено":"стан не підтверджений — від'єднайте Vgate від OBD")+"\nФільтр запису: "+filter+"\n"+resultLabel(result)+"\n"+report.optString("detail"));
@@ -210,8 +210,8 @@ public final class MainActivity extends Activity {
             long elapsed=Math.max(0,(System.nanoTime()-s[2])/1_000_000_000L);
             boolean audit=!p.auditPhase().isEmpty();
             state.setText("BLE: "+p.bleState()+"\nФільтр: "+p.activeFilter()+"\nATMA: "+p.atmaWriteEvidence()+"\n"+
-                    (audit?p.auditPhase()+" · "+elapsed+" с":"Запис: "+elapsed+" / 30 с")+(stopping?" · зупинка":""));
-            rx.setText("Прийняті кадри: "+s[0]+"\nОстанній CAN RX на телефоні: "+(s[1]<0?"—":formatTime(s[1])));
+                    (audit?p.auditPhase()+" · "+elapsed+" с":"Запис: "+elapsed+" / 30 с")+"\n"+p.auditWarning()+(stopping?" · зупинка":""));
+            rx.setText("Кадри всього (із drain): "+s[0]+"\nОстанній CAN RX на телефоні: "+(s[1]<0?"—":formatTime(s[1])));
             decoded.setText(p.hvacLatestDescription()+"\nЦе декодування матриці, не підтвердження запуску HVAC.");
             instructions.setText(audit?"Контроль RX виконується автоматично. Не перемикайте клімат. Після завершення експортуйте журнал.":elapsed<5?"Початкова фаза OFF. На 5 с штатно увімкніть клімат.":elapsed<20?
                     "Штатно ON. Позначте виконану дію та реальний потік/тепло. На 20 с штатно вимкніть клімат.":"Штатно OFF. Позначте виконану дію. Дочекайтеся завершення або натисніть «Зупинити».");
@@ -219,7 +219,7 @@ public final class MainActivity extends Activity {
                 lastCheckpoint=System.nanoTime();
                 try{JSONObject c=p.checkpoint();if(c!=null){runs.put(runIndex,c);persist();}}catch(Exception e){append("Checkpoint не збережено: "+e);}
             }
-        } else state.setText("BLE: "+p.bleState()+"\nАдаптер: налаштування / завершення\nФільтр: "+filter);
+        } else state.setText("BLE: "+p.bleState()+"\nАдаптер: налаштування / завершення\nФільтр: "+filter+"\n"+p.auditPhase()+"\n"+p.auditWarning());
         buttons();ui.postDelayed(this,250);
     }};
     private String formatTime(long millis) {return DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(millis));}
@@ -235,7 +235,7 @@ public final class MainActivity extends Activity {
     }
     private void stopCurrent() {if(scanning){endScan(false);state.setText("Пошук зупинено.");return;}if(probe!=null && !stopping){stopping=true;buttons();probe.cancel();}}
     private File journalFile() {return new File(getFilesDir(),"hvac-stage7-3-current.json");}
-    private String bundle() throws Exception {return new JSONObject().put("format","fisker-warm-hvac-bundle-1").put("appVersion","0.3.5-lab")
+    private String bundle() throws Exception {return new JSONObject().put("format","fisker-warm-hvac-bundle-1").put("appVersion","0.3.6-lab")
             .put("androidApi",Build.VERSION.SDK_INT).put("phone",Build.MANUFACTURER+" "+Build.MODEL)
             .put("vehicleClimateStartedByApp",false).put("runs",runs).toString(2);}
     private void persist() {

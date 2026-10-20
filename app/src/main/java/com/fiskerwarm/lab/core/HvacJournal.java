@@ -38,6 +38,21 @@ public final class HvacJournal {
         j.append(",\"completenessScope\":\"HOST_PARSER_ONLY; complete-frame losses before BLE callback are not observable\"");
         j.append(",\"containsSyntheticInput\":").append(s.containsSyntheticInput);
         j.append(",\"captureElapsedMillis\":").append(s.captureElapsedMillis).append(",\"windowElapsed\":").append(s.windowElapsed);
+        j.append(",\"captureElapsedMeaning\":\"Until host stop decision; excludes stop drain\",\"frameCountScope\":\"Includes stop drain\"");
+        j.append(",\"frameCountAtAcquisitionEnd\":").append(s.frameCountAtAcquisitionEnd);
+        j.append(",\"notificationCountAtAcquisitionEnd\":").append(s.notificationCountAtAcquisitionEnd);
+        j.append(",\"bytesAtAcquisitionEnd\":").append(s.bytesAtAcquisitionEnd);
+        j.append(",\"drainFrameCount\":").append(s.frameCountAtAcquisitionEnd<0?-1:s.frameCount-s.frameCountAtAcquisitionEnd);
+        j.append(",\"acquisitionEndedNanos\":").append(s.acquisitionEndedNanos).append(",\"recordingEndedNanos\":").append(s.recordingEndedNanos);
+        j.append(",\"captureTotalMillis\":").append(s.captureTotalMillis);
+        j.append(",\"frameLimitReachedOnRxNanos\":").append(s.frameLimitReachedOnRxNanos);
+        j.append(",\"frameLimitReachedParsedNanos\":").append(s.frameLimitReachedParsedNanos);
+        j.append(",\"limitMeaning\":\"Host parsed-frame stop trigger, not an adapter or physical-CAN frame quota\"");
+        j.append(",\"maxProcessingMicros\":").append(s.maxProcessingMicros).append(",\"maxReceiveLockWaitMicros\":").append(s.maxReceiveLockWaitMicros);
+        j.append(",\"framesAtFirstOverflow\":").append(s.framesAtFirstOverflow).append(",\"firstOverflowMillis\":").append(s.firstOverflowMillis);
+        j.append(",\"invalidLineSamples\":[");
+        for(int i=0;i<s.invalidLineSamples.size();i++){if(i>0)j.append(',');j.append(quote(s.invalidLineSamples.get(i)));}
+        j.append(']');
         j.append(",\"startWriteMillis\":").append(s.startWriteMillis).append(",\"startWriteConfirmed\":").append(s.startWriteConfirmed);
         j.append(",\"startWriteEvidence\":\"Host GATT completion only; not proof of ELM interpretation or CAN RX\"");
         j.append(",\"plannedFrameLimit\":").append(s.plannedFrameLimit).append(",\"frameLimitReached\":").append(s.frameLimitReached);

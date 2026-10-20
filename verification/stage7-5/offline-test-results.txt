@@ -1,0 +1,320 @@
+PASS genuine PKC21.3 owner reply
+PASS genuine ECC24 owner reply
+PASS genuine ICC49 uses 7B9
+PASS spaced CAN frames
+PASS DLC is checked
+PASS bad DLC rejected
+PASS single frame
+PASS numbered ELM parser offline
+PASS live mode requires responder
+PASS echo stripped
+PASS wrong DID rejected
+PASS wrong responder rejected
+PASS missing consecutive frame rejected
+PASS truncated ISO-TP rejected
+PASS extra ISO-TP rejected
+PASS truncated formatted rejected
+PASS out-of-order formatted rejected
+PASS NRC31 is failure
+PASS NRC78 is pending, never success
+PASS adapter error NO DATA
+PASS adapter error BUFFER FULL
+PASS adapter error CAN ERROR
+PASS adapter error STOPPED
+PASS adapter error UNABLE TO CONNECT
+PASS adapter error ?
+PASS non-hex text rejected
+PASS mixed formats rejected
+PASS binary identity not invented ASCII
+PASS voltage normal
+PASS voltage echo
+PASS voltage garbage unknown
+PASS voltage nan unknown
+PASS voltage mixed unknown
+PASS voltage absurd unknown
+PASS low voltage blocks UDS policy
+PASS unknown voltage blocks
+PASS infinite voltage blocks
+PASS addressed identity read allowed
+PASS unaddressed identity blocked
+PASS mismatched RX blocked
+PASS route change invalidates RX
+PASS ATZ invalidates route
+PASS wire firewall blocks 1101
+PASS wire firewall blocks 14FFFFFF
+PASS wire firewall blocks 1003
+PASS wire firewall blocks 2701
+PASS wire firewall blocks 2EF19500
+PASS wire firewall blocks 31010000
+PASS wire firewall blocks 3E00
+PASS wire firewall blocks 3400
+PASS wire firewall blocks ATLP
+PASS wire firewall blocks ATSH7C2
+PASS wire firewall blocks ATSH7D0
+PASS wire firewall blocks ATSH7F4
+PASS wire firewall blocks ATSH781
+PASS wire firewall blocks 22EFF2
+PASS wire firewall blocks ATCRA
+PASS wire firewall blocks ATPP00OFF
+PASS wire firewall blocks ATSH7A2/1101
+PASS wire firewall blocks ATSH7A2/1101
+PASS wire firewall blocks atsh7a2
+PASS wire firewall blocks  ATZ
+PASS all genuine routes paired
+PASS production heat always blocked
+PASS synthetic future prerequisites only
+PASS missing telemetry blocks
+PASS drive gear blocks
+PASS unknown park blocks
+PASS moving blocks
+PASS unknown speed blocks
+PASS stale data blocks
+PASS future timestamp blocks
+PASS low HV blocks
+PASS unknown HV blocks
+PASS nan HV blocks
+PASS no authentication blocks
+PASS untrusted telemetry blocks
+PASS duration capped
+PASS independent vehicle timeout required
+PASS weekly Kyiv local clock
+PASS weekly DST changes UTC hour
+PASS DST missing time skipped
+PASS DST overlap not duplicated
+PASS empty weekdays invalid
+PASS past one shot cannot catch up
+PASS fragmented ELM response single flight
+PASS timeout closes channel and forbids retry
+PASS stop closes without any write
+PASS unsafe wire command causes zero writes
+PASS overflow makes channel terminal
+PASS multiple prompts rejected
+PASS new budget cannot exceed 60 sec
+PASS slow writer cannot bypass reply deadline
+PASS identity DID allowlist cannot be mutated
+PASS single BLE probe owner only
+PASS stale BLE callback cannot complete newer probe
+PASS invalid BLE ownership token cannot release session
+PASS known UART table cannot be mutated
+PASS published UART profiles match exact triples
+PASS wrong UUID in known UART service blocked
+PASS unknown UART and missing UUID blocked
+PASS passive adapter controls allowed
+PASS passive parse two CAN frames
+PASS passive ignores junk without fake frames
+PASS passive differences are candidate IDs
+PASS passive parser rejects malformed payload
+PASS passive monitor stops adapter with CR
+PASS streaming passive parses split BLE packets
+PASS overflow diagnostics survive fragmented BLE
+PASS stream overflow detected before finish
+PASS streaming detects adapter overflow
+PASS streaming limits lines without unbounded growth
+PASS streaming monitor stops without CAN transmission
+PASS PKC sample climate 15 minute fixture
+PASS PKC sample climate 120 minute fixture
+PASS PKC sample climate stop fixture
+PASS PKC climate 0 minutes denied
+PASS PKC climate 25 minutes denied
+PASS PKC climate 121 minutes denied
+PASS PKC 22C driver fixture
+PASS PKC 24C passenger fixture
+PASS PKC minimum temperature fixture
+PASS PKC maximum temperature fixture
+PASS PKC half-degree temperature fixture
+PASS PKC sub-half-degree temperature denied
+PASS PKC unsafe high temp denied
+PASS PKC NaN temperature denied
+PASS PKC null zone denied
+PASS PKC VA key hex format valid
+PASS PKC VA key invalid character denied
+PASS PKC VIN is not VA key
+PASS PKC HMAC RFC4231 first case
+PASS PKC HMAC differs on changed bytes
+PASS PKC HMAC missing key denied
+PASS PKC status setpoint decode
+PASS PKC status cabin temp decode
+PASS PKC status ambient temp decode
+PASS PKC status flags remain undecoded
+PASS PKC undocumented status ID denied
+PASS PKC out-of-range status byte denied
+PASS PKC cannot transmit to vehicle
+PASS valid signed offline envelope
+PASS replay blocked atomically
+PASS persistent ledger failure blocks
+PASS missing ledger blocks
+PASS body tampering blocked
+PASS stale envelope blocked
+PASS future envelope blocked
+PASS path tampering blocked
+PASS nonce injection blocked
+PASS short pairing key blocked
+PASS oversized body blocked
+TOTAL 152 checks passed; no vehicle connection or climate command.
+PASS unterminated payload is discarded, never invented as a short frame
+PASS prompt cannot terminate an incomplete CAN payload
+PASS complete short CAN frame remains valid
+PASS DLC mismatch rejects an incomplete frame
+PASS zero DLC is a valid empty CAN data field
+PASS DLC too small cannot silently accept extra bytes
+PASS parser accepts all valid 11-bit IDs, not just 0E9
+PASS 29-bit IDs are explicitly outside ATSP6 capture
+PASS every byte-boundary fragmentation preserves frames and overflow
+PASS one-byte BLE packets preserve a fragmented overflow token
+PASS overflow without a trailing CR is recorded immediately
+PASS notification times and byte sizes are measured, not assumed
+PASS empty notifications do not invent throughput
+PASS CRLF does not consume two frame slots
+PASS frame cap stays at 1500 and does not hide subsequent overflow
+PASS oversized line is discarded and parsing recovers at the delimiter
+PASS non-ASCII corruption cannot turn into a valid CAN frame
+PASS documented ELM NULL insertion is ignored without inventing corruption
+PASS ELM command NULL insertion does not corrupt voltage parsing
+PASS payload interrupted by overflow is discarded with a visible counter
+PASS data following a prompt is rejected as a second stream
+PASS finish is idempotent and late notifications cannot mutate a report
+PASS adapter errors mark incomplete captures
+PASS BUFFER FULL with prompt must never send an idle CR and restart ATMA
+PASS overflow waits for a delayed final prompt without sending CR
+PASS normal stop drains the final frame before accepting the prompt
+PASS a clean prompt permits a subsequent addressed adapter command
+PASS missing overflow prompt closes the channel without repeating the command
+PASS stop write failure is reported and the channel cannot be reused
+PASS ATMA write failure is terminal and does not send an idle CR
+PASS expired session budget blocks ATMA before any write
+PASS session deadline also bounds monitoring and prompt drain
+PASS early adapter error is not restarted with an idle CR
+PASS unexpected early prompt is not a complete 500ms observation
+PASS slow start writer cannot claim a valid bounded CAN window
+PASS raw compatibility view shares safe overflow completion
+PASS monitoring still rejects unsafe raw vehicle commands
+PASS valid buffer-full-free data still does not prove heating
+PASS eleven receive groups cover every other 11-bit ID exactly once
+PASS receive groups do not invent 29-bit coverage
+PASS diagnostic group table cannot be mutated by callers
+PASS all fixed receive masks are canonically encoded and allowed
+PASS new adapter path forbids ECU/control/wake/baud/ACK-on commands
+PASS adapter diagnostics reject injected and lowercase commands
+PASS local status inspection leaves original raw send firewall intact
+PASS fixed adapter diagnostics use the same fragmented prompt channel
+PASS unsupported local query remains raw and does not invent support
+PASS diagnostic timeout closes all paths without retries
+PASS a diagnostic channel cannot reuse a stale authorized ECU route
+PASS ATZ cannot re-enable the ECU path of a diagnostic-only channel
+PASS bounded raw trace preserves the malformed line and prompt
+PASS DLC presence is evidence, not inferred from an adapter OK
+PASS raw trace cap never masks actual parsed CAN counts
+PASS notification trace is bounded independently of capture correctness
+PASS trace arrival timestamps refer to the notification entry
+PASS normal capture avoids raw notification trace storage
+PASS invalid-line samples cannot grow unbounded
+PASS filtered passive capture uses only local AT configuration and one stop
+TOTAL 58 CAN regression checks passed; emulated adapter only.
+PASS independent bit oracle and cardinality for group 0
+PASS independent bit oracle and cardinality for group 1
+PASS independent bit oracle and cardinality for group 2
+PASS independent bit oracle and cardinality for group 3
+PASS independent bit oracle and cardinality for group 4
+PASS independent bit oracle and cardinality for group 5
+PASS independent bit oracle and cardinality for group 6
+PASS independent bit oracle and cardinality for group 7
+PASS independent bit oracle and cardinality for group 8
+PASS independent bit oracle and cardinality for group 9
+PASS independent bit oracle and cardinality for group 10
+PASS fragmented positive host-path replay for group 0
+PASS fragmented positive host-path replay for group 1
+PASS fragmented positive host-path replay for group 2
+PASS fragmented positive host-path replay for group 3
+PASS fragmented positive host-path replay for group 4
+PASS fragmented positive host-path replay for group 5
+PASS fragmented positive host-path replay for group 6
+PASS fragmented positive host-path replay for group 7
+PASS fragmented positive host-path replay for group 8
+PASS fragmented positive host-path replay for group 9
+PASS fragmented positive host-path replay for group 10
+PASS consecutive groups preserve all 2047 synthetic IDs with no hidden reset
+TOTAL 23 CAN regression checks passed; emulated adapter only.
+PASS callbacks from a duplicate GATT instance or different UUID cannot enter the stream
+PASS 534 switch and all ECC fields match an independent Motorola oracle
+PASS reserved and unknown signal values remain numeric, never become HVAC ON
+PASS every notification boundary preserves DLC, all bytes and completion timestamp
+PASS 300 unchanged CAN frames are retained individually, no sample deduplication
+PASS polling the parser does not create notifications or refresh last RX
+PASS replay is explicitly synthetic including an exported frame
+PASS a mixed synthetic prefix cannot be relabeled as hardware by its final fragment
+PASS partial payload and absent DLC are rejected with full raw evidence
+PASS dropping a middle fragment never invents a valid eight-byte frame
+PASS an out-of-filter frame is retained and stops the measurement
+PASS finite storage limits report loss instead of silently dropping frames
+PASS owner marks cannot impersonate received CAN frames
+PASS the HVAC command channel rejects all vehicle payloads and broad filters
+PASS ATMA is blocked until silent mode, protocol and exact filter are acknowledged
+PASS a rejected ATCSM1 reply prevents monitoring even if later settings answer OK
+PASS CM must be acknowledged before CF, and AR invalidates an armed filter
+PASS BUFFER FULL plus prompt never sends a stop character or repeats ATMA
+PASS BUFFER FULL without prompt preserves prefix and closes without blind retry
+PASS end-of-window stop uses one SPACE, with no idle CR restart
+PASS prompt racing the stop cannot repeat ATMA
+PASS user stop drains prompt and retains the full prefix
+PASS disconnect during monitoring exports a partial prefix, not an empty success
+PASS stop timeout keeps data and prevents adapter reset on an unknown prompt
+PASS reply timeout poisons the channel; a late prompt cannot revive it
+PASS a quiet filtered bus completes without pretending notifications were lost or HVAC absent
+PASS a full 30-second synthetic ECC window retains every produced notification
+TOTAL 27 CAN regression checks passed; SYNTHETIC ADAPTER ONLY, no vehicle validation.
+PASS exact 7FF masks admit exactly one ID across all 2048 standard IDs
+PASS physical-write firewall rejects ECU, wide filters, extra CR and command injection
+PASS GATT serializes writes until actual async callback, including ATMA
+PASS a queue rejection cannot be labeled complete or retried
+PASS timeout poisons GATT even if its callback arrives later
+PASS GATT error callback is failure; closing pending write wakes the worker
+PASS early callback and mutable caller byte array preserve exact queued payload
+PASS exact setup order is preserved through fake asynchronous GATT
+PASS rejected ATMA has no success timer, no stop write and no next AT command
+PASS lost ATMA callback is terminal even when synthetic CAN already arrived
+PASS an AT command cannot interleave between ATMA and SPACE/prompt
+PASS replaying the three real STOPPED packets produces zero CAN, not hidden frames
+PASS historical 0E9 prefix parses at every BLE fragmentation boundary as synthetic
+PASS control frame limit is a planned completion and stops once via SPACE
+PASS sandwiched controls distinguish zero ECC from globally missing CAN RX
+PASS a received ECC frame is distinguished from controls and synthetic origin remains explicit
+PASS zero controls use exact CRA fallback, never broad monitor or HVAC inference
+PASS CRA-only control RX is rechecked with CM/CF before reporting API difference
+PASS 373 CRA-only result requires a CM/CF recheck and positive control after it
+PASS a disappearing post-control does not certify the zero ECC observation
+PASS only a reset separates a lossy control from a later incomplete ECC capture
+PASS raw journal preserves replies outside monitor and bytes rejected before parser
+PASS raw journal storage overrun is explicit, never a false complete export
+TOTAL 23 CAN regression checks passed; SYNTHETIC GATT/ELM ONLY, no vehicle validation.
+PASS all 1305 original raw bytes parse to 40 valid identical lines and two malformed lines
+PASS the first 200-byte callback has six frames; threshold timestamps refer to that callback
+PASS recorded async order preserves tail after SPACE and keeps overflow incomplete
+PASS presence and recovery eligibility do not erase any capture error flags or bytes
+PASS unknown stop, GATT, parser storage, user stop and CAN errors block recovery individually
+PASS a malformed-only or wrong-ID capture is never a positive control
+PASS real burst replay reaches ECC and post-control only through reacknowledged reset
+PASS ECC reception remains separately observable while both controls are explicitly lossy
+PASS reset contamination or rejected passive settings never permit a 373 monitor
+PASS missing stop prompt prevents reset/rearm even though matching RX was observed
+PASS ECC overflow is not accepted by the control exception
+TOTAL 11 CAN regression checks passed; RECORDED BYTES REPLAYED AS SYNTHETIC, no new vehicle validation.
+................
+----------------------------------------------------------------------
+Ran 16 tests in 0.213s
+
+OK
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.056s
+
+OK
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.050s
+
+OK
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.091s
+
+OK

@@ -1,0 +1,9 @@
+{
+  "apk": "Fisker-Warm-CAN-RX-0.3.5.apk",
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionCode": 11,
+  "versionName": "0.3.5-lab",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "apkSha256": "9eae895ffb66583aee486b6c81506136a3af317e145a221dfbc4a1d866bfa428",
+  "evidence": "Verified Actions 39384997170 artifact 12247415825 runtime 859ff6662af3c4ce76f3c2f96ce55acec5c28fac; original bytes rehashed during stage7.5"
+}

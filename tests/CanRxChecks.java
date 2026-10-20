@@ -137,8 +137,8 @@ public final class CanRxChecks {
         test("a disappearing post-control does not certify the zero ECC observation",()->{
             try(FakeGatt g=new FakeGatt(){@Override void rx(String text){super.rx(text);if(text.startsWith(CONTROL))control=false;}}){g.setup();CanRxAudit.Result r=g.audit();eq("CONTROL_AFTER_MISSING",r.code);}
         });
-        test("overflow preserves the raw prefix and prevents later audit phases",()->{
-            try(FakeGatt g=new FakeGatt()){g.setup();g.overflow=true;CanRxAudit.Result r=g.audit();eq("CONTROL_CAPTURE_INCOMPLETE",r.code);eq(1,r.phases.size());yes(r.phases.get(0).capture.adapterBufferFull);eq(3,r.phases.get(0).capture.frameCount);yes(!g.queued.contains("ATCF373\r"));}
+        test("only a reset separates a lossy control from a later incomplete ECC capture",()->{
+            try(FakeGatt g=new FakeGatt()){g.setup();g.overflow=true;CanRxAudit.Result r=g.audit();eq("ECC_CAPTURE_INCOMPLETE",r.code);eq(2,r.phases.size());yes(r.phases.get(0).capture.adapterBufferFull);eq(3,r.phases.get(0).capture.frameCount);yes(g.queued.contains("ATCF373\r"));eq(1,r.recoveriesCompleted);yes(!r.allCapturesComplete());}
         });
         test("raw journal preserves replies outside monitor and bytes rejected before parser",()->{
             BleIoJournal io=new BleIoJournal();ElmChannel ch=ElmChannel.forHvac(b->{},500);

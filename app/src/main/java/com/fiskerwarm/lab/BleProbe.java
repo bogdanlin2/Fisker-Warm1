@@ -61,7 +61,7 @@ public final class BleProbe {
             atmaWriteEvidence="TX_COMPLETE".equals(kind)?"GATT_SUCCESS · це не CAN RX":kind;
         }
     });
-    private volatile String atmaWriteEvidence="ще не записано",activeFilter="—",auditPhase="";
+    private volatile String atmaWriteEvidence="ще не записано",activeFilter="—",auditPhase="",auditWarning="";
     private volatile BluetoothGatt gatt;
     private volatile ElmChannel channel;
     private volatile BluetoothGattCharacteristic writeChar;
@@ -83,6 +83,7 @@ public final class BleProbe {
     public String atmaWriteEvidence(){return atmaWriteEvidence;}
     public String activeFilter(){return activeFilter;}
     public String auditPhase(){return auditPhase;}
+    public String auditWarning(){return auditWarning;}
     public long[] hvacProgress() {ElmChannel ch=channel;return ch==null?new long[]{0,-1,-1,0}:ch.hvacProgress();}
     public String hvacLatestDescription() {ElmChannel ch=channel;return ch==null?"Кадрів немає":ch.hvacLatestDescription();}
     public String bleState() {return terminal.get()?"від'єднано":linkConnected?"з'єднано":"підключення / перевірка GATT";}
@@ -103,8 +104,8 @@ public final class BleProbe {
     }
     public void start(BluetoothDevice device,String advertisedName) {
         try {
-            report.put("format",isHvac()?"fisker-warm-hvac-passive-1":"fisker-warm-lab-1"); report.put("appVersion","0.3.5-lab");
-            report.put("diagnosticRevision","can-rx-stage7.4-1").put("bleTransport",transport);
+            report.put("format",isHvac()?"fisker-warm-hvac-passive-1":"fisker-warm-lab-1"); report.put("appVersion","0.3.6-lab");
+            report.put("diagnosticRevision","can-burst-stage7.5-1").put("bleTransport",transport);
             report.put("mode",mode.toString()); report.put("startedAt",Instant.now().toString());
             report.put("heatCapability",HeatSafety.BUILD_STATUS); report.put("events",events);
             report.put("deviceName",advertisedName); report.put("deviceAddress",device.getAddress());
@@ -382,27 +383,47 @@ public final class BleProbe {
                 "Отримані кадри адаптера. Матриця й робота HVAC на авто потребують аналізу.");
     }
     private void canRxControl() throws Exception {
-        final JSONArray phases=new JSONArray();report.put("canRxAudit",phases);
+        final JSONArray phases=new JSONArray();report.put("canRxAudit",phases).put("incomplete",true).put("differentialPhasesCompleted",false);
         CanRxAudit.Result result=new CanRxAudit(channel,new CanRxAudit.Observer(){
             @Override public void phase(String name,String id,String method){
                 auditPhase=name;activeFilter="0x"+id+" · "+method;atmaWriteEvidence="очікуємо запис ATMA";
                 log("Контроль RX: "+name+" · "+activeFilter);
             }
             @Override public void captured(CanRxAudit.Phase phase){
+                if("0E9".equals(phase.id) && phase.capture.incomplete()) {
+                    auditWarning="Контроль 0E9 НЕПОВНИЙ: "+(phase.capture.adapterBufferFull?"BUFFER FULL; ":"")+phase.capture.endReason+
+                            "; пошкоджених рядків: "+phase.capture.invalidFrameLines+". Ознака RX: "+phase.controlRxObserved()+". Збережіть журнал.";
+                    log(auditWarning);
+                }
                 try{synchronized(report){phases.put(new JSONObject().put("phase",phase.name).put("id",phase.id).put("filterMethod",phase.method)
+                        .put("controlRxObserved",phase.controlRxObserved()).put("captureComplete",!phase.capture.incomplete())
+                        .put("controlOverflowRecoveryAllowed",CanRxAudit.controlRecoveryAllowed(phase.capture))
                         .put("capture",new JSONObject(HvacJournal.captureJson(phase.capture))));}}
                 catch(Exception e){throw new IllegalStateException(e);}
+            }
+            @Override public void recovery(String state){
+                auditPhase="Відновлення адаптера · "+state;activeFilter="ще не встановлено після reset";
+                stateEvent("CONTROL_OVERFLOW_RECOVERY",state);log(auditPhase);
             }
         }).run();
         if(!result.phases.isEmpty() && result.phases.get(result.phases.size()-1).capture.stopConfirmed)resetAdapter();
         report.put("canRxAuditResult",result.code);
-        String detail="CONTROL_RX_PRESENT_ECC_NOT_OBSERVED".equals(result.code)?
+        report.put("incomplete",!result.allCapturesComplete() || !result.differentialPhasesCompleted).put("differentialPhasesCompleted",result.differentialPhasesCompleted);
+        report.put("canRxAuditEvidence",new JSONObject().put("allCapturesComplete",result.allCapturesComplete())
+                .put("controlStreamIncomplete",result.controlStreamIncomplete()).put("controlBeforeRxObserved",result.beforeRxObserved())
+                .put("controlAdapterBufferFull",result.controlHasOverflow())
+                .put("controlAfterRxObserved",result.afterRxObserved()).put("eccRxObserved",result.eccRxObserved())
+                .put("eccCapturesComplete",result.eccCapturesComplete()).put("recoveriesAttempted",result.recoveriesAttempted)
+                .put("recoveriesCompleted",result.recoveriesCompleted).put("presenceMeaning","Matching complete adapter lines; distinct physical transmissions and freshness are not independently proven"));
+        String base=result.code.replace("_WITH_CONTROL_LOSS","");
+        String detail="CONTROL_RX_PRESENT_ECC_NOT_OBSERVED".equals(base)?
                 "CAN RX 0E9 підтверджено до й після; 373 не спостерігався ні через CM/CF, ні через CRA.":
-                "ECC_RX_OBSERVED_WITH_CONTROLS".equals(result.code)?"Реальні CAN-кадри 373 і контроль 0E9 отримано; потрібен аналіз журналу.":
-                "NO_CONTROL_RX".equals(result.code)?"Контроль 0E9 не отримано через CM/CF та CRA. Видимість HVAC оцінити не можна.":
-                "FILTER_API_DIFFERENCE_OBSERVED".equals(result.code)?"0E9 видно через CRA, але не через CM/CF до й після. Виявлена різниця API фільтрів.":
-                "ECC_RX_ONLY_VIA_CRA_OBSERVED".equals(result.code)?"373 видно через CRA, але не через CM/CF до й після. Потрібен аналіз різниці API фільтрів.":
+                "ECC_RX_OBSERVED_WITH_CONTROLS".equals(base)?"CAN-рядки 373 і контроль 0E9 отримано від адаптера; потрібен аналіз журналу.":
+                "NO_CONTROL_RX".equals(base)?"Контроль 0E9 не отримано через CM/CF та CRA. Видимість HVAC оцінити не можна.":
+                "FILTER_API_DIFFERENCE_OBSERVED".equals(base)?"0E9 видно через CRA, але не через CM/CF до й після. Виявлена різниця API фільтрів.":
+                "ECC_RX_ONLY_VIA_CRA_OBSERVED".equals(base)?"373 видно через CRA, але не через CM/CF до й після. Потрібен аналіз різниці API фільтрів.":
                 "Контроль не дав однозначного результату: "+result.code+". Збережіть повний журнал.";
+        if(result.controlStreamIncomplete())detail+=" Контрольні потоки НЕПОВНІ"+(result.controlHasOverflow()?" (BUFFER FULL)":"")+". Це не безвтратне вимірювання і не HVAC ON.";
         finish(result.code,detail);
     }
     private void resetAdapter() throws Exception {

@@ -1,0 +1,22 @@
+{
+  "file": "Fisker-Warm-CAN-RX-0.3.6.apk",
+  "sha256": "54e79ddf50e075ebf60d1f1253552b6763582ff645a399ca466eb1d5456540c2",
+  "sizeBytes": 74121,
+  "compileSdk": 35,
+  "targetSdk": 35,
+  "minSdk": 26,
+  "profile": "lab02",
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionCode": 12,
+  "versionName": "0.3.6-lab",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "heatingAvailable": false,
+  "readOnlyCanCapture": true,
+  "climateProtocolVerified": false,
+  "built": true,
+  "installedOnSamsung": false,
+  "testedOnVehicle": false,
+  "sourceCommit": "c66f6bcd98fc59a9cbf13ac315098b987c8b456f",
+  "sourceTreeDirty": false,
+  "diagnosticRevision": "can-burst-stage7.5-1"
+}

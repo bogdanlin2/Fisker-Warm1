@@ -68,6 +68,9 @@ public final class CanCapture {
         public boolean windowElapsed, lateStartWrite;
         public boolean startWriteConfirmed,frameLimitReached;
         public int plannedFrameLimit;
+        public int frameCountAtAcquisitionEnd=-1,notificationCountAtAcquisitionEnd=-1,bytesAtAcquisitionEnd=-1;
+        public long acquisitionEndedNanos=-1,recordingEndedNanos=-1,captureTotalMillis=-1;
+        public long frameLimitReachedOnRxNanos=-1,frameLimitReachedParsedNanos=-1;
         public String rawAsciiPrefix;
         public boolean rawTraceTruncated, notificationTraceTruncated;
         public long maxProcessingMicros, maxReceiveLockWaitMicros;
@@ -129,6 +132,10 @@ public final class CanCapture {
         IdSummary id=s.ids.get(p[0]);
         if(id==null) {id=new IdSummary(p[0]);s.ids.put(p[0],id);}
         id.count++;s.frameCount++;
+        if(s.plannedFrameLimit>0 && s.frameCount>=s.plannedFrameLimit && s.frameLimitReachedOnRxNanos<0) {
+            s.frameLimitReachedOnRxNanos=receivedNanos;
+            s.frameLimitReachedParsedNanos=System.nanoTime();
+        }
         if(s.expectedId>=0) {
             if(Integer.parseInt(p[0],16)!=s.expectedId)s.unexpectedIdOutsideFilter=true;
             if(s.frames.size()<MAX_HVAC_FRAMES) {
