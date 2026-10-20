@@ -1,0 +1,215 @@
+{
+  "schema": "fisker-warm-pkc-owner-authorization-research/v1",
+  "checkedAtUTC": "2026-10-20T12:49:39.048400+00:00",
+  "baselineCommit": "ec983c6f2ac043e7d184430112a8f44d3f23ec57",
+  "result": "NO_INDEPENDENT_OWNER_PROVISIONING_ESTABLISHED",
+  "criterionMet": false,
+  "sourceSnapshots": [
+    {
+      "id": "foa-join",
+      "url": "https://fiskeroa.com/join-foa/",
+      "finalURL": "https://fiskeroa.com/join-foa/",
+      "status": 200,
+      "bytes": 88863,
+      "sha256": "9b14db5daaeedbab072c63c6524462592a175888af5530a68d8f3fd2dd1123e1",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "foa-registered-owner",
+      "url": "https://fiskeroa.com/register/registered-owner/",
+      "finalURL": "https://fiskeroa.com/register/registered-owner/",
+      "status": 200,
+      "bytes": 148598,
+      "sha256": "ee54ee2145fbbb70a98c20a9defa7b125214492b0198376a507db3b000e1a75b",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "foa-base-quarterly",
+      "url": "https://fiskeroa.com/register/base-quarterly/",
+      "finalURL": "https://fiskeroa.com/register/base-quarterly/",
+      "status": 200,
+      "bytes": 151536,
+      "sha256": "f33b4e29cd023061357efcb1877a868ac59ef3a2099e18583ae4311b661f295b",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "foa-base-annual",
+      "url": "https://fiskeroa.com/register/base-annual/",
+      "finalURL": "https://fiskeroa.com/register/base-annual/",
+      "status": 200,
+      "bytes": 151507,
+      "sha256": "486cb335060ceb38b133e0b641ec83861aff9b62f1955cbdbe45ebcbbfb7fcf3",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "foa-terms",
+      "url": "https://fiskeroa.com/terms-conditions",
+      "finalURL": "https://fiskeroa.com/terms-conditions/",
+      "status": 200,
+      "bytes": 88387,
+      "sha256": "d308f0971ba1bc3721eb5a0c210342c7d5b370d723cb1cefde6996ba04a1a95e",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "foa-help",
+      "url": "https://fiskeroa.com/help-desk/",
+      "finalURL": "https://fiskeroa.com/help-desk/",
+      "status": 200,
+      "bytes": 92367,
+      "sha256": "6571647c0aae7e9fe61cb27b1ba1d738f0f039a88437aad659d3fa57e0fc7cda",
+      "rawHtmlPublished": false
+    },
+    {
+      "id": "chevalier-access",
+      "url": "https://chevaliertech.com/access-control-systems/",
+      "finalURL": "https://chevaliertech.com/access-control-systems/",
+      "status": 200,
+      "bytes": 142900,
+      "sha256": "e0662c53a4ddaf7cdac26b8f4d82c50074e2dc55fb977074f2ab5f9892a23ec3",
+      "rawHtmlPublished": false
+    }
+  ],
+  "verifiedPublicOffer": {
+    "freeRegisteredOwnerIncludesOlp": false,
+    "baseQuarterlyNewMemberFirstPeriodUSD": 200,
+    "baseQuarterlyPeriodMonths": 3,
+    "baseQuarterlyAdvertisedDuesUSD": 100,
+    "baseAnnualNewMemberFirstYearUSD": 500,
+    "baseAnnualAdvertisedDuesUSD": 400,
+    "newMemberInitiationFeeUSD": 100,
+    "ownerIndependentExportPriceUSD": null,
+    "personalSdkOrLocalApiOfferedToThisOwner": false,
+    "checkoutSubmitted": false,
+    "accountEntitlementConfirmedForOwner": false,
+    "taxesOrAccountSpecificChargesCalculated": false,
+    "billingTermsUse": "Published product terms; not a transaction or individual quotation."
+  },
+  "ownerOnboardingEvidence": {
+    "membershipPersonalNotTransferredWithVehicle": true,
+    "emailConsistencyAcrossFoaAndUndercurrentRequired": true,
+    "duplicateOwnerVinRequiresAdminOwnershipReview": true,
+    "acceptedDocumentExamples": [
+      "vehicle registration certificate",
+      "sales receipt",
+      "transfer document"
+    ],
+    "secureDocumentChannel": "Upload in the official portal; no owner documents sent in this research",
+    "publicRegisteredOwnerFormHasVinAndUkraineOption": true,
+    "formPresenceIsNotSuccessfulRegistration": true
+  },
+  "authorizationLayers": [
+    "ownership record",
+    "operator account entitlement",
+    "diagnostic reader grant",
+    "PKC application credential",
+    "command acceptance and actual HVAC execution"
+  ],
+  "additionalPrimarySources": [
+    {
+      "url": "https://play.google.com/store/apps/details?id=com.undercurrent.oceanlinkpro&hl=en",
+      "scope": "Developer description and current publisher support mailbox; not this owner vehicle test"
+    },
+    {
+      "url": "https://register.undercurrent.cloud/",
+      "scope": "Public account creation template, including Europe region; no form submitted"
+    },
+    {
+      "url": "https://developer.android.com/identity/data/autobackup",
+      "scope": "Backup data access/restore limitations"
+    },
+    {
+      "url": "https://chevaliertech.com/access-control-systems-ac/",
+      "scope": "Generic ECU and third-party SDK capabilities; not PKC21.3 owner ACL"
+    },
+    {
+      "url": "https://chevaliertech.com/access-control-systems-nfc/",
+      "scope": "Separate NFC access mechanism; no documented independent climate enrollment"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=PV8Ki7cNN_I",
+      "scope": "FOA title, author and 42-second length verified; English ASR exists but caption retrieval returned 429; no steps inferred"
+    }
+  ],
+  "supplierReplyEvidence": {
+    "date": "2026-10-13",
+    "chevalier": "Diagnostic Tool does not support raw BLE-key export; OLP reader added for FOA; FOA and OVLoop named as SDK licensees; individual owner export not intended.",
+    "dittmar": "Previously confirmed no export with their equipment; no new capability established.",
+    "privateCorrespondencePublished": false,
+    "sameExportQuestionResent": false,
+    "notAGlobalProof": "Supplier reply and specific service capabilities do not prove all firmware modes or all possible independent implementations."
+  },
+  "recoveryScope": {
+    "ownerHasNeverUsedOlp": true,
+    "oldOlpCacheAssumed": false,
+    "relevantDiagnosticExportsFieldNameChecked": 6,
+    "credentialFieldNameMatches": 0,
+    "scopeOfFieldCheck": "Literal field-name search, not a full binary/unknown-secret forensic exclusion.",
+    "remotePrivateJsonType": "Stage 6 TEST_ONLY relay config, not PKC credential; no secret values or source identity published.",
+    "relevantSupplierAndKeyCorrespondenceFound": 4,
+    "foaOrUndercurrentOnboardingConfirmationFoundInTargetedMailSearch": false,
+    "mailSearchIsNotProofOfNoAccount": true,
+    "phoneOrPrivateSystemBackupDatasetsInspected": false,
+    "ownerVehicleCredentialRecovered": false
+  },
+  "proposedContacts": [
+    {
+      "organization": "Undercurrent Inc.",
+      "address": "info@undercurrentauto.com",
+      "role": "Proposed primary technical recipient",
+      "source": "Current Google Play publisher support"
+    },
+    {
+      "organization": "Fisker Owners Association",
+      "address": "info@fiskeroa.com",
+      "role": "Proposed copy for licensee/owner entitlement questions",
+      "source": "Live FOA membership/terms/help pages"
+    },
+    {
+      "organization": "Chevalier Tech",
+      "address": "info@chevaliertech.com",
+      "role": "Secondary only for a new specific integration question",
+      "source": "Official corporate Contact; existing supplier reply used separately"
+    }
+  ],
+  "nextStep": "Owner-reviewed capability enquiry to licensee/operator for independent local climate access, not another Diagnostic Tool raw-export request.",
+  "conclusions": {
+    "allPkcFirmwareModesRequireVAKey": null,
+    "retainedSdkClimateConnectionRequiresExistingKey": true,
+    "keylessOwnerClimateEnrollmentEstablished": false,
+    "independentBleClientPlausibleAfterValidOwnCredential": true,
+    "serverPerNativeClimateCallObserved": false,
+    "keyLifetimeAndPostMembershipValidityEstablished": false,
+    "supportedLocalOwnerApiForWarmEstablished": false,
+    "vehicleClimateStartImplemented": false
+  },
+  "actions": {
+    "vehicleRequests": 0,
+    "bluetoothConnections": 0,
+    "protectedProviderApiCalls": 0,
+    "registrations": 0,
+    "passwordResets": 0,
+    "emailsSent": 0,
+    "mailboxDraftsCreated": 0,
+    "vinOrOwnershipDocumentsSent": 0,
+    "payments": 0,
+    "apkBuilds": 0,
+    "runtimeChanges": 0,
+    "policyChanges": 0,
+    "mainChanges": 0
+  },
+  "retrievalLimitations": [
+    "Some generic web-reader FOA fetches returned errors; public HTTPS fetches of the same pages returned 200. No site-wide outage inferred.",
+    "English ASR captions not read due to HTTP 429; no rate-limit workaround attempted.",
+    "No exact PKC21.3 firmware image or full OEM authorization specification available in the examined materials."
+  ],
+  "offlineValidation": {
+    "result": "PASS_STATIC_AND_DOCUMENTARY_CHECKS_ONLY",
+    "retainedSourceDataFlowAudit": true,
+    "modifiedSdkRejectedByHashBinding": true,
+    "noCredentialOrGlobalFirmwareClaim": true,
+    "localDocumentTargetsChecked": 10,
+    "jsonOutputsParsed": true,
+    "androidRuntimeAndProtectedPoliciesUnchanged": true,
+    "vehicleOperationProven": false
+  }
+}

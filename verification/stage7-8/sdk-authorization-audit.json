@@ -1,0 +1,118 @@
+{
+  "schema": "fisker-warm-pkc-authorization-static-evidence/v1",
+  "source": "Retained OceanLink Pro 1.2.6 / ScuSdk sample; see stage 7 APK provenance",
+  "result": "STATIC_CREDENTIAL_ALIAS_CONFIRMED_OWNER_NOT_PROVISIONED",
+  "files": [
+    {
+      "path": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin.smali",
+      "sha256": "d23f9251ebf7dd25c045efc25087cfd2199a15602bfa1b1a185e8d76bd5c06c1",
+      "boundToPriorOriginalApkAudit": true
+    },
+    {
+      "path": "com/example/oceanlink_scusdk_android/OceanlinkScusdkAndroidPlugin$performConnection$1.smali",
+      "sha256": "e351174e2d169d28e9e0858ab8eb5c8853c4a8943e2cc8b871fa69596b6e2c45",
+      "boundToPriorOriginalApkAudit": false
+    },
+    {
+      "path": "com/chevalier/scusdk/sdk/ScuSdkImpl.smali",
+      "sha256": "82dd9fe64ba026c8b46895425d82be671a607bf2d687651dacbecff87a0d65b4",
+      "boundToPriorOriginalApkAudit": true
+    },
+    {
+      "path": "com/chevalier/scusdk/sdk/ScuSdk.smali",
+      "sha256": "dd43d4ab0b902322cb83787fab8b355906a2ef50df7376099c84625373121729",
+      "boundToPriorOriginalApkAudit": false
+    }
+  ],
+  "checks": {
+    "plugin_declares_bleKey_and_vin_argument_names": true,
+    "connect_reads_explicit_key_and_bleKey_arguments": true,
+    "both_argument_forms_use_same_connection_coroutine": true,
+    "no_missing_credential_fallback_in_this_connect_branch": true,
+    "coroutine_preserves_key_argument_and_calls_VA_API": true,
+    "VA_API_checks_32_characters_before_runTheConnection": true,
+    "run_decodes_key_and_stores_same_bytes_as_VA_key": true,
+    "key_is_set_before_old_service_choice_in_this_path": true,
+    "interface_inventory_has_57_abstract_methods": true
+  },
+  "locations": {
+    "pluginConnectStart": 2284,
+    "sdkConnectByVAKeyStart": 2051,
+    "sdkRunTheConnectionStart": 4008
+  },
+  "conclusion": {
+    "bleKeyAndVAKeyAreSameInputInExaminedClientPath": true,
+    "examinedSdkEntryAcceptsOneKeyStringRatherThanSeparateVAObject": true,
+    "allFirmwareModesRequireThisKey": null,
+    "ownerEnrollmentExistsInFirmware": null,
+    "credentialAcquired": false,
+    "ownerAuthorizationEstablished": false,
+    "climateOperationVerified": false
+  },
+  "publicInterfaceMethods": [
+    "assignAccessoryToUsers",
+    "command",
+    "connectByVAKey",
+    "diagnosticsCMD",
+    "disconnectAll",
+    "getAirOutletModeStatuses",
+    "getAllClimateControlStatuses",
+    "getBcmDoorSts",
+    "getBcmFlLeFrntWinPosn",
+    "getBcmFlLeReWinPosn",
+    "getBcmFlRiFrntWinPosn",
+    "getBcmFlRiReWinPosn",
+    "getBcmPwrMod",
+    "getBcmSunroofPosn",
+    "getBleConnectionState",
+    "getCarAmbientTemp",
+    "getCarInsideTemp",
+    "getCarNetworkMngState",
+    "getCarSeatsHeatLevel",
+    "getClimateControlState",
+    "getCommandResponse",
+    "getConnectionCounter",
+    "getDiagnosticResponse",
+    "getEccDriverSeatSetPointTemp",
+    "getEccPassengerSeatSetPointTemp",
+    "getFanSpeedState",
+    "getPlgmTrSw",
+    "getReturnDeviceVersionType",
+    "getSeatOccupancyFlagNotify",
+    "getSeatOccupancyLockDetection",
+    "getUserProfilesID",
+    "getVersion",
+    "initialize",
+    "permissionsAreGranted",
+    "readUsersProfileAccessory",
+    "remoteVehicleClimateOnScenario",
+    "remoteVehicleClimateOn_SendCMD",
+    "remoteVehicleClimateOn_SendTime",
+    "setACPower",
+    "setAutoMode",
+    "setClimateControl",
+    "setDriverSetPointTemp",
+    "setDriverSetPointTemp",
+    "setFanSpeed",
+    "setOccupancyAlarmSound",
+    "setPassengerSetPointTemp",
+    "setPassengerSetPointTemp",
+    "setRearWindowDefrosting",
+    "setRecirculationPower",
+    "setSeatsHeaterLVL",
+    "setSteeringWheelHeater",
+    "setSyncState",
+    "setWindOutLetModes",
+    "setWindscreenDefrosting",
+    "shutdown",
+    "startContinuousCommand",
+    "stopContinuousCommand"
+  ],
+  "limits": [
+    "Fixed-register text trace is valid only for this pinned sample; not a general Smali analyzer.",
+    "No separate named owner enrollment API in this interface is not proof about generic diagnostics or firmware.",
+    "Only SDK and plugin hashes were already bound in the prior APK audit; the coroutine/interface are retained companion texts.",
+    "No server entitlement rules, firmware ACL, key lifetime or vehicle execution inferred.",
+    "No credentials, backend secrets, MAC, VIN, account addresses or raw packets recorded."
+  ]
+}
