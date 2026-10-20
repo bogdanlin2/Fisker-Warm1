@@ -2,7 +2,7 @@ name: Build and verify Fisker Warm APK
 
 on:
   push:
-    branches: [main, diagnostics/can-overflow-root-cause]
+    branches: [main, diagnostics/can-overflow-root-cause, diagnostics/hvac-passive-stage7-3]
     # Offline audits and reports run CAN CI without manufacturing a new APK.
     # Workflow-only changes can still be validated with workflow_dispatch.
     paths:
@@ -95,7 +95,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Fisker-Warm-0.3.3-Verification
+          name: Fisker-Warm-HVAC-Passive-Verification
           path: |
             build/core-test-results.txt
             build/offline-test-summary.json

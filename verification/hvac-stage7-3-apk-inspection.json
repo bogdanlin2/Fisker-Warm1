@@ -1,0 +1,41 @@
+{
+  "apk": "Fisker-Warm-HVAC-Passive-0.3.4.apk",
+  "profile": "lab02",
+  "sha256": "900466b239ede647c57799dcb35aea7ff8560258ca8cefbfd677303d67c557ff",
+  "applicationId": "com.fiskerwarm.lab02",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "checks": {
+    "apkSignatureV2": true,
+    "apkSignatureV3": true,
+    "expectedSigningCertificate": true,
+    "onlyOneSigner": true,
+    "applicationId": true,
+    "versionCode": true,
+    "versionName": true,
+    "minSdk26": true,
+    "targetSdk35": true,
+    "applicationLabel": true,
+    "exactPermissionSet": true,
+    "noInternet": true,
+    "noServicesReceiversProviders": true,
+    "onlyOneActivity": true,
+    "notDebuggable": true,
+    "backupDisabled": true,
+    "cleartextDisabled": true,
+    "aligned": true,
+    "compatibleUpdate": true
+  },
+  "installedOnPhone": false,
+  "vehicleTested": false,
+  "scope": "Artifact inspection only; does not validate BLE hardware or heating.",
+  "previousApkCompatibility": [
+    {
+      "apk": "Fisker-Warm-Lab-0.3.3-CAN-Diagnostics-Update02.apk",
+      "evidence": "Pinned identity; local delivery also verifies previous APK bytes",
+      "sameApplicationId": true,
+      "sameSigningCertificate": true,
+      "higherVersionCode": true,
+      "inPlaceUpdateCompatible": true
+    }
+  ]
+}

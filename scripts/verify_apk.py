@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from release_profiles import DEFAULT_PROFILE, PROFILES, VERSION_CODE, VERSION_NAME
+from release_profiles import DEFAULT_PROFILE, PROFILES, VERSION_CODE, VERSION_NAME, APPLICATION_LABEL
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,7 +50,7 @@ def main():
         'versionName': bool(package and package.group(3) == VERSION_NAME),
         'minSdk26': "minSdkVersion:'26'" in badging,
         'targetSdk35': "targetSdkVersion:'35'" in badging,
-        'applicationLabel': "application: label='Fisker Warm Lab 0.3.3'" in badging,
+        'applicationLabel': ("application: label='"+APPLICATION_LABEL+"'") in badging,
         'exactPermissionSet': permissions == expected,
         'noInternet': 'android.permission.INTERNET' not in permissions,
         'noServicesReceiversProviders': not re.search(r'E: (service|receiver|provider)\b',xml),

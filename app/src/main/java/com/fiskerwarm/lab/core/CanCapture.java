@@ -18,6 +18,27 @@ public final class CanCapture {
     public static final int MAX_CAPTURE_LINES = 1500;
     public static final int MAX_SAMPLES_PER_ID = 12;
     public static final int MAX_RAW_TRACE_BYTES=2048, MAX_NOTIFICATION_TRACE=64, MAX_INVALID_LINE_SAMPLES=3;
+    public static final int MAX_HVAC_FRAMES=4096,MAX_HVAC_PACKETS=4096,MAX_HVAC_RAW_BYTES=512_000;
+    public static final class Frame {
+        public final String id, payloadHex,source;
+        public final int dlc;
+        public final long receivedNanos, notificationNumber;
+        private Frame(String id,int dlc,byte[] payload,long receivedNanos,long notificationNumber,boolean adapterInput) {
+            this.id=id;this.dlc=dlc;this.payloadHex=ElmParser.hexText(payload);
+            this.receivedNanos=receivedNanos;this.notificationNumber=notificationNumber;
+            this.source=adapterInput?"ADAPTER_BLE_NOTIFICATION":"SYNTHETIC_TEST";
+        }
+        public byte[] payload() {
+            String s=payloadHex.replace(" ","");byte[] out=new byte[s.length()/2];
+            for(int i=0;i<out.length;i++)out[i]=(byte)Integer.parseInt(s.substring(i*2,i*2+2),16);
+            return out;
+        }
+    }
+    public static final class Packet {
+        public final String hex;
+        public final long receivedNanos;
+        private Packet(byte[] bytes,long nanos) {hex=ElmParser.hexText(bytes);receivedNanos=nanos;}
+    }
     public static final class NotificationTrace {
         public final int bytes;
         public final long arrivalMicros,processingMicros;
@@ -52,9 +73,14 @@ public final class CanCapture {
         public final List<String> invalidLineSamples=new ArrayList<>();
         public String adapterError, endReason, stopError;
         public final Map<String,IdSummary> ids=new LinkedHashMap<>();
+        public int expectedId=-1,droppedFrames,droppedPackets;
+        public long startedNanos,startedEpochMillis;
+        public boolean unexpectedIdOutsideFilter,containsSyntheticInput;
+        public final List<Frame> frames=new ArrayList<>();
+        public final List<Packet> packets=new ArrayList<>();
         public boolean incomplete() {
             return adapterBufferFull || truncated || invalidFrameLines>0 || adapterError!=null
-                    || sessionBudgetExceeded || !stopConfirmed || !windowElapsed || lateStartWrite;
+                    || unexpectedIdOutsideFilter || sessionBudgetExceeded || !stopConfirmed || !windowElapsed || lateStartWrite;
         }
     }
     private CanCapture() { }
@@ -86,7 +112,8 @@ public final class CanCapture {
         s.ignoredLines++;s.invalidFrameLines++;
         if(s.invalidLineSamples.size()<MAX_INVALID_LINE_SAMPLES)s.invalidLineSamples.add(line.substring(0,Math.min(160,line.length())));
     }
-    private static void parseFrame(String line,Snapshot s) {
+    private static void parseFrame(String line,Snapshot s) {parseFrame(line,s,0,0,false);}
+    private static void parseFrame(String line,Snapshot s,long receivedNanos,long notificationNumber,boolean adapterInput) {
         String[] p=line.split("\\s+");
         if(p.length<2 || !HEADER.matcher(p[0]).matches()) {invalid(s,line);return;}
         int start=1, dlc=-1;
@@ -94,11 +121,20 @@ public final class CanCapture {
         int length=p.length-start;
         if(length>8 || (dlc<0 && length==0) || (dlc>=0 && dlc!=length)) {invalid(s,line);return;}
         for(int j=start;j<p.length;j++) if(!BYTE.matcher(p[j]).matches()) {invalid(s,line);return;}
+        if(s.expectedId>=0 && (dlc!=8 || length!=8)) {invalid(s,line);s.truncated=true;return;}
         StringBuilder bytes=new StringBuilder();
         for(int j=start;j<p.length;j++) {if(j>start)bytes.append(' ');bytes.append(p[j]);}
         IdSummary id=s.ids.get(p[0]);
         if(id==null) {id=new IdSummary(p[0]);s.ids.put(p[0],id);}
         id.count++;s.frameCount++;
+        if(s.expectedId>=0) {
+            if(Integer.parseInt(p[0],16)!=s.expectedId)s.unexpectedIdOutsideFilter=true;
+            if(s.frames.size()<MAX_HVAC_FRAMES) {
+                byte[] payload=new byte[length];
+                for(int j=0;j<length;j++)payload[j]=(byte)Integer.parseInt(p[start+j],16);
+                s.frames.add(new Frame(p[0],dlc,payload,receivedNanos,notificationNumber,adapterInput));
+            } else {s.droppedFrames++;s.truncated=true;}
+        }
         if(dlc>=0)s.framesWithDlc++;else s.framesWithoutDlc++;
         if(id.samples.size()<MAX_SAMPLES_PER_ID)id.samples.add(bytes.toString());
     }
@@ -107,21 +143,38 @@ public final class CanCapture {
         private final Snapshot snapshot=new Snapshot();
         private final StringBuilder line=new StringBuilder();
         private final long startedNanos;
-        private int lines;
-        private boolean discardLine, finished;
+        private int lines,retainedRawBytes;
+        private long lastReceivedNanos;
+        private boolean discardLine, finished,lineHadSynthetic;
         private final StringBuilder rawTrace;
         public Stream() {this(System.nanoTime());}
         public Stream(long startedNanos) {this(startedNanos,false);}
         public Stream(long startedNanos,boolean diagnosticTrace) {this.startedNanos=startedNanos;rawTrace=diagnosticTrace?new StringBuilder():null;}
+        public Stream(long startedNanos,int expectedId) {
+            this(startedNanos,false);
+            if(expectedId!=0x534 && expectedId!=0x373)throw new IllegalArgumentException("Unsupported HVAC target");
+            snapshot.expectedId=expectedId;snapshot.startedNanos=startedNanos;
+            snapshot.startedEpochMillis=System.currentTimeMillis();
+        }
         public void accept(byte[] bytes) {
             accept(bytes,System.nanoTime());
         }
         public void accept(byte[] bytes,long receivedNanos) {
+            accept(bytes,receivedNanos,false);
+        }
+        public void accept(byte[] bytes,long receivedNanos,boolean adapterInput) {
             if(finished)throw new IllegalStateException("Capture already finished");
             if(bytes==null || bytes.length==0)return;
             long processingStart=System.nanoTime();
             long elapsed=Math.max(0,TimeUnit.NANOSECONDS.toMillis(receivedNanos-startedNanos));
             snapshot.notificationCount++;
+            lastReceivedNanos=receivedNanos;
+            if(!adapterInput)snapshot.containsSyntheticInput=true;
+            if(snapshot.expectedId>=0) {
+                if(snapshot.packets.size()<MAX_HVAC_PACKETS && retainedRawBytes+bytes.length<=MAX_HVAC_RAW_BYTES) {
+                    snapshot.packets.add(new Packet(bytes,receivedNanos));retainedRawBytes+=bytes.length;
+                } else {snapshot.droppedPackets++;snapshot.truncated=true;}
+            }
             snapshot.receivedBytes+=bytes.length;
             snapshot.minNotificationBytes=snapshot.notificationCount==1?bytes.length:Math.min(snapshot.minNotificationBytes,bytes.length);
             snapshot.maxNotificationBytes=Math.max(snapshot.maxNotificationBytes,bytes.length);
@@ -130,6 +183,7 @@ public final class CanCapture {
             snapshot.lastNotificationMillis=elapsed;
             for(byte b:bytes) {
                 int c=b&255;
+                if(!adapterInput)lineHadSynthetic=true;
                 if(rawTrace!=null) {
                     if(rawTrace.length()<MAX_RAW_TRACE_BYTES)rawTrace.append(c<128?(char)c:'?');
                     else snapshot.rawTraceTruncated=true;
@@ -177,12 +231,13 @@ public final class CanCapture {
         }
         private void flush(long elapsed) {
             String text=line.toString().trim().toUpperCase(Locale.ROOT);line.setLength(0);
+            boolean adapterInput=!lineHadSynthetic;lineHadSynthetic=false;
             if(discardLine) {snapshot.ignoredLines++;discardLine=false;return;}
             if(text.isEmpty())return;
             noteOverflow(text,elapsed);
             if(status(text,snapshot))return;
-            if(lines++>=MAX_CAPTURE_LINES) {snapshot.truncated=true;return;}
-            parseFrame(text,snapshot);
+            if(lines++>=(snapshot.expectedId<0?MAX_CAPTURE_LINES:MAX_HVAC_FRAMES)) {snapshot.truncated=true;snapshot.droppedFrames++;return;}
+            parseFrame(text,snapshot,lastReceivedNanos,snapshot.notificationCount,adapterInput);
         }
         private void discardPartial(long elapsed) {
             String text=line.toString().trim().toUpperCase(Locale.ROOT);
@@ -200,6 +255,9 @@ public final class CanCapture {
         public boolean hasAdapterError() {return snapshot.adapterError!=null;}
         public boolean hasStopped() {return snapshot.adapterStopped;}
         public boolean isTruncated() { return snapshot.truncated; }
+        public boolean hasUnexpectedId() {return snapshot.unexpectedIdOutsideFilter;}
+        /** Caller must hold its receive lock. Does not create RX events or refresh times. */
+        public Snapshot current() {return snapshot;}
         public Snapshot finish() {
             if(!finished) {discardPartial(snapshot.lastNotificationMillis);finished=true;if(rawTrace!=null)snapshot.rawAsciiPrefix=rawTrace.toString();}
             return snapshot;
