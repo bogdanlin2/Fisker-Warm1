@@ -1,0 +1,123 @@
+{
+  "schema": "fisker-warm-stage7.2-source-audit-v1",
+  "source_commit": "68a88af90b369c1b2c55d7949c4c848f41deb857",
+  "source_files": [
+    {
+      "path": "README.md",
+      "git_blob": "977ffa5c4949119eb53601c70fc50f71da932a0b",
+      "sha256": "a4b57a2ae98d4040529147c28011b4b1d1a8170d17e1ada01748ce578161cd86",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/README.md"
+    },
+    {
+      "path": "LICENSE.md",
+      "git_blob": "650b6f55b3764720f9cc11251b0d8921eae60792",
+      "sha256": "863c0cc5bdda739aa7feed92b3d3834c6786bcf892fc7b624eb1ff5b172184da",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/LICENSE.md"
+    },
+    {
+      "path": "static/js/carcatalog.js",
+      "git_blob": "3d91ad247f79a3c7f259f2778ac941e9fd62d212",
+      "sha256": "f50921fc9aa9093e6be978a057a1d87317dc724783cfbabecea8cbbddaf950fd",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/static/js/carcatalog.js"
+    },
+    {
+      "path": "static/js/cancmd.js",
+      "git_blob": "a8c6be6312248ca773377f4d31f527f7f7b6e96a",
+      "sha256": "0efdaf1c5c07edfe75cecf814566153edc2d07fa91b00690665bf87918d3ccee",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/static/js/cancmd.js"
+    },
+    {
+      "path": "static/js/ibus_tables.js",
+      "git_blob": "e65746276b335260f5e5ac67a498ebf95bac9236",
+      "sha256": "b35026826c65ea76bada8aaf8f90718d91e552f2afc9b313cb45d2b60600bf05",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/static/js/ibus_tables.js"
+    },
+    {
+      "path": "dbc/fisker_ocean_ibus.dbc",
+      "git_blob": "823ddccbca4e6513c9781aa8789915db0b45e850",
+      "sha256": "0cbf35b8f65e8f1184b4c0c9db4fc9877c33382b8d744cf717a69f3ff622912b",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/dbc/fisker_ocean_ibus.dbc"
+    },
+    {
+      "path": "tools/gen_ibus.py",
+      "git_blob": "8c98965af8246ec79fd35bb7f6e79473ffc5b78f",
+      "sha256": "ec790c0fd57a7f86159a59b5d56b8124c430464bfdd38a49ff5c97143b25cb1e",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/tools/gen_ibus.py"
+    },
+    {
+      "path": "android/canbridge/main.go",
+      "git_blob": "174f76903a197bb73dd38b68df8242293c3ecc8d",
+      "sha256": "e917a85c2bf3a1ec48476174aca072ac4bc88568ae8b6ed124b66c188ab627ac",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/android/canbridge/main.go"
+    },
+    {
+      "path": "android/app/src/main/java/ai/sunnypilot/webhud/CanBridge.kt",
+      "git_blob": "20ea9075877e4c1e7f16d14733ae714badd70ea8",
+      "sha256": "2927468e5f1762336550491cc6990f8f685951dd09eb14793a8cc1f6c1cd2a94",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/android/app/src/main/java/ai/sunnypilot/webhud/CanBridge.kt"
+    }
+  ],
+  "source_consistency": "PASS",
+  "bit_layout": {
+    "method": "independent Motorola sawtooth traversal vs byte-mask formulas",
+    "byte_values_per_field": 256,
+    "fields": [
+      {
+        "id": "534",
+        "name": "ICC_ECCSysSwtCmd",
+        "start": 57,
+        "length": 2
+      },
+      {
+        "id": "373",
+        "name": "ECC_CrtSts",
+        "start": 3,
+        "length": 4
+      },
+      {
+        "id": "373",
+        "name": "ECC_WindSpdSts",
+        "start": 12,
+        "length": 4
+      },
+      {
+        "id": "373",
+        "name": "ECC_HeatSts",
+        "start": 32,
+        "length": 1
+      },
+      {
+        "id": "373",
+        "name": "ECC_RemSts",
+        "start": 60,
+        "length": 2
+      },
+      {
+        "id": "4F8",
+        "name": "TBOX_PreCondTriggerReq",
+        "start": 42,
+        "length": 3
+      }
+    ],
+    "result": "PASS"
+  },
+  "findings": {
+    "icc_native_can_candidate": "0x534 ICC_ECCSysSwtCmd; source-level only",
+    "tbox_preconditioning_candidate": "0x4F8 TBOX_PreCondTriggerReq; source-level only",
+    "full_534_frame_has_other_setting_fields": true,
+    "tbox_4f8_has_checksum_and_counter": true,
+    "upstream_rx_keepalive_is_not_a_fresh_vehicle_rx_proof": true
+  },
+  "limits": {
+    "no_original_matrix_xlsx": true,
+    "no_owner_vehicle_trace": true,
+    "obd_routing": "UNVERIFIED",
+    "vehicle_authorization": "UNVERIFIED",
+    "sleep_locked_start": "UNVERIFIED",
+    "last_settings_retention": "UNVERIFIED",
+    "automatic_shutdown": "UNVERIFIED",
+    "actual_hvac_started_by_fisker_warm": false
+  },
+  "vehicle_commands_sent": 0,
+  "apk_created": 0
+}
