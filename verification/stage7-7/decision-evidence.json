@@ -1,0 +1,260 @@
+{
+  "stage": "7.7",
+  "checkedAtUTC": "2026-10-20T12:14:25.414Z",
+  "type": "documentary_decision_only",
+  "projectBaseline": {
+    "repository": "bogdanlin2/Fisker-Warm1",
+    "commit": "3558805766debe37e9e54050c29416a9f34f1fc8",
+    "pr": 12
+  },
+  "repositories": [
+    {
+      "repository": "moistpope/oceanfront-view",
+      "headCommit": "68a88af90b369c1b2c55d7949c4c848f41deb857",
+      "committerDate": "2026-10-19T15:42:36Z",
+      "htmlUrl": "https://github.com/moistpope/oceanfront-view/commit/68a88af90b369c1b2c55d7949c4c848f41deb857",
+      "assessment": "Matches the commit already examined in prior project research; no new vehicle implementation claimed."
+    },
+    {
+      "repository": "Fiskeretta/fiskeretta-diagnostics",
+      "headCommit": "2254dbc4845346523da91c3a1a7b85018767de7b",
+      "committerDate": "2026-06-14T22:59:54Z",
+      "htmlUrl": "https://github.com/Fiskeretta/fiskeretta-diagnostics/commit/2254dbc4845346523da91c3a1a7b85018767de7b",
+      "assessment": "Matches the commit already examined in prior project research; no new vehicle implementation claimed."
+    },
+    {
+      "repository": "MichaelOE/homeassistant-ocean_pulse",
+      "headCommit": "842a98ce0af959bec2a42796e59db563de8696d5",
+      "committerDate": "2026-10-19T15:43:43Z",
+      "htmlUrl": "https://github.com/MichaelOE/homeassistant-ocean_pulse/commit/842a98ce0af959bec2a42796e59db563de8696d5",
+      "assessment": "Matches the commit already examined in prior project research; no new vehicle implementation claimed."
+    },
+    {
+      "repository": "puddletools/SaavyScripts",
+      "headCommit": "eaf134c680f30b04f12ffb99eacffe7531ec90d7",
+      "committerDate": "2025-01-04T00:38:12Z",
+      "htmlUrl": "https://github.com/puddletools/SaavyScripts/commit/eaf134c680f30b04f12ffb99eacffe7531ec90d7",
+      "assessment": "Matches the commit already examined in prior project research; no new vehicle implementation claimed."
+    }
+  ],
+  "pulseHaFiles": [
+    {
+      "repositoryPath": "custom_components/ocean_pulse/entities_button.py",
+      "gitBlob": "ca1257bfc9b63caff0d52451ffc58697917f12ac",
+      "url": "https://github.com/MichaelOE/homeassistant-ocean_pulse/blob/842a98ce0af959bec2a42796e59db563de8696d5/custom_components/ocean_pulse/entities_button.py"
+    },
+    {
+      "repositoryPath": "custom_components/ocean_pulse/button.py",
+      "gitBlob": "421f38a9f19663ee9c070a22d0f7412244c59201",
+      "url": "https://github.com/MichaelOE/homeassistant-ocean_pulse/blob/842a98ce0af959bec2a42796e59db563de8696d5/custom_components/ocean_pulse/button.py"
+    },
+    {
+      "repositoryPath": "custom_components/ocean_pulse/__init__.py",
+      "gitBlob": "f5291b61ef6de0870cf739d9fa9bd0c0e8607388",
+      "url": "https://github.com/MichaelOE/homeassistant-ocean_pulse/blob/842a98ce0af959bec2a42796e59db563de8696d5/custom_components/ocean_pulse/__init__.py"
+    },
+    {
+      "repositoryPath": "custom_components/ocean_pulse/api.py",
+      "gitBlob": "da1ff4d0a7ab58847c81d6fe380d8112af22afdd",
+      "url": "https://github.com/MichaelOE/homeassistant-ocean_pulse/blob/842a98ce0af959bec2a42796e59db563de8696d5/custom_components/ocean_pulse/api.py"
+    }
+  ],
+  "sourcePages": [
+    {
+      "url": "https://play.google.com/store/apps/details?id=com.undercurrent.oceanlinkpro&hl=en",
+      "observed": "Developer advertises cabin preconditioning for PKC21. Not proof of this owner's HVAC execution."
+    },
+    {
+      "url": "https://www.oceanlinkpulse.com/",
+      "observed": "Internal Spider Port CAN installation, Ocean-specific multi-CAN and wake/sleep engineering. Remote Commands demo section says videos coming soon. No complete start/stop protocol found on the read page."
+    },
+    {
+      "url": "https://ocean.ovloop.com/",
+      "observed": "Cabin preconditioning advertised; $499/year plus applicable taxes; app onboarding after 2.2.3; legacy third-party APIs disabled. Does not establish an authorized independent Warm API."
+    }
+  ],
+  "reusedEvidence": [
+    {
+      "path": "docs/PKC-CLIMATE-ON-STAGE7-UA.md",
+      "scope": "Retained APK/SDK static start candidate, authenticated BLE transport, misleading callback/cache limitations.",
+      "sha256": "a473198b2274c67bdc1fe0dd6224fc36024f27c8e8284614999e92aab1e6db63"
+    },
+    {
+      "path": "docs/PKC-OWNER-KEY-STAGE7-1-UA.md",
+      "scope": "Retained key reader path and vendor replies; no credential in owner's history; firmware ACL unknown.",
+      "sha256": "0c021cd14e77ee2baa2d9db4b38615a8be8595a012cde185b901240bae23bf76"
+    },
+    {
+      "path": "docs/HVAC-WITHOUT-VA-STAGE7-2-UA.md",
+      "scope": "Pinned HMI CAN candidate and distinction from native remote start.",
+      "sha256": "0512cb4b8648bde77433bba807fbb0f3921be761cf4e456a6702e67493d9ae34"
+    },
+    {
+      "path": "docs/FISKER-CAN-TOPOLOGY-OBD-STAGE7-6-UA.md",
+      "scope": "Independent completed physical log analysis and topology source audit. No physical experiment repeated.",
+      "sha256": "3e5b3c7bed55ca04aa7cde0551930342dfdf7ed2fc5ab20db077318146385b13"
+    },
+    {
+      "path": "verification/stage7-6/upstream-provenance.json",
+      "scope": "Pinned DBC generator/trace inventory. No new raw trace claimed.",
+      "sha256": "3a62a37b4afcfa85c4947dea49a08d4d123dcf9c960e59f585b13fd5aed121a0"
+    }
+  ],
+  "searchLimitations": {
+    "githubQueries": [
+      {
+        "query": "remoteVehicleClimateOn_SendCMD",
+        "returnedResults": 0
+      },
+      {
+        "query": "F160808130021",
+        "returnedResults": 5,
+        "scope": "Results were within this project; not an independent implementation."
+      },
+      {
+        "query": "TBOX_PreCondTriggerReq",
+        "returnedResults": 0
+      }
+    ],
+    "warning": "A known DBC literal was also absent from search results. Empty index search is not proof of absence. Direct repository reads and retained source identities take precedence.",
+    "web": "Targeted searches did not produce a new reproducible owner-provisioning or locked-sleep start procedure. Some results were irrelevant, and the OceanLink FAQ/Chevalier pages could not be read on this pass; no conclusion about all private or unpublished implementations follows."
+  },
+  "decision": {
+    "pkc": {
+      "status": "CONDITIONAL_PREFERRED_EXECUTION_INTERFACE",
+      "blocker": "No supported owner credential/grant established; PKC21.3 acceptance, wake, last settings and native stop/timeout unverified.",
+      "resumeOn": "New permitted provisioning/grant or exact diagnostic/firmware evidence. Do not repeat old emails, APK functions or session-only test."
+    },
+    "ibus1": {
+      "status": "PRIORITY_FOR_NEXT_SERVICE_EVIDENCE",
+      "blocker": "No VIN-verified internal capture; HMI command code is not locked-sleep remote-start proof.",
+      "nextStep": "Validate one existing service capture or concrete one-time passive capture offer using existing service equipment. No contact, vehicle work or purchase performed."
+    },
+    "purchasesAuthorized": false,
+    "apkNeeded": false,
+    "localClimateImplemented": false,
+    "remoteClimateImplemented": false
+  },
+  "actionsPerformed": {
+    "vehicleRequests": 0,
+    "vehicleCommands": 0,
+    "providerPrivateApiRequests": 0,
+    "providerMessages": 0,
+    "hardwarePurchases": 0,
+    "apkBuilds": 0,
+    "mainChanges": 0,
+    "runtimeChanges": 0
+  },
+  "validationScope": "Only document/evidence consistency and unchanged runtime. Not automotive functionality tests.",
+  "validation": {
+    "scope": "Document and source consistency only; no vehicle or Android runtime test",
+    "checks": [
+      {
+        "check": "Retained research baseline",
+        "passed": true
+      },
+      {
+        "check": "Git blob custom_components/ocean_pulse/entities_button.py",
+        "passed": true,
+        "details": {
+          "gitBlob": "ca1257bfc9b63caff0d52451ffc58697917f12ac"
+        }
+      },
+      {
+        "check": "Git blob custom_components/ocean_pulse/button.py",
+        "passed": true,
+        "details": {
+          "gitBlob": "421f38a9f19663ee9c070a22d0f7412244c59201"
+        }
+      },
+      {
+        "check": "Git blob custom_components/ocean_pulse/__init__.py",
+        "passed": true,
+        "details": {
+          "gitBlob": "f5291b61ef6de0870cf739d9fa9bd0c0e8607388"
+        }
+      },
+      {
+        "check": "Git blob custom_components/ocean_pulse/api.py",
+        "passed": true,
+        "details": {
+          "gitBlob": "da1ff4d0a7ab58847c81d6fe380d8112af22afdd"
+        }
+      },
+      {
+        "check": "Reused documents unchanged",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-CLIMATE-ON-STAGE7-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-OWNER-KEY-STAGE7-1-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target HVAC-WITHOUT-VA-STAGE7-2-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target FISKER-CAN-TOPOLOGY-OBD-STAGE7-6-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target ../verification/stage7-7/decision-evidence.json",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-CLIMATE-ON-STAGE7-UA.md#2-що-відомо-про-справжній-start-only",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-OWNER-KEY-STAGE7-1-UA.md#2-відновлений-ланцюг-отримання-ключа",
+        "passed": true
+      },
+      {
+        "check": "Local target FISKER-CAN-TOPOLOGY-OBD-STAGE7-6-UA.md#4-фізична-архітектура-і-логічні-маршрути",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-CLIMATE-ON-STAGE7-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target PKC-OWNER-KEY-STAGE7-1-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target HVAC-WITHOUT-VA-STAGE7-2-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target FISKER-CAN-TOPOLOGY-OBD-STAGE7-6-UA.md",
+        "passed": true
+      },
+      {
+        "check": "Local target ../verification/stage7-7/decision-evidence.json",
+        "passed": true
+      },
+      {
+        "check": "No runtime modifications",
+        "passed": true
+      },
+      {
+        "check": "Explicit non-implementation statement",
+        "passed": true
+      },
+      {
+        "check": "No purchase authorized",
+        "passed": true
+      },
+      {
+        "check": "All current-stage actions remain documentary",
+        "passed": true
+      }
+    ],
+    "result": "PASS_DOCUMENTARY_CONSISTENCY_ONLY",
+    "localReferenceCount": 13
+  }
+}
