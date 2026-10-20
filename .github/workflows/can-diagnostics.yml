@@ -5,6 +5,7 @@ on:
       - diagnostics/can-overflow-root-cause
       - diagnostics/hvac-passive-stage7-3
       - diagnostics/can-rx-stage7-4
+      - diagnostics/can-burst-stage7-5
   pull_request:
     branches: [main]
   workflow_dispatch:

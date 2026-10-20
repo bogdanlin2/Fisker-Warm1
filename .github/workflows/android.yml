@@ -2,7 +2,7 @@ name: Build and verify Fisker Warm APK
 
 on:
   push:
-    branches: [main, diagnostics/can-overflow-root-cause, diagnostics/hvac-passive-stage7-3, diagnostics/can-rx-stage7-4]
+    branches: [main, diagnostics/can-overflow-root-cause, diagnostics/hvac-passive-stage7-3, diagnostics/can-rx-stage7-4, diagnostics/can-burst-stage7-5]
     # Offline audits and reports run CAN CI without manufacturing a new APK.
     # Workflow-only changes can still be validated with workflow_dispatch.
     paths:
@@ -81,7 +81,7 @@ jobs:
         run: python3 scripts/build_android.py --profile "${{ steps.signing.outputs.profile }}"
 
       - name: Verify package, version, permissions, manifest, and signature
-        run: python3 scripts/verify_apk.py --profile "${{ steps.signing.outputs.profile }}" --build-tools "$ANDROID_SDK_ROOT/build-tools/35.0.0" --previous-identity-json verification/installed-0.3.4-identity.json --require-compatible-update
+        run: python3 scripts/verify_apk.py --profile "${{ steps.signing.outputs.profile }}" --build-tools "$ANDROID_SDK_ROOT/build-tools/35.0.0" --previous-identity-json verification/installed-0.3.5-identity.json --require-compatible-update
 
       - name: Upload verified installable APK
         uses: actions/upload-artifact@v4

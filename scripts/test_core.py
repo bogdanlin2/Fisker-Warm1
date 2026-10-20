@@ -12,8 +12,8 @@ compile_result=subprocess.run(['java','com.sun.tools.javac.Main','--release','8'
 if compile_result.returncode:
     print(compile_result.stdout+compile_result.stderr);sys.exit(compile_result.returncode)
 summary=[];output=[];failed=0
-for suite in ['CoreChecks','CanDiagnosticsChecks','NetworkAuditChecks','HvacPassiveChecks','CanRxChecks']:
-    run=subprocess.run(['java','-cp',str(build),suite],text=True,capture_output=True,timeout=60)
+for suite in ['CoreChecks','CanDiagnosticsChecks','NetworkAuditChecks','HvacPassiveChecks','CanRxChecks','CanBurstChecks']:
+    run=subprocess.run(['java','-Dfiskerwarm.repoRoot='+str(ROOT),'-cp',str(build),suite],text=True,capture_output=True,timeout=60)
     log=run.stdout+run.stderr;print(log,end='');output.append(log)
     total=re.search(r'^TOTAL (\d+) (?:CAN regression )?checks passed',log,re.MULTILINE)
     passed=run.returncode==0 and total is not None and int(total.group(1))>0
@@ -40,6 +40,14 @@ log=run.stdout+run.stderr;print(log,end='');output.append(log)
 total=re.search(r'Ran (\d+) tests?',log)
 passed=run.returncode==0 and total is not None and int(total.group(1))>0
 summary.append({'suite':'CanRxExportChecks','checksPassed':int(total.group(1)) if passed else 0,'passed':passed,'exitCode':run.returncode})
+if not passed:failed=1
+(ROOT/'build/core-test-results.txt').write_text(''.join(output),encoding='utf-8')
+(ROOT/'build/offline-test-summary.json').write_text(json.dumps({'suites':summary,'allPassed':failed==0,'vehicleConnected':False},indent=2)+'\n')
+run=subprocess.run([sys.executable,'-m','unittest','discover','-s',str(ROOT/'tests'),'-p','test_can_burst.py'],text=True,capture_output=True,timeout=30,cwd=ROOT)
+log=run.stdout+run.stderr;print(log,end='');output.append(log)
+total=re.search(r'Ran (\d+) tests?',log)
+passed=run.returncode==0 and total is not None and int(total.group(1))>0
+summary.append({'suite':'CanBurstLogChecks','checksPassed':int(total.group(1)) if passed else 0,'passed':passed,'exitCode':run.returncode})
 if not passed:failed=1
 (ROOT/'build/core-test-results.txt').write_text(''.join(output),encoding='utf-8')
 (ROOT/'build/offline-test-summary.json').write_text(json.dumps({'suites':summary,'allPassed':failed==0,'vehicleConnected':False},indent=2)+'\n')

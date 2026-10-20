@@ -1,0 +1,275 @@
+{
+  "format": "fisker-warm-can-burst-analysis-1",
+  "dataOrigin": "OWNER_REAL_EXPORT_DERIVED_ANALYSIS",
+  "analysisIsNewVehicleTest": false,
+  "sourceFile": "Fisker-Warm-HVAC-2026-10-20T07-32-39.426209Z.json",
+  "sourceSha256": "e64d837495bd40e2d34828544a98ac7b75b5fd7d2fe35df78ccdc549a78a266c",
+  "selectedRunStartedAt": "2026-10-20T07:32:26.398847Z",
+  "selectedRunAppVersion": "0.3.5-lab",
+  "historicalRunsExcluded": 5,
+  "counts": {
+    "rawNotifications": 7,
+    "rawBytes": 1305,
+    "independentlyValidCanLines": 40,
+    "identicalCompleteLineVariants": {
+      "0E9 8 2D F0 FF FF 9E 57 FF FF": 40
+    },
+    "malformedCanLines": [
+      {
+        "text": "0E9 8 2D F0    9E  FF FF",
+        "receivedNanos": 71409385783642,
+        "byteEnd": 1173
+      },
+      {
+        "text": "0E9 8 2D F0 FF F",
+        "receivedNanos": 71409400388434,
+        "byteEnd": 1283
+      }
+    ],
+    "validLinesBeforeSpaceRequest": 6,
+    "validLinesAfterSpaceRequest": 34,
+    "distinctNotificationPayloads": 7
+  },
+  "timing": {
+    "captureStartNanos": 71409250773330,
+    "captureElapsedMillisUntilStopDecision": 53,
+    "stopDrainMillis": 98,
+    "lastCaptureNotificationRelativeMs": 149.615104,
+    "firstToLastNotificationMs": 101.807188,
+    "limitReachedNotificationNanos": 71409298581246,
+    "limitExactCpuParseTimeWasRecorded": false,
+    "thresholdNotificationToSpaceRequestMs": 6.070105,
+    "bufferFullNotificationAfterSpaceRequestMs": 95.737083,
+    "physicalOverflowTimeKnown": false,
+    "physicalCanFrameTimesKnown": false,
+    "originalApplicationAdapterResetConfirmed": true,
+    "postCaptureResetEvents": [
+      {
+        "kind": "TX_REQUEST",
+        "timestampNanos": 71409407204319,
+        "relativeToCaptureMs": 156.430989,
+        "ascii": "ATZ\r"
+      },
+      {
+        "kind": "TX_QUEUE_RESULT",
+        "timestampNanos": 71409409734528,
+        "relativeToCaptureMs": 158.961198,
+        "ascii": "ATZ\r"
+      },
+      {
+        "kind": "TX_CALLBACK",
+        "timestampNanos": 71409443792080,
+        "relativeToCaptureMs": 193.01875,
+        "ascii": "ATZ\r"
+      },
+      {
+        "kind": "TX_COMPLETE",
+        "timestampNanos": 71409444140830,
+        "relativeToCaptureMs": 193.3675,
+        "ascii": "ATZ\r"
+      },
+      {
+        "kind": "RX_NOTIFICATION",
+        "timestampNanos": 71410361726350,
+        "relativeToCaptureMs": 1110.95302,
+        "ascii": "\r\rELM327 v2.2\r\r>"
+      }
+    ]
+  },
+  "assertions": {
+    "rawCaptureMatchesBoundaryJournal": true,
+    "androidCountMatchesIndependentCount": true,
+    "twoCaptureCopiesNotDoubleCounted": true,
+    "onlyOneAtmaRequest": true,
+    "onlyOneStopSpace": true,
+    "noControl373PhasePerformed": true,
+    "bufferFullReceivedAfterStopRequest": true
+  },
+  "timeline": [
+    {
+      "event": "TX_REQUEST",
+      "timestampNanos": 71409251963799,
+      "relativeToCaptureMs": 1.190469,
+      "delayFromPreviousEventMs": null,
+      "bytes": 5,
+      "txId": 17,
+      "status": -1,
+      "ascii": "ATMA\r"
+    },
+    {
+      "event": "TX_QUEUE_RESULT",
+      "timestampNanos": 71409253964059,
+      "relativeToCaptureMs": 3.190729,
+      "delayFromPreviousEventMs": 2.00026,
+      "bytes": 5,
+      "txId": 17,
+      "status": 0,
+      "ascii": "ATMA\r"
+    },
+    {
+      "event": "TX_CALLBACK",
+      "timestampNanos": 71409277644632,
+      "relativeToCaptureMs": 26.871302,
+      "delayFromPreviousEventMs": 23.680573,
+      "bytes": 5,
+      "txId": 17,
+      "status": 0,
+      "ascii": "ATMA\r"
+    },
+    {
+      "event": "TX_COMPLETE",
+      "timestampNanos": 71409278004371,
+      "relativeToCaptureMs": 27.231041,
+      "delayFromPreviousEventMs": 0.359739,
+      "bytes": 5,
+      "txId": 17,
+      "status": 0,
+      "ascii": "ATMA\r"
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409298581246,
+      "relativeToCaptureMs": 47.807916,
+      "delayFromPreviousEventMs": 20.576875,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "dba1f573a3f5b6d4af994bec06a2ea01ce5f4473a4f8d29b3416c6d7a670f41a",
+      "validLinesCompletedInNotification": 6,
+      "cumulativeValidLines": 6,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "TX_REQUEST",
+      "timestampNanos": 71409304651351,
+      "relativeToCaptureMs": 53.878021,
+      "delayFromPreviousEventMs": 6.070105,
+      "bytes": 1,
+      "txId": 18,
+      "status": -1,
+      "ascii": " "
+    },
+    {
+      "event": "TX_QUEUE_RESULT",
+      "timestampNanos": 71409307541559,
+      "relativeToCaptureMs": 56.768229,
+      "delayFromPreviousEventMs": 2.890208,
+      "bytes": 1,
+      "txId": 18,
+      "status": 0,
+      "ascii": " "
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409316394736,
+      "relativeToCaptureMs": 65.621406,
+      "delayFromPreviousEventMs": 8.853177,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "773380d39f85491d0c84d429ccaf6a94bead88c821a01c0f21ab6b5112476e44",
+      "validLinesCompletedInNotification": 6,
+      "cumulativeValidLines": 12,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409338084476,
+      "relativeToCaptureMs": 87.311146,
+      "delayFromPreviousEventMs": 21.68974,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "7bc1edbcd444d26b93f9d7129d2e36ab93b5868385fe095e757ca55acd379211",
+      "validLinesCompletedInNotification": 7,
+      "cumulativeValidLines": 19,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409353022653,
+      "relativeToCaptureMs": 102.249323,
+      "delayFromPreviousEventMs": 14.938177,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "4a3d1eec7561c593755f0cab79d518ba52c8ac5ce59a5bd9fa3da163c88841d0",
+      "validLinesCompletedInNotification": 6,
+      "cumulativeValidLines": 25,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "TX_CALLBACK",
+      "timestampNanos": 71409355575882,
+      "relativeToCaptureMs": 104.802552,
+      "delayFromPreviousEventMs": 2.553229,
+      "bytes": 1,
+      "txId": 18,
+      "status": 0,
+      "ascii": " "
+    },
+    {
+      "event": "TX_COMPLETE",
+      "timestampNanos": 71409355679007,
+      "relativeToCaptureMs": 104.905677,
+      "delayFromPreviousEventMs": 0.103125,
+      "bytes": 1,
+      "txId": 18,
+      "status": 0,
+      "ascii": " "
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409369989788,
+      "relativeToCaptureMs": 119.216458,
+      "delayFromPreviousEventMs": 14.310781,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "5c7a2fb550330aa75b3edffc679084667acf4ae0a0f745892e687af5da85e600",
+      "validLinesCompletedInNotification": 7,
+      "cumulativeValidLines": 32,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409385783642,
+      "relativeToCaptureMs": 135.010312,
+      "delayFromPreviousEventMs": 15.793854,
+      "bytes": 200,
+      "txId": 0,
+      "status": -1,
+      "sha256": "74512a2bf0247082c83fad57fbaf236a6093a82eae89cca9635bc61516450873",
+      "validLinesCompletedInNotification": 5,
+      "cumulativeValidLines": 37,
+      "bufferFullText": false,
+      "stoppedText": false,
+      "prompt": false
+    },
+    {
+      "event": "RX_NOTIFICATION",
+      "timestampNanos": 71409400388434,
+      "relativeToCaptureMs": 149.615104,
+      "delayFromPreviousEventMs": 14.604792,
+      "bytes": 105,
+      "txId": 0,
+      "status": -1,
+      "sha256": "b8716622661924c3fb37a87df031f0299624bec4b00f02f5500496b0fe471f00",
+      "validLinesCompletedInNotification": 3,
+      "cumulativeValidLines": 40,
+      "bufferFullText": true,
+      "stoppedText": true,
+      "prompt": true
+    }
+  ]
+}
