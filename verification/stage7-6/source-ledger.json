@@ -1,0 +1,156 @@
+{
+  "documents": [
+    {
+      "id": "S2",
+      "title": "Fisker FM29 MY2023 SORP Wiring Diagrams (community-hosted OEM-marked copy)",
+      "url": "https://drive.google.com/file/d/1CGwOiLSLDR0w7LPi06dHyWnFvIA2Rkgc/view",
+      "discovery": "https://www.fisker-ocean-forum.de/forum/thread/494-linkliste-zu-fahrzeugdokumenten-wartung/",
+      "sha256": "bd9d4731622b18060ba041a7d6c6c029e89dc7b7a9d58a50b924e03c3ca927f7",
+      "bytes": 1548361,
+      "pdfPages": 91,
+      "metadataCreation": "2023-03-27T15:07:25+08:00",
+      "metadataIsReleaseProof": false,
+      "visuallyReviewedPages": [
+        4,
+        5,
+        9,
+        13,
+        29,
+        69
+      ],
+      "documentaryFindings": [
+        {
+          "page": 13,
+          "drawing": "III.10",
+          "from": "OBD V342B*1F X*06 / X*14",
+          "to": "GW C001B*1F A*30 / A*14",
+          "nets": "DiagBus_H/L; W1040_1/2"
+        },
+        {
+          "page": 29,
+          "drawing": "VII.5",
+          "finding": "Diagnostic, infotainment 1/2 and other CAN ports are distinct gateway pin pairs"
+        },
+        {
+          "page": 9,
+          "drawing": "III.6",
+          "finding": "ICC and GW have separate IBUS1 and IBUS2 physical pairs; development connector V078B*1F is distinct from OBD V342B*1F",
+          "caution": "Title says SORP, drawing status block says PP"
+        },
+        {
+          "page": 4,
+          "drawing": "III.1",
+          "finding": "ECC is physically on EV-CAN together with GW, BMS, VCU and PDU"
+        },
+        {
+          "page": 5,
+          "drawing": "III.2",
+          "finding": "ECC has a separate Thermal CAN with compressor/PTC; no direct GW is drawn on this private segment"
+        },
+        {
+          "page": 69,
+          "drawing": "XVIII.1",
+          "finding": "ICC has both IBUS1 and IBUS2 pairs"
+        }
+      ],
+      "officialHosting": false,
+      "authenticityIndependentlyCertified": false,
+      "ownerVinFitVerified": false,
+      "ownerOs21FitVerified": false,
+      "variantEvidence": "MY2023, LHD/RHD and ALL markings; not VIN effectivity"
+    },
+    {
+      "id": "S3",
+      "title": "Magna Logical Architecture System Schematics FM29 PT Full V0.04",
+      "url": "https://drive.google.com/file/d/1APFvIw_MYfNeS-SB48eA_QE9CV49huH4/view",
+      "discovery": "https://www.fisker-ocean-forum.de/forum/thread/494-linkliste-zu-fahrzeugdokumenten-wartung/",
+      "sha256": "de13684830b87d1f4ce0a8655aded4f42122d9ff4622a94ea3cbfcfe496f1086",
+      "bytes": 1858781,
+      "pdfPages": 144,
+      "documentDate": "2022-02-01",
+      "metadataModification": "2023-05-24T07:57:41+02:00",
+      "metadataIsReleaseProof": false,
+      "visuallyReviewedPages": [
+        12
+      ],
+      "textReviewedPages": [
+        1,
+        6,
+        12,
+        14,
+        15,
+        19,
+        23,
+        40,
+        95
+      ],
+      "conflictingDescription": "Pages 12/23/40 state DLC1 moved from Diagnostic CAN to TBus CAN; page 12 labels CAN-FD 2 Mbps. Not merged with the MY2023 OBD diagram.",
+      "ownerVinFitVerified": false,
+      "ownerOs21FitVerified": false,
+      "physicalLocationsBinding": false
+    }
+  ],
+  "other": [
+    {
+      "id": "S4",
+      "title": "Pinned Oceanfront IBUS DBC",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/dbc/fisker_ocean_ibus.dbc",
+      "sha256": "0cbf35b8f65e8f1184b4c0c9db4fc9877c33382b8d744cf717a69f3ff622912b",
+      "scope": "Derived matrix, not OEM routing/owner compatibility proof"
+    },
+    {
+      "id": "S5",
+      "title": "DBC generator",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/tools/gen_ibus.py",
+      "sha256": "ec790c0fd57a7f86159a59b5d56b8124c430464bfdd38a49ff5c97143b25cb1e",
+      "findings": [
+        "Original named matrices IBUS1/2 V390.1_20230120 are not in public tree",
+        "Receivers hard-coded as ICC",
+        "Duplicate numeric IDs collapsed across buses",
+        "Transmitter fallback GW; comments preserve declared sender list"
+      ]
+    },
+    {
+      "id": "S6",
+      "title": "Oceanfront source using separate controllers",
+      "url": "https://github.com/moistpope/oceanfront-view/blob/68a88af90b369c1b2c55d7949c4c848f41deb857/android/app/src/main/java/ai/sunnypilot/webhud/CanBridge.kt",
+      "scope": "Author code/claims, not an independent trace of owner's car"
+    },
+    {
+      "id": "S7",
+      "title": "Pulse manufacturer installation/CAN bus description",
+      "url": "https://www.oceanlinkpulse.com/",
+      "scope": "Vendor specifies separate Spider Port and multiple CAN buses; no OBD pin equivalence"
+    },
+    {
+      "id": "S8",
+      "title": "Vgate FD+ manufacturer product specification",
+      "url": "https://www.vgatemall.com/products-detail/i-23/",
+      "scope": "ISO15765/raw CAN, AT/ST and FD-IOS name; not exact-unit firmware/silent-mode certification"
+    },
+    {
+      "id": "S9",
+      "title": "ELM327DSK v2.2",
+      "url": "https://www.elmelectronics.com/wp-content/uploads/2017/01/ELM327DS.pdf",
+      "scope": "Original ELM CRA/CM/CF/CSM semantics, not Vgate hardware attestation",
+      "pagesPrinted": [
+        14,
+        15,
+        16,
+        49
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "CSS Electronics no-ACK experiment, test 4",
+      "url": "https://www.csselectronics.com/pages/can-bus-errors-intro-tutorial",
+      "scope": "Independent technical mechanism compatible with observed burst; not proven on owner vehicle"
+    },
+    {
+      "id": "S11",
+      "title": "OV Loop official service FAQ",
+      "url": "https://ocean.ovloop.com/",
+      "scope": "Vendor climate offering and explicit legacy API restriction; no independent Warm API proof"
+    }
+  ]
+}

@@ -1,0 +1,379 @@
+{
+  "schema": "fisker-warm-stage7.6-measurement-v1",
+  "inputFile": "Fisker-Warm-HVAC-2026-10-20T08-24-08.778060Z.json",
+  "inputSha256": "3add07e50f00ff607b7a17727028fe825d8e957971fd63e144c435be243ab757",
+  "inputBytes": 171762,
+  "runStartedAt": "2026-10-20T08:23:38.405397Z",
+  "runFinishedAt": "2026-10-20T08:23:49.813414Z",
+  "result": "CONTROL_RX_PRESENT_ECC_NOT_OBSERVED_WITH_CONTROL_LOSS",
+  "evidence": {
+    "allCapturesComplete": false,
+    "controlStreamIncomplete": true,
+    "controlBeforeRxObserved": true,
+    "controlAdapterBufferFull": true,
+    "controlAfterRxObserved": true,
+    "eccRxObserved": false,
+    "eccCapturesComplete": true,
+    "recoveriesAttempted": 1,
+    "recoveriesCompleted": 1,
+    "presenceMeaning": "Matching complete adapter lines; distinct physical transmissions and freshness are not independently proven"
+  },
+  "phases": [
+    {
+      "phase": "CONTROL_BEFORE",
+      "id": "0E9",
+      "filterMethod": "CM_CF",
+      "independentValidRows": 40,
+      "notifications": 7,
+      "rawBytes": 1306,
+      "distinctPayloads": {
+        "2D F0 FF FF 9E 57 FF FF": 40
+      },
+      "invalidRawLines": [
+        "0E9 8 2D0FF FF9E 57 FF FF ",
+        "0E9 8 2D F0 FF F"
+      ],
+      "startedEpochMillis": 1792484620889,
+      "startedNanos": 73916283840498,
+      "captureElapsedMillis": 49,
+      "captureTotalMillis": 150,
+      "endReason": "CONTROL_FRAME_LIMIT",
+      "frameCountAtAcquisitionEnd": 6,
+      "drainFrameCount": 34,
+      "startWriteConfirmed": true,
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "promptSeen": true,
+      "adapterBufferFull": true,
+      "incomplete": true,
+      "invalidFrameLines": 2,
+      "droppedFrames": 0,
+      "droppedPackets": 0,
+      "truncated": false
+    },
+    {
+      "phase": "ECC_VISIBILITY",
+      "id": "373",
+      "filterMethod": "CM_CF",
+      "independentValidRows": 0,
+      "notifications": 1,
+      "rawBytes": 10,
+      "distinctPayloads": {},
+      "invalidRawLines": [],
+      "startedEpochMillis": 1792484622446,
+      "startedNanos": 73917841210133,
+      "captureElapsedMillis": 3000,
+      "captureTotalMillis": 3048,
+      "endReason": "WINDOW_ELAPSED",
+      "frameCountAtAcquisitionEnd": 0,
+      "drainFrameCount": 0,
+      "startWriteConfirmed": true,
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "promptSeen": true,
+      "adapterBufferFull": false,
+      "incomplete": false,
+      "invalidFrameLines": 0,
+      "droppedFrames": 0,
+      "droppedPackets": 0,
+      "truncated": false
+    },
+    {
+      "phase": "ECC_ALTERNATE_FILTER",
+      "id": "373",
+      "filterMethod": "CRA",
+      "independentValidRows": 0,
+      "notifications": 1,
+      "rawBytes": 10,
+      "distinctPayloads": {},
+      "invalidRawLines": [],
+      "startedEpochMillis": 1792484625552,
+      "startedNanos": 73920946944663,
+      "captureElapsedMillis": 3000,
+      "captureTotalMillis": 3048,
+      "endReason": "WINDOW_ELAPSED",
+      "frameCountAtAcquisitionEnd": 0,
+      "drainFrameCount": 0,
+      "startWriteConfirmed": true,
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "promptSeen": true,
+      "adapterBufferFull": false,
+      "incomplete": false,
+      "invalidFrameLines": 0,
+      "droppedFrames": 0,
+      "droppedPackets": 0,
+      "truncated": false
+    },
+    {
+      "phase": "CONTROL_AFTER",
+      "id": "0E9",
+      "filterMethod": "CM_CF",
+      "independentValidRows": 41,
+      "notifications": 7,
+      "rawBytes": 1292,
+      "distinctPayloads": {
+        "8F F3 FF FF 00 00 9E F2": 41
+      },
+      "invalidRawLines": [
+        "0E9 8 "
+      ],
+      "startedEpochMillis": 1792484628687,
+      "startedNanos": 73924081647735,
+      "captureElapsedMillis": 59,
+      "captureTotalMillis": 153,
+      "endReason": "CONTROL_FRAME_LIMIT",
+      "frameCountAtAcquisitionEnd": 6,
+      "drainFrameCount": 35,
+      "startWriteConfirmed": true,
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "promptSeen": true,
+      "adapterBufferFull": true,
+      "incomplete": true,
+      "invalidFrameLines": 1,
+      "droppedFrames": 0,
+      "droppedPackets": 0,
+      "truncated": false
+    }
+  ],
+  "txRequests": [
+    {
+      "id": 1,
+      "nanos": 73914828390759,
+      "command": "ATZ\r"
+    },
+    {
+      "id": 2,
+      "nanos": 73915779879717,
+      "command": "ATE0\r"
+    },
+    {
+      "id": 3,
+      "nanos": 73915821663103,
+      "command": "ATI\r"
+    },
+    {
+      "id": 4,
+      "nanos": 73915863703988,
+      "command": "ATRV\r"
+    },
+    {
+      "id": 5,
+      "nanos": 73915891968207,
+      "command": "ATL0\r"
+    },
+    {
+      "id": 6,
+      "nanos": 73915923882269,
+      "command": "ATS1\r"
+    },
+    {
+      "id": 7,
+      "nanos": 73915957446384,
+      "command": "ATH1\r"
+    },
+    {
+      "id": 8,
+      "nanos": 73916006264249,
+      "command": "ATSP6\r"
+    },
+    {
+      "id": 9,
+      "nanos": 73916042336957,
+      "command": "ATCAF0\r"
+    },
+    {
+      "id": 10,
+      "nanos": 73916072605446,
+      "command": "ATCFC0\r"
+    },
+    {
+      "id": 11,
+      "nanos": 73916101099769,
+      "command": "ATCSM1\r"
+    },
+    {
+      "id": 12,
+      "nanos": 73916132488676,
+      "command": "ATD1\r"
+    },
+    {
+      "id": 13,
+      "nanos": 73916161511280,
+      "command": "ATDPN\r"
+    },
+    {
+      "id": 14,
+      "nanos": 73916191657686,
+      "command": "ATAR\r"
+    },
+    {
+      "id": 15,
+      "nanos": 73916222165498,
+      "command": "ATCM7FF\r"
+    },
+    {
+      "id": 16,
+      "nanos": 73916252464300,
+      "command": "ATCF0E9\r"
+    },
+    {
+      "id": 17,
+      "nanos": 73916284229405,
+      "command": "ATMA\r"
+    },
+    {
+      "id": 18,
+      "nanos": 73916332907269,
+      "command": " "
+    },
+    {
+      "id": 19,
+      "nanos": 73916436138519,
+      "command": "ATZ\r"
+    },
+    {
+      "id": 20,
+      "nanos": 73917388728571,
+      "command": "ATE0\r"
+    },
+    {
+      "id": 21,
+      "nanos": 73917422003102,
+      "command": "ATI\r"
+    },
+    {
+      "id": 22,
+      "nanos": 73917455218258,
+      "command": "ATRV\r"
+    },
+    {
+      "id": 23,
+      "nanos": 73917484437633,
+      "command": "ATL0\r"
+    },
+    {
+      "id": 24,
+      "nanos": 73917511764300,
+      "command": "ATS1\r"
+    },
+    {
+      "id": 25,
+      "nanos": 73917541868883,
+      "command": "ATH1\r"
+    },
+    {
+      "id": 26,
+      "nanos": 73917570946123,
+      "command": "ATSP6\r"
+    },
+    {
+      "id": 27,
+      "nanos": 73917603233467,
+      "command": "ATCAF0\r"
+    },
+    {
+      "id": 28,
+      "nanos": 73917631597477,
+      "command": "ATCFC0\r"
+    },
+    {
+      "id": 29,
+      "nanos": 73917663371592,
+      "command": "ATCSM1\r"
+    },
+    {
+      "id": 30,
+      "nanos": 73917695977165,
+      "command": "ATD1\r"
+    },
+    {
+      "id": 31,
+      "nanos": 73917721868310,
+      "command": "ATDPN\r"
+    },
+    {
+      "id": 32,
+      "nanos": 73917752814665,
+      "command": "ATAR\r"
+    },
+    {
+      "id": 33,
+      "nanos": 73917782467217,
+      "command": "ATCM7FF\r"
+    },
+    {
+      "id": 34,
+      "nanos": 73917814074144,
+      "command": "ATCF373\r"
+    },
+    {
+      "id": 35,
+      "nanos": 73917841319821,
+      "command": "ATMA\r"
+    },
+    {
+      "id": 36,
+      "nanos": 73920841572528,
+      "command": " "
+    },
+    {
+      "id": 37,
+      "nanos": 73920890982788,
+      "command": "ATAR\r"
+    },
+    {
+      "id": 38,
+      "nanos": 73920919408361,
+      "command": "ATCRA373\r"
+    },
+    {
+      "id": 39,
+      "nanos": 73920947037007,
+      "command": "ATMA\r"
+    },
+    {
+      "id": 40,
+      "nanos": 73923947437162,
+      "command": " "
+    },
+    {
+      "id": 41,
+      "nanos": 73923996560860,
+      "command": "ATAR\r"
+    },
+    {
+      "id": 42,
+      "nanos": 73924022448620,
+      "command": "ATCM7FF\r"
+    },
+    {
+      "id": 43,
+      "nanos": 73924051816277,
+      "command": "ATCF0E9\r"
+    },
+    {
+      "id": 44,
+      "nanos": 73924081755808,
+      "command": "ATMA\r"
+    },
+    {
+      "id": 45,
+      "nanos": 73924141651954,
+      "command": " "
+    },
+    {
+      "id": 46,
+      "nanos": 73924237127110,
+      "command": "ATZ\r"
+    }
+  ],
+  "gattWritesAndCompletions": 46,
+  "globalRxNotifications": 56,
+  "ownerMarks": [],
+  "climateRunningMeasured": null,
+  "physicalSilentModeVerified": false,
+  "physicalCanTimestampsAvailable": false,
+  "scope": "Raw bytes received by Android; distinct physical CAN transmissions and all upstream losses remain unknown"
+}

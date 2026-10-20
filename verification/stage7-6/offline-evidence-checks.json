@@ -1,0 +1,185 @@
+{
+  "checks": [
+    {
+      "check": "Measured input hash identifies the new 08:24 export",
+      "passed": true
+    },
+    {
+      "check": "Exactly one new differential session; no accumulated historical sessions used",
+      "passed": true
+    },
+    {
+      "check": "Four expected phases in order",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_BEFORE: independent raw CAN row count matches frames[]",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_BEFORE: all retained raw packets occur in global BLE journal",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_BEFORE: ID, DLC, payload and raw byte count agree",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_BEFORE: overflow and malformed lines remain incomplete",
+      "passed": true
+    },
+    {
+      "check": "ECC_VISIBILITY: independent raw CAN row count matches frames[]",
+      "passed": true
+    },
+    {
+      "check": "ECC_VISIBILITY: all retained raw packets occur in global BLE journal",
+      "passed": true
+    },
+    {
+      "check": "ECC_VISIBILITY: ID, DLC, payload and raw byte count agree",
+      "passed": true
+    },
+    {
+      "check": "ECC_VISIBILITY: only STOPPED/prompt, complete host window and no overflow",
+      "passed": true
+    },
+    {
+      "check": "ECC_ALTERNATE_FILTER: independent raw CAN row count matches frames[]",
+      "passed": true
+    },
+    {
+      "check": "ECC_ALTERNATE_FILTER: all retained raw packets occur in global BLE journal",
+      "passed": true
+    },
+    {
+      "check": "ECC_ALTERNATE_FILTER: ID, DLC, payload and raw byte count agree",
+      "passed": true
+    },
+    {
+      "check": "ECC_ALTERNATE_FILTER: only STOPPED/prompt, complete host window and no overflow",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_AFTER: independent raw CAN row count matches frames[]",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_AFTER: all retained raw packets occur in global BLE journal",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_AFTER: ID, DLC, payload and raw byte count agree",
+      "passed": true
+    },
+    {
+      "check": "CONTROL_AFTER: overflow and malformed lines remain incomplete",
+      "passed": true
+    },
+    {
+      "check": "All 46 physical write requests are fixed adapter settings or monitor stop",
+      "passed": true
+    },
+    {
+      "check": "Each request has exactly one successful GATT callback and completion",
+      "passed": true
+    },
+    {
+      "check": "Exactly four ATMA writes; no active ECU request or CAN payload",
+      "passed": true
+    },
+    {
+      "check": "Full verified startup repeated before 373; CM/CF and CRA independently requested",
+      "passed": true
+    },
+    {
+      "check": "One recovery and honest overall incomplete classification",
+      "passed": true
+    },
+    {
+      "check": "Host journal retains raw RX; no synthetic input, PHY silence or hardware timestamp claim",
+      "passed": true
+    },
+    {
+      "check": "Pinned DBC and generator bytes match previous source audit",
+      "passed": true
+    },
+    {
+      "check": "Generator hard-codes receiver ICC and collapses duplicate IDs across buses",
+      "passed": true
+    },
+    {
+      "check": "DBC ID 373: exact 11-bit, 8-byte source record found",
+      "passed": true
+    },
+    {
+      "check": "DBC ID 534: exact 11-bit, 8-byte source record found",
+      "passed": true
+    },
+    {
+      "check": "DBC ID 0E9: exact 11-bit, 8-byte source record found",
+      "passed": true
+    },
+    {
+      "check": "wiring: exact public PDF bytes",
+      "passed": true
+    },
+    {
+      "check": "wiring: expected PDF page count",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 4: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 5: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 9: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 13: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 29: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 67: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "wiring PDF page 69: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "architecture: exact public PDF bytes",
+      "passed": true
+    },
+    {
+      "check": "architecture: expected PDF page count",
+      "passed": true
+    },
+    {
+      "check": "architecture PDF page 1: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "architecture PDF page 12: document search anchors",
+      "passed": true
+    },
+    {
+      "check": "architecture PDF page 40: document search anchors",
+      "passed": true
+    }
+  ],
+  "checksPassed": 44,
+  "allPassed": true,
+  "vehicleCommandsSent": 0,
+  "apkCreated": false,
+  "newPhysicalTestPerformed": false
+}
