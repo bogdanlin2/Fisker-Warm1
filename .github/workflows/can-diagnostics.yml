@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - diagnostics/can-overflow-root-cause
+      - diagnostics/hvac-passive-stage7-3
   pull_request:
     branches: [main]
   workflow_dispatch:

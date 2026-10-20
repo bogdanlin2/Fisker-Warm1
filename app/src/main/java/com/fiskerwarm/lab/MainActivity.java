@@ -1,7 +1,6 @@
 package com.fiskerwarm.lab;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -14,317 +13,249 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
-import android.view.WindowInsets;
+import android.util.AtomicFile;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import com.fiskerwarm.lab.core.HeatSafety;
-import com.fiskerwarm.lab.core.ProbeGate;
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.Instant;
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-@SuppressLint("MissingPermission")
+/** Fixed passive tests. No arbitrary terminal, ECU diagnostic or climate transmit UI. */
 public final class MainActivity extends Activity {
+    private static final int PERMISSIONS=41,EXPORT=42;
     private final Handler ui=new Handler(Looper.getMainLooper());
-    private final LinkedHashMap<String,ScanResult> found=new LinkedHashMap<>();
-    private final List<Button> probeButtons=new ArrayList<>();
-    private final ProbeGate probeGate=new ProbeGate();
+    private final ExecutorService disk=Executors.newSingleThreadExecutor();
+    private final Map<String,ScanResult> found=new LinkedHashMap<>();
+    private final List<Button> marks=new ArrayList<>();
     private BluetoothAdapter adapter;
     private BluetoothLeScanner scanner;
+    private BluetoothDevice selected;
+    private String selectedName,exportText,filter="—";
     private BleProbe probe;
-    private BleProbe.Mode requestedMode;
-    private boolean scanning,busy,foreground;
+    private boolean scanning,busy,foreground,stopping,preflightReady;
+    private long generation,lastCheckpoint;
+    private int runIndex;
+    private JSONArray runs=new JSONArray();
+    private TextView state,rx,decoded,instructions,log;
     private CheckBox parked;
-    private TextView status,logView,captureStatus;
-    private JSONObject lastReport,baseline;
-    private final StringBuilder logBuffer=new StringBuilder();
-    private final Runnable endScan=this::showDevices;
-    private static final int PERMISSIONS=11,EXPORT=12;
+    private Button connect,testA,testB,stop,export,newLog;
+    private LinearLayout page;
 
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
+    @Override public void onCreate(Bundle saved) {
+        super.onCreate(saved);
         BluetoothManager manager=(BluetoothManager)getSystemService(BLUETOOTH_SERVICE);
         adapter=manager==null?null:manager.getAdapter();
-        ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true);
-        scroll.setBackgroundColor(Color.rgb(244,244,239));
-        LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(22),dp(24),dp(22),dp(26)); scroll.addView(page);
-        scroll.setOnApplyWindowInsetsListener((view,insets)->{
-            int top,bottom;
-            if(Build.VERSION.SDK_INT>=30) {
-                android.graphics.Insets i=insets.getInsets(WindowInsets.Type.systemBars()); top=i.top;bottom=i.bottom;
-            } else {top=insets.getSystemWindowInsetTop();bottom=insets.getSystemWindowInsetBottom();}
-            view.setPadding(0,top,0,bottom);return insets;
+        ScrollView scroll=new ScrollView(this);page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(24,20,24,32);page.setBackgroundColor(Color.rgb(12,25,38));scroll.addView(page);
+        label("Fisker Warm · HVAC",26);label("0.3.4 · ЕТАП 7.3 · ПАСИВНИЙ ТЕСТ",15);
+        label("Автомобільні команди заблоковано. Застосунок сам не вмикає клімат.",16);
+        parked=new CheckBox(this);parked.setText("Авто у P, стоянкове гальмо, я біля авто зі штатним ключем");
+        parked.setTextColor(Color.WHITE);page.addView(parked);
+        state=label("BLE: не підключено\nАдаптер: не перевірено\nФільтр: не встановлено",16);
+        rx=label("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —",17);
+        decoded=label("Дані з автомобіля ще не отримані.",15);
+        LinearLayout connectionRow=row();connect=button(connectionRow,"Підключити Vgate");connect.setOnClickListener(v->scan());
+        stop=button(connectionRow,"Зупинити");stop.setOnClickListener(v->stopCurrent());
+        LinearLayout testsRow=row();testA=button(testsRow,"Тест 0x534\nКлімат On/Off");testA.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_534));
+        testB=button(testsRow,"Тест 0x373\nСтатус клімату");testB.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_373));
+        instructions=label("Спочатку: авто пробуджене, клімат OFF. Після початку відліку: 5 с — штатно ON, 20 с — штатно OFF. Позначки тільки записують виконані дії.",14);
+        LinearLayout hmiRow=row();mark(hmiRow,"Позначити: ON","HMI_ON");mark(hmiRow,"Позначити: OFF","HMI_OFF");
+        LinearLayout physicalRow=row();mark(physicalRow,"Є потік повітря","AIRFLOW_PRESENT");mark(physicalRow,"Є тепле повітря","WARM_AIR_PRESENT");
+        LinearLayout exportRow=row();export=button(exportRow,"Експортувати журнал");export.setOnClickListener(v->export());
+        newLog=button(exportRow,"Новий журнал");newLog.setOnClickListener(v->{
+            if(busy)return;
+            new AlertDialog.Builder(this).setTitle("Новий журнал").setMessage("Спочатку експортуйте поточний журнал. Почати новий набір вимірювань?")
+                    .setPositiveButton("Почати новий",(d,w)->{runs=new JSONArray();persist();append("Новий журнал. Попередні записи не включатимуться до нового експорту.");buttons();})
+                    .setNegativeButton("Скасувати",null).show();
         });
-        page.addView(text("FISKER WARM / LAB 0.3.3",12,Color.rgb(131,102,42),true));
-        TextView heading=text("Перевірка\nOcean.",32,Color.rgb(24,39,53),true);
-        heading.setPadding(0,dp(12),0,dp(16)); page.addView(heading);
-        page.addView(text("Ocean Extreme · PKC 21.3\nПідготовка до безпечного дистанційного клімату",15,Color.rgb(80,92,97),false));
-
-        LinearLayout heat=card(); page.addView(heat);
-        heat.addView(text("ЗАПУСК ПОКИ ЗАБЛОКОВАНО",12,Color.rgb(153,87,22),true));
-        heat.addView(text("Знайдено статичний PKC BLE-протокол, але ключ власника, запуск на авто та пробудження замкненого авто не підтверджені.",17,Color.rgb(24,39,53),false));
-        Button warm=button("Прогріти зараз — недоступно");warm.setEnabled(false);heat.addView(warm);
-        Button explain=button("Що потрібно для запуску");heat.addView(explain);
-        explain.setOnClickListener(v->new AlertDialog.Builder(this).setTitle("Потрібні підтвердження")
-                .setMessage("1. Дозволений власнику протокол PKC 21.3.\n2. Перевірені start, stop і wake.\n3. Відгук, що опалення справді працює.\n4. Свіжі P, швидкість, SOC та 12 В.\n5. Вимкнення в самому авто навіть при збої телефона.\n\nЦя версія не надсилає команд клімату. Таймер і дистанційний шлюз не активовані.")
-                .setPositiveButton("Зрозуміло",null).show());
-
-        LinearLayout protocol=card();page.addView(protocol);
-        protocol.addView(text("PKC BLE · ОФЛАЙН-ДОСЛІДЖЕННЯ 0.3",12,Color.rgb(93,104,108),true));
-        protocol.addView(text("OceanLink SDK: локальні кліматичні payload, 18–32 °C, HMAC-SHA256, статус-коди PKC. Це лише аналіз і офлайн-тести; без цифрового ключа власника, BLE-транспорту та підтвердження роботи на машині.",13,Color.rgb(24,39,53),false));
-        protocol.addView(text("PKC GATT-сервер ≠ OBD vLinker. Жодного нового CAN/UDS-запису. START/STOP/TIMER ЗАБЛОКОВАНО.",12,Color.rgb(153,87,22),true));
-        LinearLayout known=card();page.addView(known);
-        known.addView(text("ПІДТВЕРДЖЕНІ ЗЧИТУВАННЯ · 12.10.2026",11,Color.rgb(93,104,108),true));
-        known.addView(text("PKC  F160808130021.3\nECC  ECC395 24\nBCM  BCM395030\nICC   ICC390C49",15,Color.rgb(24,39,53),false));
-        known.addView(text("Це історичні версії. Поточні SOC, P, швидкість і стан опалення невідомі.",13,Color.rgb(93,104,108),false));
-
-        LinearLayout checks=card();page.addView(checks);
-        checks.addView(text("КОРОТКА ПЕРЕВІРКА БІЛЯ АВТО",12,Color.rgb(93,104,108),true));
-        parked=new CheckBox(this);parked.setText("Авто стоїть у P. Я біля нього.");parked.setTextColor(Color.rgb(24,39,53));checks.addView(parked);
-        status=text("З'єднання не встановлено.\n12 В: не виміряно. SOC: невідомий.",15,Color.rgb(24,39,53),false);checks.addView(status);
-        addProbeButton(checks,"Виміряти напругу через vLinker",BleProbe.Mode.VOLTAGE_ONLY);
-        addProbeButton(checks,"Прочитати PKC / ECC / BCM / ICC",BleProbe.Mode.IDENTITIES);
-        addProbeButton(checks,"Оглянути BLE GATT без записів",BleProbe.Mode.GATT_MAP);
-        Button stop=button("Зупинити й роз'єднати");checks.addView(stop);
-        stop.setOnClickListener(v->{
-            stopScan();
-            if(probe!=null) probe.cancel();
-            else setBusy(false);
-            // Do not release UI busy until the cancelled BLE probe reports done.
-        });
-        checks.addView(text("Сесія обмежена 60 секундами, огляд GATT — 15. Низька або невідома напруга зупиняє читання блоків. Застосунок працює лише на відкритому екрані.",13,Color.rgb(93,104,108),false));
-
-        LinearLayout climate=card();page.addView(climate);
-        climate.addView(text("CLIMATE MONITOR · ПАСИВНИЙ CAN",12,Color.rgb(93,104,108),true));
-        climate.addView(text("Два короткі записи по 0,5 секунди: спочатку клімат ВИМКНЕНО, потім увімкни його ШТАТНО з екрана авто та повтори. Завершення запису може зайняти трохи довше. Програма не вмикає опалення і не надсилає діагностичних запитів у цьому режимі.",14,Color.rgb(24,39,53),false));
-        captureStatus=text("Ще немає записів CAN.",13,Color.rgb(80,92,97),false);climate.addView(captureStatus);
-        addProbeButton(climate,"1. Записати CAN · клімат ВИМКНЕНО",BleProbe.Mode.PASSIVE_CAN_OFF);
-        addProbeButton(climate,"2. Записати CAN · клімат УВІМКНЕНО",BleProbe.Mode.PASSIVE_CAN_ON);
-        addProbeButton(climate,"3. Перевірити інші CAN ID без 0E9",BleProbe.Mode.CAN_NETWORK_AUDIT);
-        climate.addView(text("Крок 3 автоматично перевіряє інші ID приблизно за 10 секунд. Клімат залиш увімкненим штатно; нові ID самі по собі не підтверджують HVAC.",12,Color.rgb(93,104,108),false));
-        climate.addView(text("Різниця CAN ID — лише кандидат на дослідження, а НЕ підтвердження роботи обігріву. Якщо шлюз не пропускає CAN-трафік, буде 0 кадрів. Під час запису телефон поруч з авто, екран відкритий.",12,Color.rgb(93,104,108),false));
-
-        LinearLayout history=card();page.addView(history);
-        history.addView(text("ЖУРНАЛ ПЕРЕВІРКИ",12,Color.rgb(93,104,108),true));
-        logView=text("Нової перевірки ще немає.",12,Color.rgb(52,65,76),false);logView.setTypeface(Typeface.MONOSPACE);logView.setTextIsSelectable(true);history.addView(logView);
-        Button export=button("Зберегти результат у JSON");history.addView(export);export.setOnClickListener(v->export());
-        page.addView(text("Без інтернет-доступу, фонових опитувань і підписок.\nДіагностична збірка CAN 0.3.3 потребує контрольного тесту на Ocean. Прогрів заблокований до підтвердження протоколу.",12,Color.rgb(93,104,108),false));
-        setContentView(scroll);loadLast();loadBaseline();
+        log=label("Журнал подій",12);log.setTextIsSelectable(true);
+        label("Нуль кадрів не доводить відсутності сигналу у внутрішній мережі. RX-час — час BLE callback на телефоні, а не апаратна CAN-мітка. Відсутні notifications неможливо однозначно відрізнити від тихої шини.",13);
+        setContentView(scroll);load();buttons();
     }
-    private void addProbeButton(LinearLayout parent,String title,BleProbe.Mode mode) {
-        Button b=button(title);parent.addView(b);probeButtons.add(b);
-        b.setOnClickListener(v->{if(!parked.isChecked()){message("Перед перевіркою","Підтвердь, що автомобіль на стоянці у P і ти біля нього.");return;}
-            if(mode==BleProbe.Mode.PASSIVE_CAN_ON && !freshBaseline()) {
-                message("Спершу еталонний запис","Зроби новий запис із вимкненим кліматом (крок 1), не давніший за 15 хвилин.");return;
-            }
-            requestedMode=mode;requestScan();});
+    private TextView label(String s,int size) {TextView t=new TextView(this);t.setText(s);t.setTextColor(Color.rgb(226,237,245));t.setTextSize(size);t.setPadding(2,10,2,12);page.addView(t);return t;}
+    private LinearLayout row() {LinearLayout r=new LinearLayout(this);page.addView(r);return r;}
+    private Button button(LinearLayout parent,String s) {Button b=new Button(this);b.setText(s);b.setTextSize(13);b.setAllCaps(false);b.setMinHeight((int)(52*getResources().getDisplayMetrics().density));b.setTextColor(Color.rgb(8,30,44));b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(143,211,246)));parent.addView(b,new LinearLayout.LayoutParams(0,-2,1));return b;}
+    private void mark(LinearLayout parent,String title,String kind) {Button b=button(parent,title);marks.add(b);b.setOnClickListener(v->{try{if(probe!=null)probe.mark(kind);}catch(Exception e){alert("Позначку не збережено",e.getMessage());}});}
+    private void append(String text) {if(log!=null){String old=log.getText().toString();if(old.length()>6000)old=old.substring(old.length()-6000);log.setText(old+"\n"+text);}}
+    private void alert(String title,String body) {new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Гаразд",null).show();}
+    private void buttons() {
+        if(connect==null)return;
+        connect.setEnabled(!busy);testA.setEnabled(!busy && preflightReady);testB.setEnabled(!busy && preflightReady);
+        stop.setEnabled(busy && !stopping);export.setEnabled(!busy && runs.length()>0);newLog.setEnabled(!busy);
+        boolean capturing=probe!=null && probe.hvacProgress()[3]==1 && !stopping;
+        for(Button b:marks)b.setEnabled(capturing);
+        for(Button b:new Button[]{connect,testA,testB,stop,export,newLog})b.setAlpha(b.isEnabled()?1f:0.4f);
+        for(Button b:marks)b.setAlpha(b.isEnabled()?1f:0.4f);
+        if(busy)getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
-    private void requestScan() {
-        if(busy || probeGate.busy() || !foreground)return;
-        String[] required=Build.VERSION.SDK_INT>=31?
-                new String[]{Manifest.permission.BLUETOOTH_SCAN,Manifest.permission.BLUETOOTH_CONNECT}:
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+    private boolean readyToStart() {
+        if(busy || !foreground)return false;
+        if(!parked.isChecked()){alert("Перед тестом","Підтвердьте стоянку у P та присутність біля авто.");return false;}
+        if(runs.length()>=6){alert("Журнал заповнений","Експортуйте всі записи, потім натисніть «Новий журнал». Записи не видаляються автоматично.");return false;}
+        return true;
+    }
+    private void confirm(BleProbe.Mode mode) {
+        if(!readyToStart() || selected==null || !preflightReady)return;
+        new AlertDialog.Builder(this).setTitle("Пасивний запис · 30 секунд")
+                .setMessage("Штатно вимкніть клімат. Авто пробуджене, у P, без оновлення ПЗ чи попереджень живлення.\n\nПісля початку відліку: на 5 с увімкніть клімат на екрані авто, на 20 с вимкніть. Кнопки позначок тільки записують ваші дії; команд автомобілю не передають.")
+                .setPositiveButton("Почати запис",(d,w)->start(mode)).setNegativeButton("Скасувати",null).show();
+    }
+    private void scan() {
+        if(!readyToStart())return;
+        String[] required=Build.VERSION.SDK_INT>=31?new String[]{Manifest.permission.BLUETOOTH_SCAN,Manifest.permission.BLUETOOTH_CONNECT}:new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
         for(String p:required)if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED){requestPermissions(required,PERMISSIONS);return;}
-        if(adapter==null || !adapter.isEnabled()){message("Bluetooth","Увімкни Bluetooth і повтори перевірку.");return;}
+        if(adapter==null || !adapter.isEnabled()){alert("Bluetooth","Увімкніть Bluetooth на телефоні.");return;}
         try {
-            scanner=adapter.getBluetoothLeScanner();if(scanner==null)throw new IllegalStateException("No BLE scanner");
-            found.clear();scanning=true;setBusy(true);status.setText("Пошук BLE · до 10 секунд…");
+            scanner=adapter.getBluetoothLeScanner();if(scanner==null)throw new IllegalStateException("BLE scanner недоступний");
+            found.clear();scanning=true;busy=true;stopping=false;preflightReady=false;buttons();
+            state.setText("BLE: пошук vLinker FD-IOS · до 8 секунд\nАдаптер: не перевірено");
             scanner.startScan(null,new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(),scanCallback);
-            ui.postDelayed(endScan,10_000);
-        } catch(Exception e){stopScan();setBusy(false);message("Пошук не вдався",e.toString());}
+            ui.postDelayed(endScan,8000);
+        }catch(Exception e){endScan(false);alert("Помилка пошуку",e.toString());}
     }
-    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results) {
-        super.onRequestPermissionsResult(request,permissions,results);
+    @Override public void onRequestPermissionsResult(int request,String[] p,int[] results) {
+        super.onRequestPermissionsResult(request,p,results);
         if(request!=PERMISSIONS || !foreground)return;
-        if(results.length==0){message("Немає дозволу","Пошук скасовано.");return;}
-        for(int r:results)if(r!=PackageManager.PERMISSION_GRANTED){message("Немає дозволу","Дозволь доступ до пристроїв поблизу для перевірки BLE.");return;}
-        requestScan();
+        for(int r:results)if(r!=PackageManager.PERMISSION_GRANTED){alert("Немає дозволу","Потрібен дозвіл «Пристрої поблизу» для BLE.");return;}
+        if(results.length>0)scan();
     }
+    private String deviceName(ScanResult r) {String s=r.getScanRecord()==null?null:r.getScanRecord().getDeviceName();return s==null?r.getDevice().getName():s;}
     private final ScanCallback scanCallback=new ScanCallback() {
-        @Override public void onScanResult(int type,ScanResult result) {ui.post(()->{
-            if(scanning && found.size()<100)found.put(result.getDevice().getAddress(),result);
+        @Override public void onScanResult(int type,ScanResult r) {ui.post(()->{
+            if(!scanning)return;String n=deviceName(r);
+            if(n!=null && n.toLowerCase(Locale.ROOT).replace(" ","").equals("vlinkerfd-ios") && found.size()<20)found.put(r.getDevice().getAddress(),r);
         });}
-        @Override public void onScanFailed(int code){ui.post(()->{stopScan();setBusy(false);status.setText("Помилка BLE scan: "+code);});}
+        @Override public void onScanFailed(int code){ui.post(()->{endScan(false);state.setText("Помилка BLE scan: "+code);});}
     };
-    private String name(ScanResult r) {
-        String n=r.getScanRecord()==null?null:r.getScanRecord().getDeviceName();
-        if(n==null)n=r.getDevice().getName();return n;
+    private final Runnable endScan=()->endScan(true);
+    private void endScan(boolean choose) {
+        if(scanner!=null && scanning)try{scanner.stopScan(scanCallback);}catch(Exception ignored){}
+        ui.removeCallbacks(endScan);scanning=false;busy=false;buttons();
+        if(!choose || !foreground)return;
+        List<ScanResult> list=new ArrayList<>(found.values());
+        if(list.isEmpty()){state.setText("vLinker FD-IOS не знайдено. Перевірте живлення й закрийте інші OBD-застосунки; автоматичних повторів немає.");return;}
+        String[] titles=new String[list.size()];for(int i=0;i<list.size();i++)titles[i]=deviceName(list.get(i))+" · "+list.get(i).getRssi()+" dBm";
+        new AlertDialog.Builder(this).setTitle("Оберіть свій Vgate").setItems(titles,(d,i)->{
+            selected=list.get(i).getDevice();selectedName=deviceName(list.get(i));start(BleProbe.Mode.HVAC_PREFLIGHT);
+        }).setNegativeButton("Скасувати",null).show();
     }
-    private void showDevices() {
-        if(!scanning)return;stopScan();setBusy(false);
-        List<ScanResult> devices=new ArrayList<>();
-        for(ScanResult r:found.values()) {
-            String n=name(r);
-            if(requestedMode==BleProbe.Mode.GATT_MAP || (n!=null && n.toLowerCase(Locale.ROOT).replace(" ","").startsWith("vlinkerfd")))devices.add(r);
-        }
-        if(devices.isEmpty()){status.setText("Пристрій не знайдено. Це не доводить, що Ocean спить.");message("Не знайдено","Розбуди авто штатним ключем, перевір живлення адаптера й закрий інші діагностичні застосунки. Не повторюй пошук циклічно.");return;}
-        String[] labels=new String[devices.size()];
-        for(int i=0;i<devices.size();i++){ScanResult r=devices.get(i);String n=name(r);labels[i]=(n==null?"Без назви":n)+"\n"+r.getDevice().getAddress()+" · "+r.getRssi()+" dBm";}
-        new AlertDialog.Builder(this).setTitle(requestedMode==BleProbe.Mode.GATT_MAP?"Лише твій адаптер або PKC":"Обери свій vLinker FD+")
-                .setItems(labels,(dialog,index)->{
-                    ScanResult r=devices.get(index);
-                    if(requestedMode==BleProbe.Mode.GATT_MAP)new AlertDialog.Builder(this).setTitle("Огляд власного пристрою")
-                            .setMessage("Обирай тільки пристрій свого Ocean або vLinker. Буде прочитана структура GATT; значення характеристик і ключі не читаються. Жодних записів чи сполучення.")
-                            .setPositiveButton("Оглянути",(d,w)->startProbe(r)).setNegativeButton("Скасувати",null).show();
-                    else startProbe(r);
-                }).setNegativeButton("Скасувати",null).show();
-    }
-    private void startProbe(ScanResult r) {
-        if(busy || !parked.isChecked())return;
-        long token;
-        try { token=probeGate.begin(); }
-        catch(IllegalStateException e){message("Зачекай", "Попередня перевірка ще завершується.");return;}
-        setBusy(true);logBuffer.setLength(0);logView.setText("");status.setText("Коротка перевірка…");
-        probe=new BleProbe(this,requestedMode,new BleProbe.Listener(){
-            @Override public void log(String text){appendLog(text);}
-            @Override public void done(JSONObject report){
-                if(!probeGate.complete(token))return; // An old callback must not own this UI.
-                if(report.optString("mode").equals(BleProbe.Mode.PASSIVE_CAN_OFF.toString())) {
-                    if(validCanReport(report)) {
-                        baseline=report;
-                        try{Files.write(baselineFile().toPath(),baseline.toString(2).getBytes(StandardCharsets.UTF_8));}
-                        catch(Exception e){appendLog("Не зберегли контрольний запис: "+e.getMessage());}
-                        captureStatus.setText("Контрольний запис збережено: "+frames(report)+" кадрів. Увімкни клімат ШТАТНО та виконай крок 2.");
-                    }
-                } else if(report.optString("mode").equals(BleProbe.Mode.PASSIVE_CAN_ON.toString())) {
-                    if(validCanReport(report) && freshBaseline() && baseline.optString("deviceAddress").equals(report.optString("deviceAddress"))) {
-                        try {
-                            report.put("baseline",baseline);
-                            JSONObject comparison=compareCan(baseline,report);
-                            report.put("comparison",comparison);
-                            captureStatus.setText("Порівняння: "+comparison.optString("summary")+"\nЦе не підтвердження стану HVAC.");
-                        }catch(Exception e){appendLog("Порівняння неможливе: "+e.getMessage());}
-                    }else captureStatus.setText("Другий запис є, але порівняння неможливе: перевір час, пристрій і результат.");
+    private void start(BleProbe.Mode mode) {
+        if(!readyToStart() || selected==null)return;
+        long token=++generation;busy=true;stopping=false;lastCheckpoint=0;runIndex=runs.length();runs.put(new JSONObject());
+        rx.setText("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —");decoded.setText("Новий запис: кадрів ще немає.");
+        filter=mode==BleProbe.Mode.HVAC_534?"0x534":mode==BleProbe.Mode.HVAC_373?"0x373":"не встановлено (перевірка адаптера)";
+        probe=new BleProbe(this,mode,new BleProbe.Listener(){
+            @Override public void log(String text) {append(text);}
+            @Override public void done(JSONObject report) {
+                if(token!=generation)return;
+                try{runs.put(runIndex,report);}catch(Exception e){append("Помилка збереження запису: "+e);}
+                String result=report.optString("result");
+                if(mode==BleProbe.Mode.HVAC_PREFLIGHT)preflightReady="ADAPTER_SETTINGS_ACKNOWLEDGED".equals(result);
+                else if(!report.optBoolean("adapterResetConfirmed"))preflightReady=false;
+                JSONObject capture=report.optJSONObject("hvacCapture");
+                if(capture!=null && (capture.optBoolean("adapterBufferFull") || capture.optBoolean("unexpectedIdOutsideFilter")
+                        || !capture.optBoolean("stopConfirmed")))preflightReady=false;
+                if(capture!=null) {
+                    int count=capture.optInt("frameCount");JSONArray frames=capture.optJSONArray("frames");String last="—";
+                    if(frames!=null && frames.length()>0)last=formatTime(frames.optJSONObject(frames.length()-1).optLong("utcEpochMillis"));
+                    rx.setText("Прийняті кадри: "+count+"\nОстанній CAN RX на телефоні: "+last);
                 }
-                lastReport=report;probe=null;setBusy(false);
-                if("CAN_NETWORK_AUDIT".equals(report.optString("mode"))) {
-                    JSONObject audit=report.optJSONObject("networkAudit");
-                    captureStatus.setText("Діагностика мережі: "+(audit==null?report.optString("result"):audit.optString("verdict",report.optString("result")))+"\nЗбережи результат у JSON. Стан HVAC не декодовано.");
-                }
-                String voltage=report.isNull("voltageAtObd")?"не виміряно":report.optString("voltageAtObd")+" В";
-                status.setText("Перевірка завершена · BLE роз'єднано.\nНапруга на OBD: "+voltage+"\nSOC, P і стан опалення: невідомі.\nРезультат: "+report.optString("result"));
-                try{Files.write(cacheFile().toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));}catch(Exception e){appendLog("Не вдалося зберегти журнал: "+e.getMessage());}
+                boolean reset=report.optBoolean("adapterResetConfirmed");
+                state.setText("BLE: від'єднано\nАдаптер: "+(reset?"скидання підтверджено":"стан не підтверджений — від'єднайте Vgate від OBD")+"\nФільтр запису: "+filter+"\n"+resultLabel(result)+"\n"+report.optString("detail"));
+                if(mode==BleProbe.Mode.HVAC_PREFLIGHT && preflightReady)decoded.setText("Адаптер прийняв налаштування. CAN-кадрів ще немає; фізична тиша передавача не виміряна. Оберіть тест A або B — з'єднання відкриється заново.");
+                probe=null;busy=false;stopping=false;buttons();persist();
             }
-        });probe.start(r.getDevice(),name(r));
+        });
+        state.setText("BLE: підключення\nАдаптер: очікуємо відповіді\nФільтр: "+filter);
+        probe.start(selected,selectedName);buttons();ui.removeCallbacks(tick);ui.post(tick);
     }
-    private void appendLog(String s) {
-        logBuffer.append(s).append('\n');if(logBuffer.length()>16_000)logBuffer.delete(0,logBuffer.length()-16_000);
-        logView.setText(logBuffer.toString());
+    private final Runnable tick=new Runnable(){@Override public void run(){
+        BleProbe p=probe;if(p==null || !busy)return;long[] s=p.hvacProgress();
+        if(s[3]==1) {
+            long elapsed=Math.max(0,(System.nanoTime()-s[2])/1_000_000_000L);
+            state.setText("BLE: "+p.bleState()+"\nАдаптер: ATMA · фільтр "+filter+"\nЗапис: "+elapsed+" / 30 с"+(stopping?" · зупинка":""));
+            rx.setText("Прийняті кадри: "+s[0]+"\nОстанній CAN RX на телефоні: "+(s[1]<0?"—":formatTime(s[1])));
+            decoded.setText(p.hvacLatestDescription()+"\nЦе декодування матриці, не підтвердження запуску HVAC.");
+            instructions.setText(elapsed<5?"Початкова фаза OFF. На 5 с штатно увімкніть клімат.":elapsed<20?
+                    "Штатно ON. Позначте виконану дію та реальний потік/тепло. На 20 с штатно вимкніть клімат.":"Штатно OFF. Позначте виконану дію. Дочекайтеся завершення або натисніть «Зупинити».");
+            if(System.nanoTime()-lastCheckpoint>5_000_000_000L) {
+                lastCheckpoint=System.nanoTime();
+                try{JSONObject c=p.checkpoint();if(c!=null){runs.put(runIndex,c);persist();}}catch(Exception e){append("Checkpoint не збережено: "+e);}
+            }
+        } else state.setText("BLE: "+p.bleState()+"\nАдаптер: налаштування / завершення\nФільтр: "+filter);
+        buttons();ui.postDelayed(this,250);
+    }};
+    private String formatTime(long millis) {return DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(millis));}
+    private String resultLabel(String r) {
+        if("NO_MATCHING_FRAMES".equals(r))return "Кадрів не отримано";
+        if("MATCHING_FRAMES_RECEIVED".equals(r))return "Кадри отримано; потрібен аналіз";
+        if("CAPTURE_INCOMPLETE".equals(r))return "Неповний запис — збережіть журнал";
+        if("ADAPTER_SETTINGS_ACKNOWLEDGED".equals(r))return "Налаштування адаптера прийнято; CAN RX ще не перевірений";
+        if("DISCONNECTED".equals(r) || "BLE_ERROR".equals(r))return "BLE втрачено — запис не підтверджений";
+        if("BLOCKED_VOLTAGE".equals(r))return "Тест заблоковано через напругу живлення";
+        if("CANCELLED".equals(r))return "Перевірку скасовано";
+        return "Перевірка зупинена: "+r;
     }
-    private void stopScan() {
-        ui.removeCallbacks(endScan);scanning=false;
-        try{if(scanner!=null)scanner.stopScan(scanCallback);}catch(Exception ignored){}scanner=null;
-    }
-    private void setBusy(boolean value){busy=value;for(Button b:probeButtons)b.setEnabled(!value);parked.setEnabled(!value);}
-    @Override protected void onStart(){super.onStart();foreground=true;}
-    @Override protected void onStop(){
-        foreground=false;stopScan();
-        if(probe!=null) probe.cancel();
-        else setBusy(false);
-        super.onStop();
-    }
-    private File cacheFile(){return new File(getFilesDir(),"last-probe.json");}
-    private void loadLast() {
-        try{File f=cacheFile();if(!f.isFile() || f.length()>524_288)return;
-            lastReport=new JSONObject(new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8));
-            appendLog("Збережений історичний результат: "+lastReport.optString("finishedAt")+" · "+lastReport.optString("result"));
-            status.setText("Є попередній журнал. Поточний стан авто невідомий.");
-        }catch(Exception ignored){}
-    }
-    private File baselineFile(){return new File(getFilesDir(),"can-climate-off.json");}
-    private void loadBaseline(){
+    private void stopCurrent() {if(scanning){endScan(false);state.setText("Пошук зупинено.");return;}if(probe!=null && !stopping){stopping=true;buttons();probe.cancel();}}
+    private File journalFile() {return new File(getFilesDir(),"hvac-stage7-3-current.json");}
+    private String bundle() throws Exception {return new JSONObject().put("format","fisker-warm-hvac-bundle-1").put("appVersion","0.3.4-lab")
+            .put("androidApi",Build.VERSION.SDK_INT).put("phone",Build.MANUFACTURER+" "+Build.MODEL)
+            .put("vehicleClimateStartedByApp",false).put("runs",runs).toString(2);}
+    private void persist() {
         try {
-            File f=baselineFile();if(!f.isFile() || f.length()>524288)return;
-            baseline=new JSONObject(new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8));
-            if(freshBaseline())captureStatus.setText("Є свіжий контрольний запис: "+frames(baseline)+" кадрів. Тепер зроби крок 2.");
-            else captureStatus.setText("Попередній контрольний запис застарів. Почни з кроку 1.");
-        }catch(Exception ignored){}
+            final byte[] bytes=bundle().getBytes(StandardCharsets.UTF_8);
+            disk.execute(()->{AtomicFile atomic=new AtomicFile(journalFile());FileOutputStream output=null;
+                try{output=atomic.startWrite();output.write(bytes);atomic.finishWrite(output);}
+                catch(Exception e){if(output!=null)atomic.failWrite(output);ui.post(()->append("ПОМИЛКА: журнал не збережено на телефоні. Експортуйте його: "+e.getMessage()));}
+            });
+        }catch(Exception e){append("ПОМИЛКА журналу: "+e);}
     }
-    private boolean validCanReport(JSONObject r){
-        return r!=null && ("PASSIVE_CAPTURED".equals(r.optString("result")) || "NO_PASSIVE_FRAMES".equals(r.optString("result")));
-    }
-    private int frames(JSONObject r){return r==null?0:r.optJSONObject("passiveCan")==null?0:r.optJSONObject("passiveCan").optInt("frameCount",0);}
-    private boolean freshBaseline(){
-        if(!validCanReport(baseline))return false;
-        try {long age=java.time.Duration.between(Instant.parse(baseline.getString("finishedAt")),Instant.now()).toMillis();
-            return age>=0 && age<=15*60*1000;
-        }catch(Exception ex){return false;}
-    }
-    private static Map<String,Set<String>> signatures(JSONObject r){
-        Map<String,Set<String>> m=new HashMap<>();JSONObject can=r.optJSONObject("passiveCan");
-        JSONArray ids=can==null?null:can.optJSONArray("ids");if(ids==null)return m;
-        for(int i=0;i<ids.length();i++){
-            JSONObject row=ids.optJSONObject(i);if(row==null)continue;
-            String id=row.optString("id");if(!id.matches("[0-7][0-9A-Fa-f]{2}"))continue;
-            JSONArray samples=row.optJSONArray("samples");Set<String> ss=new HashSet<>();
-            if(samples!=null)for(int j=0;j<samples.length();j++)ss.add(samples.optString(j));
-            m.put(id,ss);
-        }return m;
-    }
-    private static JSONObject compareCan(JSONObject first,JSONObject second)throws Exception {
-        JSONObject output=new JSONObject();
-        int a=first.optJSONObject("passiveCan").optInt("frameCount"), b=second.optJSONObject("passiveCan").optInt("frameCount");
-        output.put("beforeFrames",a).put("afterFrames",b);
-        Map<String,Set<String>> before=signatures(first),after=signatures(second);
-        JSONArray changed=new JSONArray();TreeSet<String> keys=new TreeSet<>();keys.addAll(before.keySet());keys.addAll(after.keySet());
-        for(String id:keys)if(!before.containsKey(id) || !after.containsKey(id) || !before.get(id).equals(after.get(id)))changed.put(id);
-        output.put("changedCandidateIds",changed).put("beforeUniqueIds",before.size()).put("afterUniqueIds",after.size());
-        boolean incomplete=first.optJSONObject("passiveCan").optBoolean("adapterBufferFull") || second.optJSONObject("passiveCan").optBoolean("adapterBufferFull")
-                || first.optJSONObject("passiveCan").optBoolean("truncated") || second.optJSONObject("passiveCan").optBoolean("truncated")
-                || !first.optJSONObject("passiveCan").optBoolean("stopConfirmed") || !second.optJSONObject("passiveCan").optBoolean("stopConfirmed")
-                || "INCOMPLETE".equals(first.optJSONObject("passiveCan").optString("captureQuality"))
-                || "INCOMPLETE".equals(second.optJSONObject("passiveCan").optString("captureQuality"));
-        boolean sameAdapter=first.optString("deviceAddress").equals(second.optString("deviceAddress"));
-        boolean phasesMatch="OFF".equals(first.optString("observationPhase")) && "ON".equals(second.optString("observationPhase"));
-        boolean usable=a>0 && b>0 && !incomplete && sameAdapter && phasesMatch;
-        output.put("sameAdapter",sameAdapter).put("phasesMatch",phasesMatch);
-        output.put("captureIncomplete",incomplete);
-        output.put("usable",usable).put("climateStateVerified",false).put("decodedSignals",0);
-        output.put("summary",usable?("CAN IDs зі змінними даними: "+changed.length()+" · "+a+" → "+b+" кадрів"):
-                (incomplete?"Неповний запис CAN (переповнення або обрізання): ":"Немає достатніх CAN-кадрів для порівняння: ")+a+" / "+b);
-        output.put("warning","CAN differences may come from counters, timing or other systems; NOT confirmed climate signals");
-        return output;
+    private void load() {
+        try {
+            AtomicFile file=new AtomicFile(journalFile());if(!file.getBaseFile().exists())return;
+            byte[] bytes=file.readFully();if(bytes.length>20_000_000)throw new IllegalStateException("Журнал перевищує ліміт");
+            runs=new JSONObject(new String(bytes,StandardCharsets.UTF_8)).getJSONArray("runs");
+            append("Відновлено записів: "+runs.length()+". Це архів; живого BLE/CAN RX зараз немає.");
+            for(int i=0;i<runs.length();i++)if("RUNNING_CHECKPOINT".equals(runs.optJSONObject(i).optString("result")))append("Є незавершений checkpoint. Дані після нього могли бути втрачені; повний запис не підтверджений.");
+        }catch(Exception e){append("Попередній журнал не прочитано: "+e);}
     }
     private void export() {
-        if(busy){message("Перевірка триває","Спочатку дочекайся завершення або зупини перевірку.");return;}
-        if(lastReport==null){message("Поки немає результату","Виконай коротку перевірку або огляд GATT.");return;}
-        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);intent.setType("application/json");
-        intent.putExtra(Intent.EXTRA_TITLE,"fisker-warm-lab-"+Instant.now().toString().replace(":", "-")+".json");startActivityForResult(intent,EXPORT);
+        if(busy)return;
+        try {exportText=bundle();Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE)
+                    .putExtra(Intent.EXTRA_TITLE,"Fisker-Warm-HVAC-"+Instant.now().toString().replace(':','-')+".json");startActivityForResult(intent,EXPORT);
+        }catch(Exception e){alert("Експорт не відкрився",e.toString());}
     }
     @Override protected void onActivityResult(int request,int result,Intent data) {
         super.onActivityResult(request,result,data);
-        if(request!=EXPORT || result!=RESULT_OK || data==null || data.getData()==null || lastReport==null)return;
-        try(OutputStream out=getContentResolver().openOutputStream(data.getData())) {
-            if(out==null)throw new IllegalStateException("No export stream");out.write(lastReport.toString(2).getBytes(StandardCharsets.UTF_8));
-            message("Збережено","JSON містить фактичні відповіді цієї перевірки. Він не містить команди прогріву.");
-        }catch(Exception e){message("Помилка збереження",e.toString());}
+        if(request!=EXPORT || result!=RESULT_OK || data==null || data.getData()==null || exportText==null)return;
+        try(OutputStream out=getContentResolver().openOutputStream(data.getData(),"wt")) {
+            if(out==null)throw new IllegalStateException("Файл не відкрито");out.write(exportText.getBytes(StandardCharsets.UTF_8));
+            append("JSON-файл збережено. Це не підтверджує видимість сигналів або роботу HVAC.");
+        }catch(Exception e){alert("Журнал не експортовано",e.toString());}finally{exportText=null;}
     }
-    private void message(String title,String body){new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Гаразд",null).show();}
-    private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
-    private TextView text(String body,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(body);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,dp(7),0,dp(7));if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);return t;}
-    private LinearLayout card(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(dp(16),dp(12),dp(16),dp(16));l.setBackgroundColor(Color.WHITE);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(18);l.setLayoutParams(p);return l;}
-    private Button button(String title){Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextSize(14);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=dp(8);b.setLayoutParams(p);return b;}
+    @Override protected void onResume(){super.onResume();foreground=true;}
+    @Override protected void onPause(){foreground=false;if(scanning)endScan(false);if(probe!=null)stopCurrent();super.onPause();}
+    @Override protected void onDestroy(){ui.removeCallbacks(tick);super.onDestroy();}
 }

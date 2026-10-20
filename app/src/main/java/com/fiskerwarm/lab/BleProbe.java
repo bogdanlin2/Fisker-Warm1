@@ -19,6 +19,7 @@ import com.fiskerwarm.lab.core.ElmParser;
 import com.fiskerwarm.lab.core.HeatSafety;
 import com.fiskerwarm.lab.core.ReadOnlyPolicy;
 import com.fiskerwarm.lab.core.UartProfiles;
+import com.fiskerwarm.lab.core.HvacJournal;
 import com.fiskerwarm.lab.core.PassiveNetworkPlan;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,7 +38,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Foreground, finite probes only. GATT-map mode never writes characteristics or descriptors. */
 @SuppressLint("MissingPermission")
 public final class BleProbe {
-    public enum Mode { VOLTAGE_ONLY, IDENTITIES, GATT_MAP, PASSIVE_CAN_OFF, PASSIVE_CAN_ON, CAN_NETWORK_AUDIT }
+    public enum Mode { VOLTAGE_ONLY, IDENTITIES, GATT_MAP, PASSIVE_CAN_OFF, PASSIVE_CAN_ON, CAN_NETWORK_AUDIT,
+        HVAC_PREFLIGHT, HVAC_534, HVAC_373 }
     public interface Listener { void log(String text); void done(JSONObject report); }
     private static final UUID CCC=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private final Context context;
@@ -48,10 +50,12 @@ public final class BleProbe {
     private final AtomicBoolean terminal=new AtomicBoolean(false), started=new AtomicBoolean(false);
     private final JSONObject report=new JSONObject();
     private final JSONArray events=new JSONArray();
+    private final HvacJournal ownerMarks=new HvacJournal();
     private volatile BluetoothGatt gatt;
     private volatile ElmChannel channel;
     private volatile BluetoothGattCharacteristic writeChar;
     private volatile BluetoothGattCharacteristic notifyChar;
+    private volatile boolean linkConnected;
     private final AtomicBoolean mtuPending=new AtomicBoolean(false), subscriptionStarted=new AtomicBoolean(false);
     private final JSONObject transport=new JSONObject();
     private volatile int effectiveMtu=23;
@@ -66,15 +70,43 @@ public final class BleProbe {
     public BleProbe(Context context,Mode mode,Listener listener) {
         this.context=context.getApplicationContext(); this.mode=mode; this.listener=listener;
     }
+    private boolean isHvac() {return mode==Mode.HVAC_PREFLIGHT || mode==Mode.HVAC_534 || mode==Mode.HVAC_373;}
+    public long[] hvacProgress() {ElmChannel ch=channel;return ch==null?new long[]{0,-1,-1,0}:ch.hvacProgress();}
+    public String hvacLatestDescription() {ElmChannel ch=channel;return ch==null?"Кадрів немає":ch.hvacLatestDescription();}
+    public String bleState() {return terminal.get()?"від'єднано":linkConnected?"з'єднано":"підключення / перевірка GATT";}
+    public void mark(String kind) {
+        if(!isHvac() || terminal.get() || hvacProgress()[3]!=1)throw new IllegalStateException("Немає активного запису");
+        ownerMarks.mark(kind,System.nanoTime(),System.currentTimeMillis());log("Позначка власника: "+kind);
+    }
+    /** A running checkpoint is explicitly incomplete; it never fabricates frames. */
+    public JSONObject checkpoint() throws Exception {
+        ElmChannel ch=channel;
+        if(ch==null || hvacProgress()[3]!=1)return null;
+        synchronized(report) {
+            return new JSONObject(report.toString()).put("hvacCapture",new JSONObject(ch.hvacCaptureJson()))
+                    .put("ownerMarks",new JSONArray(ownerMarks.marksJson())).put("result","RUNNING_CHECKPOINT")
+                    .put("incomplete",true).put("checkpointAt",Instant.now().toString());
+        }
+    }
     public void start(BluetoothDevice device,String advertisedName) {
         try {
-            report.put("format","fisker-warm-lab-1"); report.put("appVersion","0.3.3-lab");
-            report.put("diagnosticRevision","can-network-audit-1").put("bleTransport",transport);
+            report.put("format",isHvac()?"fisker-warm-hvac-passive-1":"fisker-warm-lab-1"); report.put("appVersion","0.3.4-lab");
+            report.put("diagnosticRevision","hvac-passive-stage7.3-1").put("bleTransport",transport);
             report.put("mode",mode.toString()); report.put("startedAt",Instant.now().toString());
             report.put("heatCapability",HeatSafety.BUILD_STATUS); report.put("events",events);
             report.put("deviceName",advertisedName); report.put("deviceAddress",device.getAddress());
             report.put("hvSoc",JSONObject.NULL); report.put("gear",JSONObject.NULL);
             report.put("speedKph",JSONObject.NULL); report.put("climateRunning",JSONObject.NULL);
+            if(isHvac()) {
+                report.put("vehicleCommandsSent",0).put("canTransmissionsRequested",0).put("syntheticRx",false)
+                        .put("physicalCanRxTimestampsAvailable",false).put("physicalSilentModeVerified",false)
+                        .put("matrixSourceCommit",com.fiskerwarm.lab.core.HvacDecoder.SOURCE_COMMIT)
+                        .put("adapterResetConfirmed",false).put("noAutomaticReconnect",true)
+                        .put("receiptMeaning","RX only from adapter notifications; cannot independently detect dropped notifications or verify on-wire silence");
+                if(advertisedName==null || !advertisedName.toLowerCase(Locale.ROOT).replace(" ","").equals("vlinkerfd-ios")) {
+                    finish("BLOCKED_ADAPTER_PROFILE","Потрібен перевірений профіль vLinker FD-IOS; жодного AT не надіслано");return;
+                }
+            }
             if(mode!=Mode.GATT_MAP && (advertisedName==null ||
                     !advertisedName.toLowerCase(Locale.ROOT).replace(" ","").startsWith("vlinkerfd"))) {
                 finish("BLOCKED_DEVICE","Only a named vLinker FD adapter can receive AT/UDS commands"); return;
@@ -92,21 +124,28 @@ public final class BleProbe {
             }
         } catch(Exception e) { finish("CONNECT_ERROR",e.toString()); }
     }
-    public void cancel() { finish("CANCELLED","User left the foreground or stopped the probe"); }
+    public void cancel() {
+        ElmChannel ch=channel;
+        if(isHvac() && ch!=null && ch.requestMonitorStop()) {log("Зупинка запису; очікуємо prompt адаптера…");return;}
+        finish("CANCELLED","User left the foreground or stopped the probe");
+    }
 
     private final BluetoothGattCallback callback=new BluetoothGattCallback() {
         @Override public void onConnectionStateChange(BluetoothGatt g,int status,int state) {
             if(terminal.get()) { g.close(); return; }
             if(gatt==null)gatt=g;
             if(g!=gatt)return;
+            stateEvent("CONNECTION_STATE",status+" / "+state);
             if(status!=BluetoothGatt.GATT_SUCCESS) { finish("BLE_ERROR","Connection status "+status); return; }
             if(state==BluetoothProfile.STATE_CONNECTED) {
+                linkConnected=true;
                 log("BLE connected. This does not prove the vehicle is awake.");
                 if(!g.discoverServices()) finish("GATT_ERROR","Cannot start service discovery");
             } else if(state==BluetoothProfile.STATE_DISCONNECTED) finish("DISCONNECTED","Peripheral disconnected");
         }
         @Override public void onServicesDiscovered(BluetoothGatt g,int status) {
-            if(terminal.get()) return;
+            if(terminal.get() || g!=gatt) return;
+            stateEvent("SERVICES_DISCOVERED",Integer.toString(status));
             if(status!=BluetoothGatt.GATT_SUCCESS) { finish("GATT_ERROR","Discovery status "+status); return; }
             try {
                 JSONArray services=new JSONArray();
@@ -127,6 +166,8 @@ public final class BleProbe {
                 }
                 List<BluetoothGattCharacteristic[]> pairs=new ArrayList<>();
                 for(UartProfiles.Profile profile:UartProfiles.known()) {
+                    // Exact UART triple observed on the owner's FD-IOS in the 15 Oct export.
+                    if(isHvac() && !profile.service.equals("000018f0-0000-1000-8000-00805f9b34fb"))continue;
                     BluetoothGattService s=g.getService(UUID.fromString(profile.service)); if(s==null) continue;
                     BluetoothGattCharacteristic w=s.getCharacteristic(UUID.fromString(profile.write));
                     BluetoothGattCharacteristic n=s.getCharacteristic(UUID.fromString(profile.notify));
@@ -140,8 +181,8 @@ public final class BleProbe {
                 report.put("writeUuid",writeChar.getUuid().toString()).put("notifyUuid",notify.getUuid().toString());
                 long remaining=ReadOnlyPolicy.MAX_SESSION_MILLIS-(SystemClock.elapsedRealtime()-startElapsed);
                 if(remaining<=0) {finish("SESSION_LIMIT","Session expired before UART setup");return;}
-                channel=new ElmChannel(BleProbe.this::write,remaining);
-                if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON || mode==Mode.CAN_NETWORK_AUDIT) {
+                channel=isHvac()?ElmChannel.forHvac(BleProbe.this::write,remaining):new ElmChannel(BleProbe.this::write,remaining);
+                if(isHvac() || mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON || mode==Mode.CAN_NETWORK_AUDIT) {
                     transport.put("highPriorityRequestQueued",g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH));
                     transport.put("highPriorityConfirmed",false).put("requestedMtu",247).put("negotiatedMtu",JSONObject.NULL);
                     mtuPending.set(true);ui.postDelayed(mtuWatchdog,2500);
@@ -157,6 +198,7 @@ public final class BleProbe {
         @Override public void onDescriptorWrite(BluetoothGatt g,BluetoothGattDescriptor d,int status) {
             if(terminal.get() || g!=gatt || !CCC.equals(d.getUuid()) || !sameCharacteristic(d.getCharacteristic(),notifyChar)) return;
             if(status!=BluetoothGatt.GATT_SUCCESS) { finish("NOTIFY_ERROR","Subscription status "+status); return; }
+            stateEvent("NOTIFICATIONS_SUBSCRIBED",Integer.toString(status));
             if(started.compareAndSet(false,true)) worker.execute(BleProbe.this::read);
         }
         @Override public void onCharacteristicWrite(BluetoothGatt g,BluetoothGattCharacteristic c,int status) {
@@ -176,8 +218,9 @@ public final class BleProbe {
             } catch(Exception e) {finish("GATT_ERROR",e.toString());}
         }
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c,byte[] value) {
+            long callbackEntry=System.nanoTime();
             ElmChannel ch=channel;
-            if(ch!=null && g==gatt && sameCharacteristic(c,notifyChar) && value!=null && !terminal.get()) ch.receive(value.clone());
+            if(ch!=null && g==gatt && sameCharacteristic(c,notifyChar) && value!=null && !terminal.get()) ch.receiveAdapterNotification(value.clone(),callbackEntry);
         }
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c) {
             if(Build.VERSION.SDK_INT<33) { byte[] v=c.getValue(); if(v!=null) onCharacteristicChanged(g,c,v); }
@@ -185,8 +228,9 @@ public final class BleProbe {
     };
 
     private static boolean sameCharacteristic(BluetoothGattCharacteristic a,BluetoothGattCharacteristic b) {
-        return a!=null && b!=null && a.getUuid().equals(b.getUuid()) && a.getService()!=null && b.getService()!=null
-                && a.getService().getUuid().equals(b.getService().getUuid());
+        return a!=null && b!=null && a.getService()!=null && b.getService()!=null
+                && UartProfiles.sameEndpoint(a.getService().getUuid().toString(),a.getService().getInstanceId(),a.getUuid().toString(),a.getInstanceId(),
+                b.getService().getUuid().toString(),b.getService().getInstanceId(),b.getUuid().toString(),b.getInstanceId());
     }
     private void subscribe(BluetoothGatt g) throws Exception {
         if(terminal.get() || g!=gatt || !subscriptionStarted.compareAndSet(false,true))return;
@@ -227,7 +271,7 @@ public final class BleProbe {
         log("RX "+r.replace('\r',' ').replace('\n',' ')); return r;
     }
     private void expectOk(String cmd) throws Exception {
-        String r=command(cmd,2500); if(!"OK".equals(r.trim())) throw new IllegalStateException(cmd+" was not acknowledged: "+r);
+        String r=command(cmd,2500); if(!"OK".equals(r.trim())) throw new IllegalStateException("Налаштування не підтверджено: "+cmd+" → "+r);
     }
     private void read() {
         try {
@@ -245,6 +289,7 @@ public final class BleProbe {
             if(!ReadOnlyPolicy.diagnosticVoltageAcceptable(voltage)) {
                 finish("BLOCKED_VOLTAGE","No UDS: voltage unknown, below 12.2 V or outside expected range"); return;
             }
+            if(isHvac()) {hvacCapture();return;}
             if(mode==Mode.CAN_NETWORK_AUDIT) {networkAudit();return;}
             if(mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON) {
                 for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF0","ATCFC0"}) expectOk(cmd);
@@ -284,6 +329,31 @@ public final class BleProbe {
             }
             finish("IDENTITIES_CAPTURED","Completed a bounded read-only snapshot");
         } catch(Exception e) { finish("PROBE_ERROR",e.toString()); }
+    }
+    private void hvacCapture() throws Exception {
+        for(String cmd:new String[]{"ATL0","ATS1","ATH1","ATSP6","ATCAF0","ATCFC0","ATCSM1","ATD1"})expectOk(cmd);
+        report.put("silentModeCommandReply","OK").put("silentModeEvidence","ACTUAL_ADAPTER_ACKNOWLEDGMENT_ONLY_NOT_ELECTRICAL_VERIFICATION");
+        if(!"6".equals(command("ATDPN",2500).trim()))throw new IllegalStateException("Потрібен підтверджений налаштований протокол 6");
+        if(mode==Mode.HVAC_PREFLIGHT) {
+            resetAdapter();finish("ADAPTER_SETTINGS_ACKNOWLEDGED","Налаштування прийнято; CAN RX і фізична тиша ще не перевірені");return;
+        }
+        String id=mode==Mode.HVAC_534?"534":"373";
+        expectOk("ATAR");expectOk("ATCM7FF");expectOk("ATCF"+id);
+        report.put("exactReceiveFilter",id).put("requestedWindowMillis",30_000)
+                .put("hardwareFilterBehaviorVerified",false);
+        log("Запис 0x"+id+" · 30 секунд. На 5 с — штатно ON, на 20 с — штатно OFF. Позначайте виконані дії.");
+        CanCapture.Snapshot capture=channel.listenCanSnapshot(30_000);
+        report.put("hardwareFilterBehaviorVerified",false); // No matching RX cannot prove a mask; even matching RX is bounded evidence.
+        if(capture.stopConfirmed)resetAdapter();
+        String result=capture.incomplete()?"CAPTURE_INCOMPLETE":capture.frameCount==0?"NO_MATCHING_FRAMES":"MATCHING_FRAMES_RECEIVED";
+        finish(result,capture.incomplete()?"Запис неповний: "+capture.endReason:
+                capture.frameCount==0?"Кадрів немає. Видимість через OBD не підтверджена; це не доказ відсутності сигналу.":
+                "Отримані кадри адаптера. Матриця й робота HVAC на авто потребують аналізу.");
+    }
+    private void resetAdapter() throws Exception {
+        String reset=command("ATZ",4000);
+        if(!reset.toUpperCase(Locale.ROOT).contains("ELM"))throw new IllegalStateException("Reset адаптера не підтверджений");
+        report.put("adapterResetConfirmed",true);log("Налаштування адаптера скинуто; автомобіль не скидався.");
     }
     private String diagnosticCommand(String command) throws Exception {
         if(terminal.get())throw new IllegalStateException("Stopped");
@@ -398,8 +468,15 @@ public final class BleProbe {
     }
 
     private void log(String s) { ui.post(()->listener.log(s)); }
+    private void stateEvent(String name,String value) {
+        try{synchronized(report){events.put(new JSONObject().put("at",Instant.now().toString()).put("scope","BLE_STATE")
+                .put("event",name).put("value",value).put("elapsedMillis",SystemClock.elapsedRealtime()-startElapsed));}}
+        catch(Exception ignored) {}
+    }
     private void finish(String result,String detail) {
         if(!terminal.compareAndSet(false,true)) return;
+        stateEvent("CLOSE_REQUESTED",result);
+        linkConnected=false;
         ui.removeCallbacks(watchdog);
         ui.removeCallbacks(mtuWatchdog);mtuPending.set(false);
         ElmChannel ch=channel; if(ch!=null) ch.close(detail);
@@ -410,6 +487,12 @@ public final class BleProbe {
         ui.post(()->{
             try {
                 synchronized(report) {
+                    if(isHvac()) {
+                        String capture=ch==null?"null":ch.hvacCaptureJson();
+                        report.put("hvacCapture",capture.equals("null")?JSONObject.NULL:new JSONObject(capture))
+                                .put("ownerMarks",new JSONArray(ownerMarks.marksJson()))
+                                .put("adapterMayStillBeMonitoring",!report.optBoolean("adapterResetConfirmed"));
+                    }
                     report.put("result",result).put("detail",detail).put("finishedAt",Instant.now().toString())
                             .put("sessionMillis",SystemClock.elapsedRealtime()-startElapsed).put("bleCloseRequested",true);
                 }

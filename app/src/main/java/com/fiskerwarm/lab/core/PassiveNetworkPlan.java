@@ -4,6 +4,14 @@ import java.util.Locale;
 
 /** Receive-only, fixed ELM adapter diagnostics. Never authorizes a vehicle payload. */
 public final class PassiveNetworkPlan {
+    /** Stage 7.3 is a separate, narrower adapter-only capability. No arbitrary IDs. */
+    public static boolean hvacAdapterCommand(String command) {
+        if(command==null)return false;
+        for(String allowed:new String[]{"ATZ","ATE0","ATI","ATRV","ATL0","ATS1","ATH1","ATSP6",
+                "ATCAF0","ATCFC0","ATCSM1","ATD1","ATDPN","ATAR","ATCM7FF","ATCF534","ATCF373"})
+            if(allowed.equals(command))return true;
+        return false;
+    }
     public static final int OBSERVED_FLOOD_ID=0x0E9;
     public static final long WINDOW_MILLIS=500;
     public static final class Group {

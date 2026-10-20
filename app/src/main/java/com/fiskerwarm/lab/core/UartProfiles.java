@@ -17,6 +17,11 @@ public final class UartProfiles {
         new Profile("6e400001-b5a3-f393-e0a9-e50e24dcca9e","6e400002-b5a3-f393-e0a9-e50e24dcca9e","6e400003-b5a3-f393-e0a9-e50e24dcca9e")
     };
     public static Profile[] known() { return KNOWN.clone(); }
+    public static boolean sameEndpoint(String serviceA,int serviceInstanceA,String charA,int charInstanceA,
+                                       String serviceB,int serviceInstanceB,String charB,int charInstanceB) {
+        return serviceA!=null && serviceA.equals(serviceB) && charA!=null && charA.equals(charB)
+                && serviceInstanceA==serviceInstanceB && charInstanceA==charInstanceB;
+    }
     public static boolean matches(String service,String write,String notify) {
         if(service==null || write==null || notify==null)return false;
         for(Profile p:KNOWN) if(p.service.equals(service.toLowerCase(Locale.ROOT)) &&
