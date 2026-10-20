@@ -1,0 +1,95 @@
+[
+  {
+    "name": "wiring",
+    "sha256": "bd9d4731622b18060ba041a7d6c6c029e89dc7b7a9d58a50b924e03c3ca927f7",
+    "pages": 91,
+    "locations": [
+      {
+        "pdfPage": 4,
+        "anchorsFound": [
+          "Electronic Climate Control (ECC)",
+          "EV-CAN-H",
+          "C088B*2F"
+        ]
+      },
+      {
+        "pdfPage": 5,
+        "anchorsFound": [
+          "THERMAL BUS",
+          "Thermal-CAN-H"
+        ]
+      },
+      {
+        "pdfPage": 9,
+        "anchorsFound": [
+          "INFOTAINMENT BUS",
+          "IBUS2 CAN_H",
+          "IBUS1 CAN _H",
+          "V078B*1F"
+        ]
+      },
+      {
+        "pdfPage": 13,
+        "anchorsFound": [
+          "DiagBus_H",
+          "DiagBus_L",
+          "OBD",
+          "W1040_1",
+          "X*06",
+          "X*14"
+        ]
+      },
+      {
+        "pdfPage": 29,
+        "anchorsFound": [
+          "DiagBus_H",
+          "IBUS2_H",
+          "Private-CAN-H"
+        ]
+      },
+      {
+        "pdfPage": 67,
+        "anchorsFound": [
+          "EV-CAN-H",
+          "Thermal-CAN-H"
+        ]
+      },
+      {
+        "pdfPage": 69,
+        "anchorsFound": [
+          "IBUS1 CAN _H",
+          "IBUS2 CAN_H"
+        ]
+      }
+    ],
+    "scope": "Search locations only; physical wire mapping was separately visually reviewed, VIN/OS fit unverified"
+  },
+  {
+    "name": "architecture",
+    "sha256": "de13684830b87d1f4ce0a8655aded4f42122d9ff4622a94ea3cbfcfe496f1086",
+    "pages": 144,
+    "locations": [
+      {
+        "pdfPage": 1,
+        "anchorsFound": [
+          "PT Full",
+          "V0.04",
+          "01.02.2022"
+        ]
+      },
+      {
+        "pdfPage": 12,
+        "anchorsFound": [
+          "DLC1 moved from Diagnostic CAN to T BUS CAN"
+        ]
+      },
+      {
+        "pdfPage": 40,
+        "anchorsFound": [
+          "DLC1 moved from Diagnostic CAN to TBus CAN"
+        ]
+      }
+    ],
+    "scope": "Search locations only; physical wire mapping was separately visually reviewed, VIN/OS fit unverified"
+  }
+]

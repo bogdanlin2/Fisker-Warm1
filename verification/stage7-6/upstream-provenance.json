@@ -1,0 +1,22 @@
+{
+  "checkedAtDateUTC": "2026-10-20",
+  "headCommit": "68a88af90b369c1b2c55d7949c4c848f41deb857",
+  "treeTruncated": false,
+  "treeEntries": 185,
+  "blobEntries": 148,
+  "originalXlsxPaths": [],
+  "rawCanTraceCandidates": [],
+  "dbcHistory": [
+    {
+      "sha": "41a7543bb093b3dffd33b82408b7a08b4d4a05f6",
+      "date": "2026-10-05T20:50:16Z",
+      "message": "webhud: implement map tile fetching and caching for improved road segment access"
+    },
+    {
+      "sha": "2aaa6f568810d5e7ab892036e18ae25f74491b0b",
+      "date": "2026-10-04T19:02:48Z",
+      "message": "webhud: live car controls that send over IBUS1, and the HUD from the car's own buses\n\nThe car-control menus are live on the car: each control follows what the car reports (doors, liftgate,\nwindows, sunroof, mirrors, lights, climate, seat heat, gear, drive mode, battery, charging), the 3D car\nfollows the same values, and setting a control sends the head unit's own control message through the\nAndroid app's CAN link (windows auto up/down, lock, liftgate, sunroof position, mirrors, lamps,\nclimate, seat heat and moves, the locking settings). Controls the car has no message for, or whose\nmessage the head unit sends itself every second, or whose frame would carry every audio volume along,\nare greyed with the reason. Energy shows the charging power, pack voltage and current, time left,\nlimits and health. Doors are manual now: only the liftgate has buttons; the windows have held up/down\nbuttons.\n\nThe tables, the IBUS DBC and the app's ID lists are generated from the FM29 IBUS matrices by\ntools/gen_ibus.py, with the matrix's LSB start bits converted to DBC numbering (the hand-made table\nwas only right for signals inside one byte). The gateway mirrors the ADAS bus onto IBUS2 with the same\nlayout, so the page's worker keeps a second decoder on the IBUS DBC and the HUD runs from the car alone\nwhenever the comma's ticks aren't coming (CAR in the mode chip).\n\nThe CAN helper transmits only the IDs it is given (checked again in the app), with loopback off, and\nrepeats every message's current frame once a second so steady values (climate, seats, a window's\nposition) no longer expire in the page. Its output now goes through one locked writer: a race on the\nbuffered writer had been dropping everything after the first frame.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+    }
+  ],
+  "scope": "Pinned public source inventory; absence of these files is not proof that the author has no private measurements"
+}
