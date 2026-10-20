@@ -1,0 +1,66 @@
+{
+  "suites": [
+    {
+      "suite": "CoreChecks",
+      "checksPassed": 152,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanDiagnosticsChecks",
+      "checksPassed": 58,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditChecks",
+      "checksPassed": 23,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "HvacPassiveChecks",
+      "checksPassed": 27,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanRxChecks",
+      "checksPassed": 23,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanBurstChecks",
+      "checksPassed": 11,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "NetworkAuditLogChecks",
+      "checksPassed": 16,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "HvacExportChecks",
+      "checksPassed": 2,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanRxExportChecks",
+      "checksPassed": 4,
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "suite": "CanBurstLogChecks",
+      "checksPassed": 5,
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "allPassed": true,
+  "vehicleConnected": false
+}

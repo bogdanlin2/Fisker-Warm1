@@ -98,7 +98,20 @@ SPACE queue прийнята через 2.890208 мс після TX_REQUEST. Ї�
 
 [CanBurstChecks](../tests/CanBurstChecks.java) відтворює саме сім записаних packets у вихідному порядку через асинхронний fake GATT: перший packet після MA completion, tail після SPACE, SPACE callback між четвертим і п'ятим RX, BUFFER FULL/STOPPED/prompt у сьомому. Відтворення підтверджує 40/2/1305, acquisition 6 / drain 34 і незмінні error flags. Це модель host-подій, а не модель фізичної CAN-шини або нове автомобільне вимірювання.
 
-Окремо автоматизовано: завершення всього differential із двома втратними controls та нульовим ECC; отримання ECC як окрема ознака; правильний reset/re-arm порядок; забруднений reset banner, ATI/voltage/CSM1/DPN відмови; 15 незалежних заборон recovery; unknown stop; ECC overflow. Усі outbound bytes перевіряються існуючим fixed passive firewall. [Python-перевірки](../tests/test_can_burst.py) незалежно рахують raw lines/timestamps і читають Java JSON: неповнота та SYNTHETIC_TEST не зникають, payload/raw bytes не обрізаються. Усі чинні регресії також запускаються. Точні CI totals, фактичний APK hash/сертифікат і посилання фіксуються в `verification/stage7-5/DELIVERY-UA.md` після збірки.
+Окремо автоматизовано: завершення всього differential із двома втратними controls та нульовим ECC; отримання ECC як окрема ознака; правильний reset/re-arm порядок; забруднений reset banner, ATI/voltage/CSM1/DPN відмови; 15 незалежних заборон recovery; unknown stop; ECC overflow. Усі outbound bytes перевіряються існуючим fixed passive firewall. [Python-перевірки](../tests/test_can_burst.py) незалежно рахують raw lines/timestamps і читають Java JSON: неповнота та SYNTHETIC_TEST не зникають, payload/raw bytes не обрізаються. Усі **321 офлайн-перевірка** пройшли локально та в обох CI. [Android CI 39390521171](https://github.com/bogdanlin2/Fisker-Warm1/actions/runs/39390521171) і [CAN CI 39390521235](https://github.com/bogdanlin2/Fisker-Warm1/actions/runs/39390521235) — success. Підписи APK v2/v3 перевірено, applicationId/сертифікат збережено для оновлення 0.3.5 без видалення. Точні totals, фактичний APK hash/сертифікат і готова збірка: [DELIVERY-UA.md](../verification/stage7-5/DELIVERY-UA.md).
+
+Точні місця нового runtime [c66f6bc](https://github.com/bogdanlin2/Fisker-Warm1/commit/c66f6bcd98fc59a9cbf13ac315098b987c8b456f):
+
+| Функція | Код |
+|---|---|
+| Raw RX до routing, сумісні callback API | [BleProbe.onCharacteristicChanged, 238–248](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/BleProbe.java#L238-L248) |
+| Raw packet перед парсингом, host поріг, незалежна неповнота | [CanCapture, 69–88 та 135–174](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/core/CanCapture.java#L69-L174) |
+| MA completion, stop decision, SPACE/drain та нові часові межі | [ElmChannel.monitor, 143–220](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/core/ElmChannel.java#L143-L220) |
+| Вузький критерій overflow prefix, ATZ/startup boundary | [CanRxAudit, 48–80](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/core/CanRxAudit.java#L48-L80) |
+| Перехід 0E9 → ECC → 0E9 та суфікс WITH_CONTROL_LOSS | [CanRxAudit.run, 82–116](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/core/CanRxAudit.java#L82-L116) |
+| Root.incomplete відокремлено від phases completed | [BleProbe.canRxControl, 386–422](https://github.com/bogdanlin2/Fisker-Warm1/blob/c66f6bcd98fc59a9cbf13ac315098b987c8b456f/app/src/main/java/com/fiskerwarm/lab/BleProbe.java#L386-L422) |
+
+Статичні посилання прив'язані до перевіреного runtime commit; наступний docs-only commit доставки не змінює APK.
 
 На реальному Vgate новий шлях ще не виконано. Фізичну причину однакових frames не можна остаточно відрізнити без ACK/error/wire timestamps чи підтверджених firmware даних. Купівля обладнання, прошивання, зміна CSM0 або активний CAN для цього етапу не потрібні й не пропонуються.
 

@@ -1,0 +1,48 @@
+{
+  "runtimeCommit": "c66f6bcd98fc59a9cbf13ac315098b987c8b456f",
+  "pullRequest": "https://github.com/bogdanlin2/Fisker-Warm1/pull/11",
+  "apk": "Fisker-Warm-CAN-RX-0.3.6.apk",
+  "sha256": "54e79ddf50e075ebf60d1f1253552b6763582ff645a399ca466eb1d5456540c2",
+  "sizeBytes": 74121,
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionName": "0.3.6-lab",
+  "versionCode": 12,
+  "certificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "previousApkBytesHashVerified": true,
+  "previousApkCertificateBytesCompared": true,
+  "compatibleInPlaceUpdate": true,
+  "apkSignatureV2AndV3VerifiedByCi": true,
+  "artifactZipDigestsVerifiedLocally": true,
+  "offlineChecksPassed": 321,
+  "ciRuns": [
+    {
+      "id": 39390521235,
+      "name": "CAN diagnostics tests",
+      "head_sha": "c66f6bcd98fc59a9cbf13ac315098b987c8b456f",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/bogdanlin2/Fisker-Warm1/actions/runs/39390521235",
+      "created_at": "2026-10-20T08:02:09Z",
+      "updated_at": "2026-10-20T08:04:00Z",
+      "run_started_at": "2026-10-20T08:02:09Z"
+    },
+    {
+      "id": 39390521171,
+      "name": "Build and verify Fisker Warm APK",
+      "head_sha": "c66f6bcd98fc59a9cbf13ac315098b987c8b456f",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/bogdanlin2/Fisker-Warm1/actions/runs/39390521171",
+      "created_at": "2026-10-20T08:02:09Z",
+      "updated_at": "2026-10-20T08:04:12Z",
+      "run_started_at": "2026-10-20T08:02:09Z"
+    }
+  ],
+  "vehicleTested": false,
+  "samsungInstallTested": false,
+  "physicalOverflowFixed": false,
+  "rawLogReplayed": true,
+  "differentialRecoveryVerifiedOffline": true,
+  "mainModified": false,
+  "carCommandsAdded": false
+}
