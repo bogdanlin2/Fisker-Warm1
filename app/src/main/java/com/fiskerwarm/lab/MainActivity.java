@@ -12,7 +12,9 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,7 +61,7 @@ public final class MainActivity extends Activity {
     private JSONArray runs=new JSONArray();
     private TextView state,rx,decoded,instructions,log;
     private CheckBox parked;
-    private Button connect,testA,testB,stop,export,newLog;
+    private Button connect,control,testA,testB,stop,export,newLog;
     private LinearLayout page;
 
     @Override public void onCreate(Bundle saved) {
@@ -68,18 +70,21 @@ public final class MainActivity extends Activity {
         adapter=manager==null?null:manager.getAdapter();
         ScrollView scroll=new ScrollView(this);page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(24,20,24,32);page.setBackgroundColor(Color.rgb(12,25,38));scroll.addView(page);
-        label("Fisker Warm · HVAC",26);label("0.3.4 · ЕТАП 7.3 · ПАСИВНИЙ ТЕСТ",15);
+        label("Fisker Warm · CAN RX",26);label("0.3.5 · ЕТАП 7.4 · ПАСИВНИЙ КОНТРОЛЬ",15);
         label("Автомобільні команди заблоковано. Застосунок сам не вмикає клімат.",16);
         parked=new CheckBox(this);parked.setText("Авто у P, стоянкове гальмо, я біля авто зі штатним ключем");
-        parked.setTextColor(Color.WHITE);page.addView(parked);
+        parked.setTextColor(Color.WHITE);parked.setTextSize(18);parked.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        parked.setButtonTintList(ColorStateList.valueOf(Color.rgb(135,206,250)));
+        parked.setBackgroundColor(Color.rgb(31,57,78));parked.setPadding(16,20,16,20);page.addView(parked);
         state=label("BLE: не підключено\nАдаптер: не перевірено\nФільтр: не встановлено",16);
         rx=label("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —",17);
         decoded=label("Дані з автомобіля ще не отримані.",15);
         LinearLayout connectionRow=row();connect=button(connectionRow,"Підключити Vgate");connect.setOnClickListener(v->scan());
         stop=button(connectionRow,"Зупинити");stop.setOnClickListener(v->stopCurrent());
+        control=button(row(),"Контроль CAN RX · 0E9 → 373 → 0E9");control.setOnClickListener(v->confirmControl());
         LinearLayout testsRow=row();testA=button(testsRow,"Тест 0x534\nКлімат On/Off");testA.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_534));
         testB=button(testsRow,"Тест 0x373\nСтатус клімату");testB.setOnClickListener(v->confirm(BleProbe.Mode.HVAC_373));
-        instructions=label("Спочатку: авто пробуджене, клімат OFF. Після початку відліку: 5 с — штатно ON, 20 с — штатно OFF. Позначки тільки записують виконані дії.",14);
+        instructions=label("Для етапу 7.4 оберіть «Контроль CAN RX». Авто має бути пробуджене. Перемикати клімат під час контролю не потрібно; старі 30-секундні тести повторювати не потрібно.",15);
         LinearLayout hmiRow=row();mark(hmiRow,"Позначити: ON","HMI_ON");mark(hmiRow,"Позначити: OFF","HMI_OFF");
         LinearLayout physicalRow=row();mark(physicalRow,"Є потік повітря","AIRFLOW_PRESENT");mark(physicalRow,"Є тепле повітря","WARM_AIR_PRESENT");
         LinearLayout exportRow=row();export=button(exportRow,"Експортувати журнал");export.setOnClickListener(v->export());
@@ -101,11 +106,11 @@ public final class MainActivity extends Activity {
     private void alert(String title,String body) {new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Гаразд",null).show();}
     private void buttons() {
         if(connect==null)return;
-        connect.setEnabled(!busy);testA.setEnabled(!busy && preflightReady);testB.setEnabled(!busy && preflightReady);
+        connect.setEnabled(!busy);control.setEnabled(!busy && preflightReady);testA.setEnabled(!busy && preflightReady);testB.setEnabled(!busy && preflightReady);
         stop.setEnabled(busy && !stopping);export.setEnabled(!busy && runs.length()>0);newLog.setEnabled(!busy);
         boolean capturing=probe!=null && probe.hvacProgress()[3]==1 && !stopping;
         for(Button b:marks)b.setEnabled(capturing);
-        for(Button b:new Button[]{connect,testA,testB,stop,export,newLog})b.setAlpha(b.isEnabled()?1f:0.4f);
+        for(Button b:new Button[]{connect,control,testA,testB,stop,export,newLog})b.setAlpha(b.isEnabled()?1f:0.4f);
         for(Button b:marks)b.setAlpha(b.isEnabled()?1f:0.4f);
         if(busy)getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -113,7 +118,7 @@ public final class MainActivity extends Activity {
     private boolean readyToStart() {
         if(busy || !foreground)return false;
         if(!parked.isChecked()){alert("Перед тестом","Підтвердьте стоянку у P та присутність біля авто.");return false;}
-        if(runs.length()>=6){alert("Журнал заповнений","Експортуйте всі записи, потім натисніть «Новий журнал». Записи не видаляються автоматично.");return false;}
+        if(runs.length()>=8){alert("Журнал заповнений","Експортуйте всі записи, потім натисніть «Новий журнал». Записи не видаляються автоматично.");return false;}
         return true;
     }
     private void confirm(BleProbe.Mode mode) {
@@ -121,6 +126,13 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Пасивний запис · 30 секунд")
                 .setMessage("Штатно вимкніть клімат. Авто пробуджене, у P, без оновлення ПЗ чи попереджень живлення.\n\nПісля початку відліку: на 5 с увімкніть клімат на екрані авто, на 20 с вимкніть. Кнопки позначок тільки записують ваші дії; команд автомобілю не передають.")
                 .setPositiveButton("Почати запис",(d,w)->start(mode)).setNegativeButton("Скасувати",null).show();
+    }
+    private void confirmControl() {
+        if(!readyToStart() || selected==null || !preflightReady)return;
+        new AlertDialog.Builder(this).setTitle("Один пасивний контроль CAN RX")
+                .setMessage("Авто пробуджене, у P, ви поруч зі штатним ключем. Без оновлення ПЗ чи попереджень живлення.\n\n0E9: до 1 с або 3 кадрів → 373: 3 с → 0E9: до 1 с або 3 кадрів. Один BLE-сеанс. Якщо фільтр дає нуль, перевіряється альтернативний точний CRA для того самого ID; за появи RX повторно перевіряється CM/CF. До 12 с моніторингу загалом.\n\nШирокого моніторингу немає. Кліматом не керуємо, перемикати його не потрібно. «Зупинити» завершує моніторинг через SPACE. За помилки живлення чи стану авто від'єднайте Vgate.")
+                .setPositiveButton("Почати пасивний контроль",(d,w)->start(BleProbe.Mode.CAN_RX_CONTROL))
+                .setNegativeButton("Скасувати",null).show();
     }
     private void scan() {
         if(!readyToStart())return;
@@ -165,7 +177,7 @@ public final class MainActivity extends Activity {
         if(!readyToStart() || selected==null)return;
         long token=++generation;busy=true;stopping=false;lastCheckpoint=0;runIndex=runs.length();runs.put(new JSONObject());
         rx.setText("Прийняті кадри: 0\nОстанній CAN RX на телефоні: —");decoded.setText("Новий запис: кадрів ще немає.");
-        filter=mode==BleProbe.Mode.HVAC_534?"0x534":mode==BleProbe.Mode.HVAC_373?"0x373":"не встановлено (перевірка адаптера)";
+        filter=mode==BleProbe.Mode.HVAC_534?"0x534":mode==BleProbe.Mode.HVAC_373?"0x373":mode==BleProbe.Mode.CAN_RX_CONTROL?"контроль 0E9 / 373":"не встановлено (перевірка адаптера)";
         probe=new BleProbe(this,mode,new BleProbe.Listener(){
             @Override public void log(String text) {append(text);}
             @Override public void done(JSONObject report) {
@@ -184,7 +196,8 @@ public final class MainActivity extends Activity {
                 }
                 boolean reset=report.optBoolean("adapterResetConfirmed");
                 state.setText("BLE: від'єднано\nАдаптер: "+(reset?"скидання підтверджено":"стан не підтверджений — від'єднайте Vgate від OBD")+"\nФільтр запису: "+filter+"\n"+resultLabel(result)+"\n"+report.optString("detail"));
-                if(mode==BleProbe.Mode.HVAC_PREFLIGHT && preflightReady)decoded.setText("Адаптер прийняв налаштування. CAN-кадрів ще немає; фізична тиша передавача не виміряна. Оберіть тест A або B — з'єднання відкриється заново.");
+                if(mode==BleProbe.Mode.HVAC_PREFLIGHT && preflightReady)decoded.setText("Адаптер прийняв налаштування. CAN RX ще не перевірений. Оберіть «Контроль CAN RX». Фізична тиша передавача не виміряна.");
+                if(mode==BleProbe.Mode.CAN_RX_CONTROL)decoded.setText(report.optString("detail")+"\nЦе перевірка RX, а не запуск HVAC.");
                 probe=null;busy=false;stopping=false;buttons();persist();
             }
         });
@@ -195,10 +208,12 @@ public final class MainActivity extends Activity {
         BleProbe p=probe;if(p==null || !busy)return;long[] s=p.hvacProgress();
         if(s[3]==1) {
             long elapsed=Math.max(0,(System.nanoTime()-s[2])/1_000_000_000L);
-            state.setText("BLE: "+p.bleState()+"\nАдаптер: ATMA · фільтр "+filter+"\nЗапис: "+elapsed+" / 30 с"+(stopping?" · зупинка":""));
+            boolean audit=!p.auditPhase().isEmpty();
+            state.setText("BLE: "+p.bleState()+"\nФільтр: "+p.activeFilter()+"\nATMA: "+p.atmaWriteEvidence()+"\n"+
+                    (audit?p.auditPhase()+" · "+elapsed+" с":"Запис: "+elapsed+" / 30 с")+(stopping?" · зупинка":""));
             rx.setText("Прийняті кадри: "+s[0]+"\nОстанній CAN RX на телефоні: "+(s[1]<0?"—":formatTime(s[1])));
             decoded.setText(p.hvacLatestDescription()+"\nЦе декодування матриці, не підтвердження запуску HVAC.");
-            instructions.setText(elapsed<5?"Початкова фаза OFF. На 5 с штатно увімкніть клімат.":elapsed<20?
+            instructions.setText(audit?"Контроль RX виконується автоматично. Не перемикайте клімат. Після завершення експортуйте журнал.":elapsed<5?"Початкова фаза OFF. На 5 с штатно увімкніть клімат.":elapsed<20?
                     "Штатно ON. Позначте виконану дію та реальний потік/тепло. На 20 с штатно вимкніть клімат.":"Штатно OFF. Позначте виконану дію. Дочекайтеся завершення або натисніть «Зупинити».");
             if(System.nanoTime()-lastCheckpoint>5_000_000_000L) {
                 lastCheckpoint=System.nanoTime();
@@ -220,7 +235,7 @@ public final class MainActivity extends Activity {
     }
     private void stopCurrent() {if(scanning){endScan(false);state.setText("Пошук зупинено.");return;}if(probe!=null && !stopping){stopping=true;buttons();probe.cancel();}}
     private File journalFile() {return new File(getFilesDir(),"hvac-stage7-3-current.json");}
-    private String bundle() throws Exception {return new JSONObject().put("format","fisker-warm-hvac-bundle-1").put("appVersion","0.3.4-lab")
+    private String bundle() throws Exception {return new JSONObject().put("format","fisker-warm-hvac-bundle-1").put("appVersion","0.3.5-lab")
             .put("androidApi",Build.VERSION.SDK_INT).put("phone",Build.MANUFACTURER+" "+Build.MODEL)
             .put("vehicleClimateStartedByApp",false).put("runs",runs).toString(2);}
     private void persist() {

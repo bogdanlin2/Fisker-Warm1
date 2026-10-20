@@ -21,6 +21,9 @@ import com.fiskerwarm.lab.core.ReadOnlyPolicy;
 import com.fiskerwarm.lab.core.UartProfiles;
 import com.fiskerwarm.lab.core.HvacJournal;
 import com.fiskerwarm.lab.core.PassiveNetworkPlan;
+import com.fiskerwarm.lab.core.GattWriteGate;
+import com.fiskerwarm.lab.core.BleIoJournal;
+import com.fiskerwarm.lab.core.CanRxAudit;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressLint("MissingPermission")
 public final class BleProbe {
     public enum Mode { VOLTAGE_ONLY, IDENTITIES, GATT_MAP, PASSIVE_CAN_OFF, PASSIVE_CAN_ON, CAN_NETWORK_AUDIT,
-        HVAC_PREFLIGHT, HVAC_534, HVAC_373 }
+        HVAC_PREFLIGHT, HVAC_534, HVAC_373, CAN_RX_CONTROL }
     public interface Listener { void log(String text); void done(JSONObject report); }
     private static final UUID CCC=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private final Context context;
@@ -51,6 +53,15 @@ public final class BleProbe {
     private final JSONObject report=new JSONObject();
     private final JSONArray events=new JSONArray();
     private final HvacJournal ownerMarks=new HvacJournal();
+    private final BleIoJournal ioJournal=new BleIoJournal();
+    private final AtomicBoolean ioOverrun=new AtomicBoolean(false);
+    private final GattWriteGate writeGate=new GattWriteGate((kind,id,value,status)->{
+        recordIo(kind,System.nanoTime(),id,value,status,"2AF1", "WRITE_CALLBACK_IS_NOT_CAN_RX");
+        if(java.util.Arrays.equals(value,"ATMA\r".getBytes(StandardCharsets.US_ASCII))) {
+            atmaWriteEvidence="TX_COMPLETE".equals(kind)?"GATT_SUCCESS · це не CAN RX":kind;
+        }
+    });
+    private volatile String atmaWriteEvidence="ще не записано",activeFilter="—",auditPhase="";
     private volatile BluetoothGatt gatt;
     private volatile ElmChannel channel;
     private volatile BluetoothGattCharacteristic writeChar;
@@ -59,8 +70,6 @@ public final class BleProbe {
     private final AtomicBoolean mtuPending=new AtomicBoolean(false), subscriptionStarted=new AtomicBoolean(false);
     private final JSONObject transport=new JSONObject();
     private volatile int effectiveMtu=23;
-    private volatile CountDownLatch writeLatch;
-    private volatile int writeStatus;
     private final long startElapsed=SystemClock.elapsedRealtime();
     private final Runnable watchdog=()->finish("SESSION_LIMIT", "Hard session deadline reached");
     private final Runnable mtuWatchdog=()->{
@@ -70,7 +79,10 @@ public final class BleProbe {
     public BleProbe(Context context,Mode mode,Listener listener) {
         this.context=context.getApplicationContext(); this.mode=mode; this.listener=listener;
     }
-    private boolean isHvac() {return mode==Mode.HVAC_PREFLIGHT || mode==Mode.HVAC_534 || mode==Mode.HVAC_373;}
+    private boolean isHvac() {return mode==Mode.HVAC_PREFLIGHT || mode==Mode.HVAC_534 || mode==Mode.HVAC_373 || mode==Mode.CAN_RX_CONTROL;}
+    public String atmaWriteEvidence(){return atmaWriteEvidence;}
+    public String activeFilter(){return activeFilter;}
+    public String auditPhase(){return auditPhase;}
     public long[] hvacProgress() {ElmChannel ch=channel;return ch==null?new long[]{0,-1,-1,0}:ch.hvacProgress();}
     public String hvacLatestDescription() {ElmChannel ch=channel;return ch==null?"Кадрів немає":ch.hvacLatestDescription();}
     public String bleState() {return terminal.get()?"від'єднано":linkConnected?"з'єднано":"підключення / перевірка GATT";}
@@ -84,14 +96,15 @@ public final class BleProbe {
         if(ch==null || hvacProgress()[3]!=1)return null;
         synchronized(report) {
             return new JSONObject(report.toString()).put("hvacCapture",new JSONObject(ch.hvacCaptureJson()))
+                    .put("bleIo",new JSONObject(ioJournal.json()))
                     .put("ownerMarks",new JSONArray(ownerMarks.marksJson())).put("result","RUNNING_CHECKPOINT")
                     .put("incomplete",true).put("checkpointAt",Instant.now().toString());
         }
     }
     public void start(BluetoothDevice device,String advertisedName) {
         try {
-            report.put("format",isHvac()?"fisker-warm-hvac-passive-1":"fisker-warm-lab-1"); report.put("appVersion","0.3.4-lab");
-            report.put("diagnosticRevision","hvac-passive-stage7.3-1").put("bleTransport",transport);
+            report.put("format",isHvac()?"fisker-warm-hvac-passive-1":"fisker-warm-lab-1"); report.put("appVersion","0.3.5-lab");
+            report.put("diagnosticRevision","can-rx-stage7.4-1").put("bleTransport",transport);
             report.put("mode",mode.toString()); report.put("startedAt",Instant.now().toString());
             report.put("heatCapability",HeatSafety.BUILD_STATUS); report.put("events",events);
             report.put("deviceName",advertisedName); report.put("deviceAddress",device.getAddress());
@@ -181,7 +194,10 @@ public final class BleProbe {
                 report.put("writeUuid",writeChar.getUuid().toString()).put("notifyUuid",notify.getUuid().toString());
                 long remaining=ReadOnlyPolicy.MAX_SESSION_MILLIS-(SystemClock.elapsedRealtime()-startElapsed);
                 if(remaining<=0) {finish("SESSION_LIMIT","Session expired before UART setup");return;}
-                channel=isHvac()?ElmChannel.forHvac(BleProbe.this::write,remaining):new ElmChannel(BleProbe.this::write,remaining);
+                channel=mode==Mode.CAN_RX_CONTROL?ElmChannel.forCanRxAudit(BleProbe.this::write,remaining):
+                        isHvac()?ElmChannel.forHvac(BleProbe.this::write,remaining):new ElmChannel(BleProbe.this::write,remaining);
+                transport.put("writeType",(writeChar.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE)!=0?"WITH_RESPONSE":"NO_RESPONSE")
+                        .put("writeCompletionMeaning","Host GATT callback; not ELM semantic acknowledgment or CAN RX");
                 if(isHvac() || mode==Mode.PASSIVE_CAN_OFF || mode==Mode.PASSIVE_CAN_ON || mode==Mode.CAN_NETWORK_AUDIT) {
                     transport.put("highPriorityRequestQueued",g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH));
                     transport.put("highPriorityConfirmed",false).put("requestedMtu",247).put("negotiatedMtu",JSONObject.NULL);
@@ -202,8 +218,9 @@ public final class BleProbe {
             if(started.compareAndSet(false,true)) worker.execute(BleProbe.this::read);
         }
         @Override public void onCharacteristicWrite(BluetoothGatt g,BluetoothGattCharacteristic c,int status) {
-            if(g!=gatt || !sameCharacteristic(c,writeChar) || terminal.get())return;
-            CountDownLatch latch=writeLatch; writeStatus=status; if(latch!=null) latch.countDown();
+            boolean accepted=g==gatt && sameCharacteristic(c,writeChar) && !terminal.get();
+            if(!accepted){recordIo("IGNORED_WRITE_CALLBACK",System.nanoTime(),0,null,status,endpoint(c),"WRONG_ENDPOINT_OR_CLOSED");return;}
+            writeGate.complete(status);
         }
         @Override public void onMtuChanged(BluetoothGatt g,int mtu,int status) {
             if(g!=gatt || terminal.get() || !mtuPending.compareAndSet(true,false))return;
@@ -220,12 +237,26 @@ public final class BleProbe {
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c,byte[] value) {
             long callbackEntry=System.nanoTime();
             ElmChannel ch=channel;
-            if(ch!=null && g==gatt && sameCharacteristic(c,notifyChar) && value!=null && !terminal.get()) ch.receiveAdapterNotification(value.clone(),callbackEntry);
+            String route=value==null?"NULL_VALUE":terminal.get()?"CLOSED":g!=gatt?"OTHER_GATT":
+                    !sameCharacteristic(c,notifyChar)?"OTHER_ENDPOINT":ch==null?"NO_ELM_CHANNEL":"ELM_CHANNEL";
+            // Raw bytes are recorded BEFORE endpoint checks and BEFORE the ELM/parser state gate.
+            recordIo("RX_NOTIFICATION",callbackEntry,0,value,-1,endpoint(c),route);
+            if("ELM_CHANNEL".equals(route) && !ioOverrun.get())ch.receiveAdapterNotification(value.clone(),callbackEntry);
         }
         @Override public void onCharacteristicChanged(BluetoothGatt g,BluetoothGattCharacteristic c) {
             if(Build.VERSION.SDK_INT<33) { byte[] v=c.getValue(); if(v!=null) onCharacteristicChanged(g,c,v); }
         }
     };
+
+    private static String endpoint(BluetoothGattCharacteristic c) {
+        return c==null?"null":(c.getService()==null?"no-service":c.getService().getUuid()+"#"+c.getService().getInstanceId())+
+                "/"+c.getUuid()+"#"+c.getInstanceId();
+    }
+    private void recordIo(String kind,long nanos,long id,byte[] bytes,int status,String endpoint,String route) {
+        if(!isHvac())return;
+        if(!ioJournal.add(kind,nanos,id,bytes,status,endpoint,route) && ioOverrun.compareAndSet(false,true))
+            ui.post(()->finish("BLE_JOURNAL_FULL","Сирий BLE-журнал заповнений; вимірювання припинене, prefix збережено"));
+    }
 
     private static boolean sameCharacteristic(BluetoothGattCharacteristic a,BluetoothGattCharacteristic b) {
         return a!=null && b!=null && a.getService()!=null && b.getService()!=null
@@ -248,20 +279,18 @@ public final class BleProbe {
 
     private void write(byte[] bytes) throws Exception {
         if(terminal.get() || gatt==null || writeChar==null) throw new IllegalStateException("No active UART");
+        if(ioOverrun.get())throw new IllegalStateException("Raw BLE journal full");
+        if(isHvac() && !PassiveNetworkPlan.hvacWireBytesAllowed(bytes,mode==Mode.CAN_RX_CONTROL))
+            throw new SecurityException("Non-passive wire bytes blocked");
         if(bytes.length>effectiveMtu-3)throw new IllegalArgumentException("UART command exceeds negotiated ATT payload");
         int type=(writeChar.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE)!=0?
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT:BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
-        CountDownLatch latch=new CountDownLatch(1); writeLatch=latch; writeStatus=-1;
-        try {
-            boolean queued;
-            if(Build.VERSION.SDK_INT>=33) queued=gatt.writeCharacteristic(writeChar,bytes,type)==0;
-            else {writeChar.setWriteType(type);writeChar.setValue(bytes);queued=gatt.writeCharacteristic(writeChar);}
-            if(!queued)throw new IllegalStateException("BLE write did not start");
-            // Serialize host GATT completion for both write types. For NO_RESPONSE
-            // this callback is not a peripheral ACK; only the ELM prompt confirms it.
-            if(!latch.await(3000,TimeUnit.MILLISECONDS) || writeStatus!=BluetoothGatt.GATT_SUCCESS)
-                throw new IllegalStateException("BLE write failed or timed out");
-        } finally {writeLatch=null;}
+        writeGate.write(bytes,3000,value->{
+            if(terminal.get() || gatt==null)throw new IllegalStateException("Connection closed before queue");
+            if(Build.VERSION.SDK_INT>=33)return gatt.writeCharacteristic(writeChar,value,type);
+            writeChar.setWriteType(type);writeChar.setValue(value);return gatt.writeCharacteristic(writeChar)?0:-1;
+        });
+        if(ioOverrun.get())throw new IllegalStateException("Raw BLE journal incomplete");
     }
     private String command(String cmd,long timeout) throws Exception {
         if(terminal.get()) throw new IllegalStateException("Stopped");
@@ -337,7 +366,9 @@ public final class BleProbe {
         if(mode==Mode.HVAC_PREFLIGHT) {
             resetAdapter();finish("ADAPTER_SETTINGS_ACKNOWLEDGED","Налаштування прийнято; CAN RX і фізична тиша ще не перевірені");return;
         }
+        if(mode==Mode.CAN_RX_CONTROL){canRxControl();return;}
         String id=mode==Mode.HVAC_534?"534":"373";
+        activeFilter="0x"+id;
         expectOk("ATAR");expectOk("ATCM7FF");expectOk("ATCF"+id);
         report.put("exactReceiveFilter",id).put("requestedWindowMillis",30_000)
                 .put("hardwareFilterBehaviorVerified",false);
@@ -349,6 +380,30 @@ public final class BleProbe {
         finish(result,capture.incomplete()?"Запис неповний: "+capture.endReason:
                 capture.frameCount==0?"Кадрів немає. Видимість через OBD не підтверджена; це не доказ відсутності сигналу.":
                 "Отримані кадри адаптера. Матриця й робота HVAC на авто потребують аналізу.");
+    }
+    private void canRxControl() throws Exception {
+        final JSONArray phases=new JSONArray();report.put("canRxAudit",phases);
+        CanRxAudit.Result result=new CanRxAudit(channel,new CanRxAudit.Observer(){
+            @Override public void phase(String name,String id,String method){
+                auditPhase=name;activeFilter="0x"+id+" · "+method;atmaWriteEvidence="очікуємо запис ATMA";
+                log("Контроль RX: "+name+" · "+activeFilter);
+            }
+            @Override public void captured(CanRxAudit.Phase phase){
+                try{synchronized(report){phases.put(new JSONObject().put("phase",phase.name).put("id",phase.id).put("filterMethod",phase.method)
+                        .put("capture",new JSONObject(HvacJournal.captureJson(phase.capture))));}}
+                catch(Exception e){throw new IllegalStateException(e);}
+            }
+        }).run();
+        if(!result.phases.isEmpty() && result.phases.get(result.phases.size()-1).capture.stopConfirmed)resetAdapter();
+        report.put("canRxAuditResult",result.code);
+        String detail="CONTROL_RX_PRESENT_ECC_NOT_OBSERVED".equals(result.code)?
+                "CAN RX 0E9 підтверджено до й після; 373 не спостерігався ні через CM/CF, ні через CRA.":
+                "ECC_RX_OBSERVED_WITH_CONTROLS".equals(result.code)?"Реальні CAN-кадри 373 і контроль 0E9 отримано; потрібен аналіз журналу.":
+                "NO_CONTROL_RX".equals(result.code)?"Контроль 0E9 не отримано через CM/CF та CRA. Видимість HVAC оцінити не можна.":
+                "FILTER_API_DIFFERENCE_OBSERVED".equals(result.code)?"0E9 видно через CRA, але не через CM/CF до й після. Виявлена різниця API фільтрів.":
+                "ECC_RX_ONLY_VIA_CRA_OBSERVED".equals(result.code)?"373 видно через CRA, але не через CM/CF до й після. Потрібен аналіз різниці API фільтрів.":
+                "Контроль не дав однозначного результату: "+result.code+". Збережіть повний журнал.";
+        finish(result.code,detail);
     }
     private void resetAdapter() throws Exception {
         String reset=command("ATZ",4000);
@@ -480,7 +535,7 @@ public final class BleProbe {
         ui.removeCallbacks(watchdog);
         ui.removeCallbacks(mtuWatchdog);mtuPending.set(false);
         ElmChannel ch=channel; if(ch!=null) ch.close(detail);
-        CountDownLatch latch=writeLatch; if(latch!=null) latch.countDown();
+        writeGate.close();
         BluetoothGatt g=gatt; gatt=null;
         if(g!=null) { try { g.disconnect(); } catch(Exception ignored) {} try { g.close(); } catch(Exception ignored) {} }
         worker.shutdownNow();
@@ -490,6 +545,7 @@ public final class BleProbe {
                     if(isHvac()) {
                         String capture=ch==null?"null":ch.hvacCaptureJson();
                         report.put("hvacCapture",capture.equals("null")?JSONObject.NULL:new JSONObject(capture))
+                                .put("bleIo",new JSONObject(ioJournal.json()))
                                 .put("ownerMarks",new JSONArray(ownerMarks.marksJson()))
                                 .put("adapterMayStillBeMonitoring",!report.optBoolean("adapterResetConfirmed"));
                     }

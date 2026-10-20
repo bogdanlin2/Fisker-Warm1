@@ -1,0 +1,9 @@
+{
+  "apk": "Fisker-Warm-HVAC-Passive-0.3.4.apk",
+  "applicationId": "com.fiskerwarm.lab02",
+  "versionCode": 10,
+  "versionName": "0.3.4-lab",
+  "signerCertificateSha256": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e",
+  "apkSha256": "900466b239ede647c57799dcb35aea7ff8560258ca8cefbfd677303d67c557ff",
+  "evidence": "Verified Actions 39365624447 / artifact 12239451384 / runtime 6d6c45a16f9dd1f30a15c1c5755f1b304d6b7995; bytes rehashed during stage7.4"
+}

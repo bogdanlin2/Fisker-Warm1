@@ -1,0 +1,321 @@
+{
+  "format": "fisker-warm-stage7-4-measured-summary-1",
+  "dataOrigin": "OWNER_REAL_EXPORT_DERIVED_SUMMARY",
+  "analysisIsNewVehicleTest": false,
+  "runtimeCommit": "6d6c45a16f9dd1f30a15c1c5755f1b304d6b7995",
+  "files": [
+    {
+      "name": "Fisker-Warm-HVAC-2026-10-20T06-32-48.894443Z.json",
+      "sha256": "ce203e4e11c17ef6dfeebb5c358eac4018e43c1959d922ae60092a8493e7869d",
+      "exportedRuns": 2
+    },
+    {
+      "name": "Fisker-Warm-HVAC-2026-10-20T06-35-24.253964Z.json",
+      "sha256": "1ae8c68daa8d23e1f0802bbe20c95e24ec90987cebbce0a99873bc750e923443",
+      "exportedRuns": 4
+    },
+    {
+      "name": "Fisker-Warm-HVAC-2026-10-20T06-37-27.581858Z.json",
+      "sha256": "861e0741ec35da524b0b8078a20cfb946121977598ccb372e5186f71aa8c1055",
+      "exportedRuns": 5
+    }
+  ],
+  "captures": [
+    {
+      "mode": "HVAC_534",
+      "startedAt": "2026-10-20T06:30:40.385339Z",
+      "frameCount": 0,
+      "notificationCount": 1,
+      "receivedBytes": 10,
+      "rawHex": [
+        "53544F505045440D0D3E"
+      ],
+      "firstNotificationOffsetMillis": 30042.413739,
+      "captureElapsedMillis": 30000,
+      "endReason": "WINDOW_ELAPSED",
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "invalidFrameLines": 0,
+      "truncated": false,
+      "containsSyntheticInput": false,
+      "startWriteMillisExported": false,
+      "rawTxExported": false,
+      "marks": [],
+      "commandReplies": [
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATE0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATI",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATRV",
+          "reply": "14.1V"
+        },
+        {
+          "command": "ATL0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATS1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATH1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATSP6",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCAF0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCFC0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCSM1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATD1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATDPN",
+          "reply": "6"
+        },
+        {
+          "command": "ATAR",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCM7FF",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCF534",
+          "reply": "OK"
+        },
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        }
+      ]
+    },
+    {
+      "mode": "HVAC_534",
+      "startedAt": "2026-10-20T06:34:44.941797Z",
+      "frameCount": 0,
+      "notificationCount": 1,
+      "receivedBytes": 10,
+      "rawHex": [
+        "53544F505045440D0D3E"
+      ],
+      "firstNotificationOffsetMillis": 30032.582593,
+      "captureElapsedMillis": 30000,
+      "endReason": "WINDOW_ELAPSED",
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "invalidFrameLines": 0,
+      "truncated": false,
+      "containsSyntheticInput": false,
+      "startWriteMillisExported": false,
+      "rawTxExported": false,
+      "marks": [
+        {
+          "kind": "HMI_ON",
+          "secondsAfterMonitorStart": 8.458928
+        },
+        {
+          "kind": "HMI_ON",
+          "secondsAfterMonitorStart": 13.029172
+        }
+      ],
+      "commandReplies": [
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATE0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATI",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATRV",
+          "reply": "14.1V"
+        },
+        {
+          "command": "ATL0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATS1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATH1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATSP6",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCAF0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCFC0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCSM1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATD1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATDPN",
+          "reply": "6"
+        },
+        {
+          "command": "ATAR",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCM7FF",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCF534",
+          "reply": "OK"
+        },
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        }
+      ]
+    },
+    {
+      "mode": "HVAC_373",
+      "startedAt": "2026-10-20T06:36:48.913975Z",
+      "frameCount": 0,
+      "notificationCount": 1,
+      "receivedBytes": 10,
+      "rawHex": [
+        "53544F505045440D0D3E"
+      ],
+      "firstNotificationOffsetMillis": 30043.429728,
+      "captureElapsedMillis": 30001,
+      "endReason": "WINDOW_ELAPSED",
+      "stopWriteConfirmed": true,
+      "stopConfirmed": true,
+      "invalidFrameLines": 0,
+      "truncated": false,
+      "containsSyntheticInput": false,
+      "startWriteMillisExported": false,
+      "rawTxExported": false,
+      "marks": [
+        {
+          "kind": "HMI_ON",
+          "secondsAfterMonitorStart": 6.022283
+        },
+        {
+          "kind": "AIRFLOW_PRESENT",
+          "secondsAfterMonitorStart": 15.102693
+        },
+        {
+          "kind": "HMI_OFF",
+          "secondsAfterMonitorStart": 28.735386
+        }
+      ],
+      "commandReplies": [
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATE0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATI",
+          "reply": "ELM327 v2.2"
+        },
+        {
+          "command": "ATRV",
+          "reply": "14.1V"
+        },
+        {
+          "command": "ATL0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATS1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATH1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATSP6",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCAF0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCFC0",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCSM1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATD1",
+          "reply": "OK"
+        },
+        {
+          "command": "ATDPN",
+          "reply": "6"
+        },
+        {
+          "command": "ATAR",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCM7FF",
+          "reply": "OK"
+        },
+        {
+          "command": "ATCF373",
+          "reply": "OK"
+        },
+        {
+          "command": "ATZ",
+          "reply": "ELM327 v2.2"
+        }
+      ]
+    }
+  ],
+  "uniquePreflights": 2
+}

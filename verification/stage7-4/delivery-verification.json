@@ -1,0 +1,26 @@
+{
+  "sourceCommit": "859ff6662af3c4ce76f3c2f96ce55acec5c28fac",
+  "apk": {
+    "apk": "Fisker-Warm-CAN-RX-0.3.5.apk",
+    "sha256": "9eae895ffb66583aee486b6c81506136a3af317e145a221dfbc4a1d866bfa428",
+    "certificateSha256FromApkPkcs7": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e"
+  },
+  "previousApk": {
+    "apk": "Fisker-Warm-HVAC-Passive-0.3.4.apk",
+    "sha256": "900466b239ede647c57799dcb35aea7ff8560258ca8cefbfd677303d67c557ff",
+    "certificateSha256FromApkPkcs7": "848edb87d8b74d2c20efd191a0fa3086c2466aa9a1169628826ac8f5fb78983e"
+  },
+  "zipCrcOk": true,
+  "ciApkSignatureV2": true,
+  "ciApkSignatureV3": true,
+  "localCertificateParsing": "PKCS7 signer certificate extracted independently from both original APK byte sets; full v2/v3 verification performed by official apksigner in CI",
+  "samePackageAndCertificateAsInstalled034": true,
+  "versionCode11GreaterThan10": true,
+  "offlineChecksPassed": 305,
+  "newTargetedChecks": 27,
+  "vehicleTested": false,
+  "actualHvacOnImplemented": false,
+  "apkCiRun": 39384997170,
+  "canCiRun": 39384997135,
+  "apkArtifact": 12247415825
+}

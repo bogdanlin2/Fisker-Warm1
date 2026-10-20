@@ -38,6 +38,9 @@ public final class HvacJournal {
         j.append(",\"completenessScope\":\"HOST_PARSER_ONLY; complete-frame losses before BLE callback are not observable\"");
         j.append(",\"containsSyntheticInput\":").append(s.containsSyntheticInput);
         j.append(",\"captureElapsedMillis\":").append(s.captureElapsedMillis).append(",\"windowElapsed\":").append(s.windowElapsed);
+        j.append(",\"startWriteMillis\":").append(s.startWriteMillis).append(",\"startWriteConfirmed\":").append(s.startWriteConfirmed);
+        j.append(",\"startWriteEvidence\":\"Host GATT completion only; not proof of ELM interpretation or CAN RX\"");
+        j.append(",\"plannedFrameLimit\":").append(s.plannedFrameLimit).append(",\"frameLimitReached\":").append(s.frameLimitReached);
         j.append(",\"inProgress\":").append(s.endReason==null).append(",\"incomplete\":").append(s.incomplete());
         j.append(",\"endReason\":").append(quote(s.endReason)).append(",\"adapterError\":").append(quote(s.adapterError));
         j.append(",\"stopError\":").append(quote(s.stopError)).append(",\"adapterBufferFull\":").append(s.adapterBufferFull);
@@ -60,7 +63,7 @@ public final class HvacJournal {
             j.append(",\"source\":").append(quote(f.source)).append(",\"matrixCompatibilityWithVehicle\":\"UNVERIFIED\"");
             j.append(",\"bleState\":").append(quote(f.source.equals("SYNTHETIC_TEST")?"NOT_APPLICABLE_SYNTHETIC":"CONNECTED_AT_NOTIFICATION"));
             j.append(",\"adapterState\":\"ATMA_RECEIVE\"");
-            if(Integer.parseInt(f.id,16)==s.expectedId) {
+            if(Integer.parseInt(f.id,16)==s.expectedId && ("534".equals(f.id) || "373".equals(f.id))) {
                 int[] d=HvacDecoder.decode(f.id,f.payload());
                 j.append(",\"decoded\":{");
                 if("534".equals(f.id))j.append("\"ICC_ECCSysSwtCmd\":").append(d[0]);

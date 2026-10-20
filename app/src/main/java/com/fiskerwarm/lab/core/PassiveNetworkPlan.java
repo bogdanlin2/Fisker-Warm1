@@ -12,6 +12,19 @@ public final class PassiveNetworkPlan {
             if(allowed.equals(command))return true;
         return false;
     }
+    /** Stage 7.4 adds one historical RX control and one equivalent exact-filter API. */
+    public static boolean canRxAuditCommand(String command) {
+        return hvacAdapterCommand(command) || "ATCF0E9".equals(command) || "ATCRA0E9".equals(command) || "ATCRA373".equals(command);
+    }
+    /** Defense at the actual BLE write boundary, including monitor start/stop. */
+    public static boolean hvacWireBytesAllowed(byte[] bytes,boolean rxAudit) {
+        if(bytes==null)return false;
+        String value=new String(bytes,java.nio.charset.StandardCharsets.US_ASCII);
+        if("ATMA\r".equals(value) || " ".equals(value))return true;
+        if(!value.endsWith("\r"))return false;
+        String command=value.substring(0,value.length()-1);
+        return rxAudit?canRxAuditCommand(command):hvacAdapterCommand(command);
+    }
     public static final int OBSERVED_FLOOD_ID=0x0E9;
     public static final long WINDOW_MILLIS=500;
     public static final class Group {
