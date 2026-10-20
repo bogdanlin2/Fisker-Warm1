@@ -19,8 +19,10 @@ public final class ElmChannel {
     private boolean retainMonitorRaw;
     private boolean diagnosticOnly;
     private final boolean hvacOnly;
+    private final boolean canRxAudit;
     private final Set<String> hvacAcknowledged=new HashSet<>();
     private int hvacTarget=-1;
+    private String hvacFilterMethod;
     private boolean stopRequested,hvacResetOnly;
     private CanCapture.Snapshot lastSnapshot;
     private static final long STOP_DRAIN_MILLIS=1000;
@@ -28,19 +30,21 @@ public final class ElmChannel {
     private String failure;
 
     public ElmChannel(Writer writer, long sessionBudgetMillis) {
-        this(writer,sessionBudgetMillis,false);
+        this(writer,sessionBudgetMillis,false,false);
     }
-    private ElmChannel(Writer writer,long sessionBudgetMillis,boolean hvacOnly) {
+    private ElmChannel(Writer writer,long sessionBudgetMillis,boolean hvacOnly,boolean canRxAudit) {
         if(sessionBudgetMillis <= 0 || sessionBudgetMillis > ReadOnlyPolicy.MAX_SESSION_MILLIS) throw new IllegalArgumentException("Invalid budget");
         this.writer=writer;
         this.hvacOnly=hvacOnly;
+        this.canRxAudit=canRxAudit;
         sessionDeadline=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(sessionBudgetMillis);
     }
-    public static ElmChannel forHvac(Writer writer,long budgetMillis) {return new ElmChannel(writer,budgetMillis,true);}
+    public static ElmChannel forHvac(Writer writer,long budgetMillis) {return new ElmChannel(writer,budgetMillis,true,false);}
+    public static ElmChannel forCanRxAudit(Writer writer,long budgetMillis) {return new ElmChannel(writer,budgetMillis,true,true);}
     public String send(String cmd, long timeoutMillis) throws Exception {
         synchronized(sendLock) {
             if(hvacOnly) {
-                if(!PassiveNetworkPlan.hvacAdapterCommand(cmd) || (hvacResetOnly && !"ATZ".equals(cmd)))
+                if(!(canRxAudit?PassiveNetworkPlan.canRxAuditCommand(cmd):PassiveNetworkPlan.hvacAdapterCommand(cmd)) || (hvacResetOnly && !"ATZ".equals(cmd)))
                     throw new SecurityException("HVAC channel permits fixed passive adapter settings only");
                 return exchange(cmd,timeoutMillis);
             }
@@ -90,21 +94,26 @@ public final class ElmChannel {
         } catch(Exception e) { close(e.getMessage()); throw e; }
     }
     private void noteHvacReply(String cmd,String reply) {
-        if("ATZ".equals(cmd)) {hvacAcknowledged.clear();hvacTarget=-1;hvacResetOnly=false;return;}
+        if("ATZ".equals(cmd)) {hvacAcknowledged.clear();hvacTarget=-1;hvacFilterMethod=null;hvacResetOnly=false;return;}
         if("ATAR".equals(cmd) || "ATCM7FF".equals(cmd)) {
-            hvacTarget=-1;hvacAcknowledged.remove("ATCM7FF");
+            hvacTarget=-1;hvacFilterMethod=null;hvacAcknowledged.remove("ATCM7FF");
         }
+        if(cmd.startsWith("ATCF") || cmd.startsWith("ATCRA")){hvacTarget=-1;hvacFilterMethod=null;}
         if("OK".equals(reply.trim())) {
             hvacAcknowledged.add(cmd);
-            if("ATCF534".equals(cmd) || "ATCF373".equals(cmd)) {
-                if(hvacAcknowledged.contains("ATCM7FF"))hvacTarget=Integer.parseInt(cmd.substring(4),16);
+            if("ATCF534".equals(cmd) || "ATCF373".equals(cmd) || (canRxAudit && "ATCF0E9".equals(cmd))) {
+                if(hvacAcknowledged.contains("ATCM7FF")){hvacTarget=Integer.parseInt(cmd.substring(4),16);hvacFilterMethod="CM_CF";}
+            } else if(canRxAudit && ("ATCRA0E9".equals(cmd) || "ATCRA373".equals(cmd))) {
+                hvacTarget=Integer.parseInt(cmd.substring(5),16);hvacFilterMethod="CRA";
             }
         } else hvacAcknowledged.remove(cmd);
         if("ATDPN".equals(cmd) && "6".equals(reply.trim()))hvacAcknowledged.add("PROTOCOL_6");
     }
     private void requireHvacMonitorReady() {
-        if(hvacResetOnly || (hvacTarget!=0x534 && hvacTarget!=0x373))throw new SecurityException("Exact filter not armed");
-        for(String setting:new String[]{"ATCSM1","ATCFC0","ATCAF0","ATH1","ATS1","ATD1","ATSP6","PROTOCOL_6","ATAR","ATCM7FF"})
+        if(hvacResetOnly || (hvacTarget!=0x534 && hvacTarget!=0x373 && !(canRxAudit && hvacTarget==0x0E9)))throw new SecurityException("Exact filter not armed");
+        if(!("CM_CF".equals(hvacFilterMethod) && hvacAcknowledged.contains("ATCM7FF")) &&
+                !(canRxAudit && "CRA".equals(hvacFilterMethod) && hvacAcknowledged.contains(String.format(java.util.Locale.ROOT,"ATCRA%03X",hvacTarget))))throw new SecurityException("Filter API not acknowledged");
+        for(String setting:new String[]{"ATCSM1","ATCFC0","ATCAF0","ATH1","ATS1","ATD1","ATSP6","PROTOCOL_6","ATAR"})
             if(!hvacAcknowledged.contains(setting))throw new SecurityException("Missing acknowledged passive setting: "+setting);
     }
     /** Legacy raw view uses the same prompt/stop state machine as streaming capture. */
@@ -119,9 +128,19 @@ public final class ElmChannel {
         return listenCanSnapshot(durationMillis,false);
     }
     public CanCapture.Snapshot listenCanSnapshot(long durationMillis,boolean diagnosticTrace) throws Exception {
-        synchronized(sendLock) {return monitor(durationMillis,false,diagnosticTrace);}
+        synchronized(sendLock) {return monitor(durationMillis,false,diagnosticTrace,0);}
+    }
+    /** Only the known 0E9 control may end early after three genuine parsed frames. */
+    public CanCapture.Snapshot listenCanRxControl() throws Exception {
+        synchronized(sendLock) {
+            if(!canRxAudit || hvacTarget!=0x0E9)throw new SecurityException("Not the fixed RX control");
+            return monitor(1000,false,false,3);
+        }
     }
     private CanCapture.Snapshot monitor(long durationMillis,boolean retainRaw,boolean diagnosticTrace) throws Exception {
+        return monitor(durationMillis,retainRaw,diagnosticTrace,0);
+    }
+    private CanCapture.Snapshot monitor(long durationMillis,boolean retainRaw,boolean diagnosticTrace,int frameLimit) throws Exception {
         if(durationMillis<500 || durationMillis>(hvacOnly?30_000:5000))throw new IllegalArgumentException("Invalid monitor duration");
         if(hvacOnly)requireHvacMonitorReady();
         policy.checkAndRecord("ATMA");
@@ -131,6 +150,7 @@ public final class ElmChannel {
             if(closed || waiting || monitoring)throw new IllegalStateException("Channel busy/closed");
             if(monitorStart>=sessionDeadline) {closed=true;failure="Session budget exceeded";throw new IllegalStateException(failure);}
             stream=hvacOnly?new CanCapture.Stream(monitorStart,hvacTarget):new CanCapture.Stream(monitorStart,diagnosticTrace);
+            stream.current().plannedFrameLimit=frameLimit;
             buffer.reset();retainMonitorRaw=retainRaw;lastSnapshot=null;
             monitorTruncated=false;monitoring=true;stopRequested=false;
         }
@@ -141,8 +161,11 @@ public final class ElmChannel {
             writer.write("ATMA\r".getBytes(StandardCharsets.US_ASCII));
             long startWriteDone=System.nanoTime();
             synchronized(receiveLock) {
+                stream.current().startWriteConfirmed=true;
+                stream.current().startWriteMillis=TimeUnit.NANOSECONDS.toMillis(startWriteDone-monitorStart);
                 while(!closed && !stream.hasPrompt() && !stream.hasAdapterOverflow() && !stream.hasAdapterError()
                         && !stream.hasStopped() && !stream.isTruncated() && !stream.hasUnexpectedId()
+                        && (frameLimit==0 || stream.current().frameCount<frameLimit)
                         && !stopRequested && !monitorTruncated && System.nanoTime()<until) {
                     TimeUnit.NANOSECONDS.timedWait(receiveLock,until-System.nanoTime());
                 }
@@ -152,6 +175,7 @@ public final class ElmChannel {
                         stream.hasUnexpectedId()?"FILTER_MISMATCH":stopRequested?"USER_STOP":
                         stream.hasPrompt()?"ADAPTER_PROMPT":stream.hasStopped()?"ADAPTER_STOPPED":
                         (stream.isTruncated() || monitorTruncated)?"APP_TRUNCATED":
+                        frameLimit>0 && stream.current().frameCount>=frameLimit?"CONTROL_FRAME_LIMIT":
                         acquisitionEnd>=sessionDeadline?"SESSION_LIMIT":"WINDOW_ELAPSED";
                 // An empty CR at an idle prompt REPEATS ATMA. Do not restart a
                 // monitor that has already ended, including BUFFER FULL/error.
@@ -171,6 +195,9 @@ public final class ElmChannel {
                 }
                 if(closed)throw new IllegalStateException(failure);
                 CanCapture.Snapshot result=stream.finish();
+                result.plannedFrameLimit=frameLimit;
+                result.frameLimitReached=frameLimit>0 && result.frameCount>=frameLimit && "CONTROL_FRAME_LIMIT".equals(reason);
+                result.startWriteConfirmed=true;
                 result.captureElapsedMillis=TimeUnit.NANOSECONDS.toMillis(acquisitionEnd-monitorStart);
                 result.startWriteMillis=TimeUnit.NANOSECONDS.toMillis(startWriteDone-monitorStart);
                 result.lateStartWrite=startWriteDone>=monitorStart+TimeUnit.MILLISECONDS.toNanos(durationMillis);
@@ -217,6 +244,7 @@ public final class ElmChannel {
             if(s==null || s.frames.isEmpty())return "Жодного кадру ще не отримано";
             CanCapture.Frame f=s.frames.get(s.frames.size()-1);
             if(Integer.parseInt(f.id,16)!=s.expectedId)return "ID поза фільтром: "+f.id;
+            if(s.expectedId==0x0E9)return "Контрольний CAN RX 0x0E9. Це не сигнал HVAC.";
             return HvacDecoder.describe(f.id,f.payload());
         }
     }

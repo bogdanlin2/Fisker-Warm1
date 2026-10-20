@@ -66,6 +66,8 @@ public final class CanCapture {
         public long lastNotificationMillis = -1, firstOverflowMillis = -1, maxNotificationGapMillis;
         public boolean promptSeen, adapterStopped, stopSent, stopWriteConfirmed, stopConfirmed, sessionBudgetExceeded;
         public boolean windowElapsed, lateStartWrite;
+        public boolean startWriteConfirmed,frameLimitReached;
+        public int plannedFrameLimit;
         public String rawAsciiPrefix;
         public boolean rawTraceTruncated, notificationTraceTruncated;
         public long maxProcessingMicros, maxReceiveLockWaitMicros;
@@ -80,7 +82,7 @@ public final class CanCapture {
         public final List<Packet> packets=new ArrayList<>();
         public boolean incomplete() {
             return adapterBufferFull || truncated || invalidFrameLines>0 || adapterError!=null
-                    || unexpectedIdOutsideFilter || sessionBudgetExceeded || !stopConfirmed || !windowElapsed || lateStartWrite;
+                    || unexpectedIdOutsideFilter || sessionBudgetExceeded || !stopConfirmed || (!windowElapsed && !frameLimitReached) || lateStartWrite;
         }
     }
     private CanCapture() { }
@@ -152,7 +154,7 @@ public final class CanCapture {
         public Stream(long startedNanos,boolean diagnosticTrace) {this.startedNanos=startedNanos;rawTrace=diagnosticTrace?new StringBuilder():null;}
         public Stream(long startedNanos,int expectedId) {
             this(startedNanos,false);
-            if(expectedId!=0x534 && expectedId!=0x373)throw new IllegalArgumentException("Unsupported HVAC target");
+            if(expectedId!=0x534 && expectedId!=0x373 && expectedId!=0x0E9)throw new IllegalArgumentException("Unsupported fixed RX target");
             snapshot.expectedId=expectedId;snapshot.startedNanos=startedNanos;
             snapshot.startedEpochMillis=System.currentTimeMillis();
         }
